@@ -110,7 +110,7 @@ def plane_to_sphere_SIN(az0, el0, x, y):
         
     """
     sin2_theta = x * x + y * y
-    if sin2_theta > 1.0:
+    if np.any(sin2_theta > 1.0):
         raise ValueError('Length of (x, y) vector bigger than 1.0')
     cos_theta = np.sqrt(1.0 - sin2_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
@@ -229,7 +229,7 @@ def plane_to_sphere_TAN(az0, el0, x, y):
     tan2_theta = x * x + y * y
     # This is an unnecessarily strict check in AIPS, which restricts target
     # points to within pi/4 radians of the reference point
-    if tan2_theta > 1.0:
+    if np.any(tan2_theta > 1.0):
         raise ValueError('Length of (x, y) vector bigger than 1.0')
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     # This term is cos(el) * cos(daz) / cos(theta)
@@ -297,10 +297,15 @@ def sphere_to_plane_ARC(az0, el0, az, el):
 
     cos_theta = sin_el * sin_el0 + cos_el * cos_el0 * cos_daz
     theta = np.arccos(np.clip(cos_theta, -1.0, 1.0))
-    if theta == 0.0:
-        scale = 1.0
+    if np.isscalar(theta):
+        if theta == 0.0:
+            scale = 1.0
+        else:
+            scale = theta / np.sin(theta)
     else:
-        scale = theta / np.sin(theta)
+        scale = np.ones(theta.shape)
+        nonzero = (theta != 0.0)
+        scale[nonzero] = theta[nonzero] / np.sin(theta[nonzero])
     x = cos_el * sin_daz
     y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
     return scale * x, scale * y
@@ -344,13 +349,18 @@ def plane_to_sphere_ARC(az0, el0, x, y):
     
     """
     theta = np.sqrt(x * x + y * y)
-    if theta > np.pi:
+    if np.any(theta > np.pi):
         raise ValueError('Length of (x, y) vector bigger than pi')
     cos_theta = np.cos(theta)
-    if theta == 0.0:
-        scale = 1.0
+    if np.isscalar(theta):
+        if theta == 0.0:
+            scale = 1.0
+        else:
+            scale = np.sin(theta) / theta
     else:
-        scale = np.sin(theta) / theta
+        scale = np.ones(theta.shape)
+        nonzero = (theta != 0.0)
+        scale[nonzero] = np.sin(theta[nonzero]) / theta[nonzero]
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     sin_el = cos_el0 * scale * y + sin_el0 * cos_theta
     # This check in AIPS should never be triggered, as scale * y and cos_theta are
