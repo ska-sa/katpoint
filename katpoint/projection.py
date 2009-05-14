@@ -1,4 +1,77 @@
-"""Spherical projections."""
+"""Spherical projections.
+
+This module provides a basic set of routines that projects spherical coordinates
+onto a plane and deprojects the plane coordinates back to the sphere. It
+complements the ephem module, which focuses on transformations between various
+spherical coordinate systems instead. The routines are derived from AIPS, as
+documented in [Ref1]_ and [Ref2]_ and implemented in the DIRCOS and NEWPOS
+routines in the 31DEC08 release, with minor improvements. The projections are
+referred to by their AIPS (and FITS) codes, as also described in [Ref3]_ and
+implemented in Calabretta's WCSLIB.
+
+Any spherical coordinate system can be used in the projections, as long as the
+target and reference points are expressed in the same system of longitude and
+latitude. The latitude coordinate is referred to as *elevation*, but could also
+be geodetic latitude or declination. It ranges between -pi/2 and pi/2 radians,
+with zero representing the equator, pi/2 the north pole and -pi/2 the south pole.
+
+The longitude coordinate is referred to as *azimuth*, but could also be
+geodetic longitude or right ascension. It can be any value in radians. The fact
+that azimuth increases clockwise while right ascension and geodetic longitude
+increase anti-clockwise is not a concern, as it simply changes the direction
+of the *x*-axis on the plane (which is defined to point in the direction of
+increasing longitude coordinate).
+
+The projection plane is tangent to the sphere at the reference point, which also
+coincides with the origin of the plane. All projections in this module are
+*zenithal* or *azimuthal* projections that map the sphere directly onto this
+plane. The *y* coordinate axis in the plane points along the reference meridian
+of longitude towards the north pole of the sphere (in the direction of
+increasing elevation). The *x* coordinate axis is perpendicular to it and points
+in the direction of increasing azimuth (which may be towards the right or left,
+depending on whether the azimuth coordinate increases clockwise or
+anti-clockwise).
+
+If the reference point is at a pole, its azimuth angle is undefined and the
+reference meridian is therefore arbitrary. Nevertheless, the (x, y) axes are
+still aligned to this meridian, with the *y* axis pointing away from the
+intersection of the meridian with the equator for the north pole, and towards
+the intersection for the south pole. The axes at the poles can therefore be seen
+as a continuation of the axes obtained while moving along the reference meridian
+from the equator to the pole. 
+
+The following projections are implemented:
+
+- Orthographic (**SIN**): This is the standard projection in aperture synthesis
+  radio astronomy, as it ties in closely with the 2-D Fourier imaging equation
+  and the resultant (l, m) coordinate system. It is the simple orthographic
+  projection of AIPS and [Ref1]_, not the generalised slant orthographic
+  projection of [Ref3]_.
+  
+- Gnomonic (**TAN**): This is commonly used in optical astronomy.
+
+- Zenithal equidistant (**ARC**): This is commonly used for single-dish maps,
+  and is obtained if relative (az, el) coordinates are directly plotted. It
+  preserves angular distances.
+
+- Stereographic (**STG**): This is useful to represent polar regions and large
+  fields. It preserves circles.
+
+Each projection typically has restrictions on the input domain and output range
+of values, which are highlighted in the docstrings of the individual functions.
+Each function in this module is also vectorised, and will operate on single
+floating-point values as well as :mod:`numpy` arrays of floats. The standard
+:mod:`numpy` broadcasting rules apply. It is therefore possible to have an
+array of target points and a single reference point, or vice versa.
+
+All coordinates in this module are in radians.
+
+.. [Ref1] Greisen, "Non-linear Coordinate Systems in AIPS," AIPS Memo 27, 1993.
+.. [Ref2] Greisen, "Additional Non-linear Coordinates in AIPS," AIPS Memo 46, 1993.
+.. [Ref3] Calabretta, Greisen, "Representations of celestial coordinates in 
+          FITS. II," Astronomy & Astrophysics, 395, 1077-1122, 2002.
+
+"""
 
 import numpy as np
 
@@ -9,19 +82,14 @@ import numpy as np
 def sphere_to_plane_SIN(az0, el0, az, el):
     """Project sphere to plane using orthographic (SIN) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions. The orthographic projection requires the target point to be
-    within the hemisphere centred on the reference point. The angular separation
-    between the target and reference points should be less than or equal to
-    pi/2 radians. The output (x, y) coordinates are constrained to lie within 
+    The orthographic projection requires the target point to be within the
+    hemisphere centred on the reference point. The angular separation between
+    the target and reference points should be less than or equal to pi/2
+    radians. The output (x, y) coordinates are constrained to lie within or on
     the unit circle in the plane.
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -50,7 +118,7 @@ def sphere_to_plane_SIN(az0, el0, az, el):
     -----
     This implements the original SIN projection as in AIPS, not the generalised
     'slant orthographic' projection as in WCSLIB.
-        
+    
     """
     if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
         raise ValueError('Elevation angle outside range of +- pi/2 radians')
@@ -68,17 +136,12 @@ def sphere_to_plane_SIN(az0, el0, az, el):
 def plane_to_sphere_SIN(az0, el0, x, y):
     """Deproject plane to sphere using orthographic (SIN) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions. The orthographic projection requires the (x, y) coordinates
-    to lie within or on the unit circle. The target point is constrained to
-    lie within the hemisphere centred on the reference point.
+    The orthographic projection requires the (x, y) coordinates to lie within
+    or on the unit circle. The target point is constrained to lie within the
+    hemisphere centred on the reference point.
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -138,18 +201,13 @@ def plane_to_sphere_SIN(az0, el0, x, y):
 def sphere_to_plane_TAN(az0, el0, az, el):
     """Project sphere to plane using gnomonic (TAN) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions. The gnomonic projection requires the target point to be
-    within the hemisphere centred on the reference point. The angular separation
-    between the target and reference points should be less than pi/2 radians.
+    The gnomonic projection requires the target point to be within the
+    hemisphere centred on the reference point. The angular separation between
+    the target and reference points should be less than pi/2 radians.
     The output (x, y) coordinates are unrestricted.
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -191,16 +249,11 @@ def sphere_to_plane_TAN(az0, el0, az, el):
 def plane_to_sphere_TAN(az0, el0, x, y):
     """Deproject plane to sphere using gnomonic (TAN) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions. The target point is constrained to lie within the hemisphere
-    centred on the reference point.
+    The input (x, y) coordinates are unrestricted. The returned target point is
+    constrained to lie within the hemisphere centred on the reference point.
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -252,18 +305,12 @@ def plane_to_sphere_TAN(az0, el0, x, y):
 def sphere_to_plane_ARC(az0, el0, az, el):
     """Project sphere to plane using zenithal equidistant (ARC) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions.  The target point can be anywhere on the sphere except in a
-    small region diametrically opposite the reference point, which get mapped
-    to infinity. The output (x, y) coordinates are constrained to lie within a
-    circle of radius pi radians centred on the origin in the plane.
+    The target point can be anywhere on the sphere. The output (x, y)
+    coordinates are constrained to lie within or on a circle of radius pi
+    radians centred on the origin in the plane.
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -313,16 +360,12 @@ def sphere_to_plane_ARC(az0, el0, az, el):
 def plane_to_sphere_ARC(az0, el0, x, y):
     """Deproject plane to sphere using zenithal equidistant (ARC) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions.  The input (x, y) coordinates should lie within a circle of
-    radius pi radians centred on the origin in the plane.
+    The input (x, y) coordinates should lie within or on a circle of radius pi
+    radians centred on the origin in the plane. The target point can be anywhere
+    on the sphere. 
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -388,17 +431,12 @@ def plane_to_sphere_ARC(az0, el0, x, y):
 def sphere_to_plane_STG(az0, el0, az, el):
     """Project sphere to plane using stereographic (STG) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions. The target point can be anywhere on the sphere except in a
-    small region diametrically opposite the reference point, which get mapped
-    to infinity.
+    The target point can be anywhere on the sphere except in a small region
+    diametrically opposite the reference point, which get mapped to infinity.
+    The output (x, y) coordinates are unrestricted.
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -441,15 +479,11 @@ def sphere_to_plane_STG(az0, el0, az, el):
 def plane_to_sphere_STG(az0, el0, x, y):
     """Deproject plane to sphere using stereographic (STG) projection.
     
-    The elevation ranges between -pi/2 and +pi/2 radians, while azimuth has no
-    restrictions.
+    The input (x, y) coordinates are unrestricted. The target point can be
+    anywhere on the sphere.
     
-    The y coordinate axis points along the reference meridian of longitude
-    towards the north pole of the sphere (in the direction of increasing
-    elevation). The x coordinate axis is perpendicular to it and points in the
-    direction of increasing azimuth (which may be on the right or left of y).
-    If the target or reference point is at one of the poles of the sphere, the
-    axes are still aligned to the reference meridian.
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
     
     Parameters
     ----------
@@ -468,11 +502,6 @@ def plane_to_sphere_STG(az0, el0, x, y):
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
-    Raises
-    ------
-    ValueError
-        If the radius of (x, y) > pi
     
     """
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
@@ -510,6 +539,7 @@ def plane_to_sphere_STG(az0, el0, x, y):
 #--- Selector
 #--------------------------------------------------------------------------------------------------
 
+# Maps projection code to appropriate function
 sphere_to_plane = {'SIN' : sphere_to_plane_SIN, 
                    'TAN' : sphere_to_plane_TAN, 
                    'ARC' : sphere_to_plane_ARC,
