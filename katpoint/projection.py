@@ -7,7 +7,8 @@ spherical coordinate systems instead. The routines are derived from AIPS, as
 documented in [Ref1]_ and [Ref2]_ and implemented in the DIRCOS and NEWPOS
 routines in the 31DEC08 release, with minor improvements. The projections are
 referred to by their AIPS (and FITS) codes, as also described in [Ref3]_ and
-implemented in Calabretta's WCSLIB.
+implemented in Calabretta's WCSLIB. The (x, y) coordinates in this module
+correspond to the (L, M) direction cosines calculated in [Ref1]_ and [Ref2]_.
 
 Any spherical coordinate system can be used in the projections, as long as the
 target and reference points are expressed in the same system of longitude and
@@ -76,10 +77,28 @@ All coordinates in this module are in radians.
 import numpy as np
 
 #--------------------------------------------------------------------------------------------------
+#--- Common
+#--------------------------------------------------------------------------------------------------
+
+def _sphere_to_plane_common(az0, el0, az, el):
+    """Do calculations common to all zenithal/azimuthal projections."""
+    if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
+        raise ValueError('Elevation angle outside range of +- pi/2 radians')
+    sin_el, cos_el, sin_el0, cos_el0 = np.sin(el), np.cos(el), np.sin(el0), np.cos(el0)
+    delta_az = az - az0
+    sin_daz, cos_daz = np.sin(delta_az), np.cos(delta_az)
+    # Theta is the native latitude (0 at reference point, increases radially outwards)
+    cos_theta = sin_el * sin_el0 + cos_el * cos_el0 * cos_daz
+    # Do basic orthographic projection: x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
+    ortho_x = cos_el * sin_daz
+    ortho_y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
+    return ortho_x, ortho_y, cos_theta
+    
+#--------------------------------------------------------------------------------------------------
 #--- Orthographic projection (SIN)
 #--------------------------------------------------------------------------------------------------
 
-def sphere_to_plane_SIN(az0, el0, az, el):
+def sphere_to_plane_sin(az0, el0, az, el):
     """Project sphere to plane using orthographic (SIN) projection.
     
     The orthographic projection requires the target point to be within the
@@ -120,20 +139,13 @@ def sphere_to_plane_SIN(az0, el0, az, el):
     'slant orthographic' projection as in WCSLIB.
     
     """
-    if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
-        raise ValueError('Elevation angle outside range of +- pi/2 radians')
-    sin_el, cos_el, sin_el0, cos_el0 = np.sin(el), np.cos(el), np.sin(el0), np.cos(el0)
-    delta_az = az - az0
-    sin_daz, cos_daz = np.sin(delta_az), np.cos(delta_az)
-    
-    cos_theta = sin_el * sin_el0 + cos_el * cos_el0 * cos_daz
+    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
     if np.any(cos_theta < 0.0):
-        raise ValueError('Target point more than 90 degrees away from reference point')
-    x = cos_el * sin_daz
-    y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
-    return x, y
+        raise ValueError('Target point more than pi/2 radians away from reference point')
+    # x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
+    return ortho_x, ortho_y
 
-def plane_to_sphere_SIN(az0, el0, x, y):
+def plane_to_sphere_sin(az0, el0, x, y):
     """Deproject plane to sphere using orthographic (SIN) projection.
     
     The orthographic projection requires the (x, y) coordinates to lie within
@@ -178,19 +190,8 @@ def plane_to_sphere_SIN(az0, el0, x, y):
     cos_theta = np.sqrt(1.0 - sin2_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     sin_el = sin_el0 * cos_theta + cos_el0 * y
-    # This check in AIPS should never be triggered, as y and cos_theta are
-    # between -1 and 1, and their convex combination will be too
-    if np.any(np.abs(sin_el) > 1.0):
-        raise ValueError('(x, y) coordinates out of range')
     el = np.arcsin(sin_el)
     cos_el_cos_daz = cos_el0 * cos_theta - sin_el0 * y
-    # This check in AIPS throws out the case when cos(el) == 0, i.e. when
-    # the target point lands on one of the poles of the sphere. (This is also
-    # triggered when the reference point is at the pole and only an azimuthal
-    # x-offset is given.) This is not such a big disaster - just use the
-    # reference point azimuth value as guidance.
-    #if (cos_el_cos_daz == 0.0) and (x == 0.0):
-    #    raise ValueError('Target point too close to pole of sphere - azimuth undefined')
     az = az0 + np.arctan2(x, cos_el_cos_daz)    
     return az, el
 
@@ -198,7 +199,7 @@ def plane_to_sphere_SIN(az0, el0, x, y):
 #--- Gnomonic projection (TAN)
 #--------------------------------------------------------------------------------------------------
 
-def sphere_to_plane_TAN(az0, el0, az, el):
+def sphere_to_plane_tan(az0, el0, az, el):
     """Project sphere to plane using gnomonic (TAN) projection.
     
     The gnomonic projection requires the target point to be within the
@@ -233,20 +234,13 @@ def sphere_to_plane_TAN(az0, el0, az, el):
         If input values are out of range, or target is too far from reference
         
     """
-    if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
-        raise ValueError('Elevation angle outside range of +- pi/2 radians')
-    sin_el, cos_el, sin_el0, cos_el0 = np.sin(el), np.cos(el), np.sin(el0), np.cos(el0)
-    delta_az = az - az0
-    sin_daz, cos_daz = np.sin(delta_az), np.cos(delta_az)
-    
-    cos_theta = sin_el * sin_el0 + cos_el * cos_el0 * cos_daz
+    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
     if np.any(cos_theta <= 0.0):
-        raise ValueError('Target point 90 degrees or more away from reference point')
-    x = cos_el * sin_daz
-    y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
-    return x / cos_theta, y / cos_theta
+        raise ValueError('Target point pi/2 radians or more away from reference point')
+    # x = tan(theta) * sin(phi), y = tan(theta) * cos(phi)
+    return ortho_x / cos_theta, ortho_y / cos_theta
 
-def plane_to_sphere_TAN(az0, el0, x, y):
+def plane_to_sphere_tan(az0, el0, x, y):
     """Deproject plane to sphere using gnomonic (TAN) projection.
     
     The input (x, y) coordinates are unrestricted. The returned target point is
@@ -273,27 +267,10 @@ def plane_to_sphere_TAN(az0, el0, x, y):
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
     
-    Raises
-    ------
-    ValueError
-        If the radius of (x, y) > 1.0
-    
     """
-    tan2_theta = x * x + y * y
-    # This is an unnecessarily strict check in AIPS, which restricts target
-    # points to within pi/4 radians of the reference point
-    if np.any(tan2_theta > 1.0):
-        raise ValueError('Length of (x, y) vector bigger than 1.0')
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     # This term is cos(el) * cos(daz) / cos(theta)
     den = cos_el0 - y * sin_el0
-    # This check in AIPS throws out the case when cos(el) == 0, i.e. when
-    # the target point lands on one of the poles of the sphere. (This is also
-    # triggered when the reference point is at the pole and only an azimuthal
-    # x-offset is given.) This is not such a big disaster - just use the
-    # reference point azimuth value as guidance.
-    #if den == 0:
-    #    raise ValueError('Target point too close to pole of sphere - azimuth undefined')
     az = az0 + np.arctan2(x, den)
     el = np.arctan(np.cos(az - az0) * (sin_el0 + y * cos_el0) / den)
     return az, el
@@ -302,7 +279,7 @@ def plane_to_sphere_TAN(az0, el0, x, y):
 #--- Zenithal equidistant projection (ARC)
 #--------------------------------------------------------------------------------------------------
 
-def sphere_to_plane_ARC(az0, el0, az, el):
+def sphere_to_plane_arc(az0, el0, az, el):
     """Project sphere to plane using zenithal equidistant (ARC) projection.
     
     The target point can be anywhere on the sphere. The output (x, y)
@@ -336,14 +313,8 @@ def sphere_to_plane_ARC(az0, el0, az, el):
         If input values are out of range
         
     """
-    if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
-        raise ValueError('Elevation angle outside range of +- pi/2 radians')
-    sin_el, cos_el, sin_el0, cos_el0 = np.sin(el), np.cos(el), np.sin(el0), np.cos(el0)
-    delta_az = az - az0
-    sin_daz, cos_daz = np.sin(delta_az), np.cos(delta_az)
-
-    cos_theta = sin_el * sin_el0 + cos_el * cos_el0 * cos_daz
-    theta = np.arccos(np.clip(cos_theta, -1.0, 1.0))
+    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
+    theta = np.arccos(cos_theta)
     if np.isscalar(theta):
         if theta == 0.0:
             scale = 1.0
@@ -353,11 +324,10 @@ def sphere_to_plane_ARC(az0, el0, az, el):
         scale = np.ones(theta.shape)
         nonzero = (theta != 0.0)
         scale[nonzero] = theta[nonzero] / np.sin(theta[nonzero])
-    x = cos_el * sin_daz
-    y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
-    return scale * x, scale * y
+    # x = theta * sin(phi), y = theta * cos(phi)
+    return scale * ortho_x, scale * ortho_y
 
-def plane_to_sphere_ARC(az0, el0, x, y):
+def plane_to_sphere_arc(az0, el0, x, y):
     """Deproject plane to sphere using zenithal equidistant (ARC) projection.
     
     The input (x, y) coordinates should lie within or on a circle of radius pi
@@ -406,21 +376,11 @@ def plane_to_sphere_ARC(az0, el0, x, y):
         scale[nonzero] = np.sin(theta[nonzero]) / theta[nonzero]
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     sin_el = cos_el0 * scale * y + sin_el0 * cos_theta
-    # This check in AIPS should never be triggered, as scale * y and cos_theta are
-    # between -1 and 1, and their convex combination will be too
-    if np.any(np.abs(sin_el) > 1.0):
-        raise ValueError('(x, y) coordinates out of range')
     el = np.arcsin(sin_el)
     # This term is cos(el) * cos(el0) * sin(delta_az)
     num = x * scale * cos_el0
     # This term is cos(el) * cos(el0) * cos(delta_az)
     den = cos_theta - sin_el * sin_el0
-    # This check in AIPS throws out the case when cos(el) == 0 or cos(el0) == 0,
-    # i.e. when the target or reference point lands on one of the poles of the
-    # sphere. This is not such a big disaster - just use the reference point
-    # azimuth value as guidance.
-    #if (num == 0) and (den == 0):
-    #    raise ValueError('Target or reference point too close to pole of sphere - azimuth undefined')
     az = az0 + np.arctan2(num, den)
     return az, el
 
@@ -428,7 +388,7 @@ def plane_to_sphere_ARC(az0, el0, x, y):
 #--- Stereographic projection (STG)
 #--------------------------------------------------------------------------------------------------
 
-def sphere_to_plane_STG(az0, el0, az, el):
+def sphere_to_plane_stg(az0, el0, az, el):
     """Project sphere to plane using stereographic (STG) projection.
     
     The target point can be anywhere on the sphere except in a small region
@@ -462,21 +422,14 @@ def sphere_to_plane_STG(az0, el0, az, el):
         If input values are out of range, or target point opposite to reference
     
     """
-    if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
-        raise ValueError('Elevation angle outside range of +- pi/2 radians')
-    sin_el, cos_el, sin_el0, cos_el0 = np.sin(el), np.cos(el), np.sin(el0), np.cos(el0)
-    delta_az = az - az0
-    sin_daz, cos_daz = np.sin(delta_az), np.cos(delta_az)
-
-    cos_theta = sin_el * sin_el0 + cos_el * cos_el0 * cos_daz
+    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
     den = 1.0 + cos_theta
     if np.any(den < 1e-5):
-        raise ValueError('Target point ~180 degrees away from reference point')
-    x = cos_el * sin_daz
-    y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
-    return 2.0 * x / den, 2.0 * y / den
+        raise ValueError('Target point too close to pi radians away from reference point')
+    # x = 2 sin(theta) sin(phi) / (1 + cos(theta)), y = 2 sin(theta) cos(phi) / (1 + cos(theta))
+    return 2.0 * ortho_x / den, 2.0 * ortho_y / den
 
-def plane_to_sphere_STG(az0, el0, x, y):
+def plane_to_sphere_stg(az0, el0, x, y):
     """Deproject plane to sphere using stereographic (STG) projection.
     
     The input (x, y) coordinates are unrestricted. The target point can be
@@ -508,26 +461,12 @@ def plane_to_sphere_STG(az0, el0, x, y):
     # This is the square of 2 sin(theta) / (1 + cos(theta))
     r2 = x * x + y * y
     cos_theta = (4.0 - r2) / (4.0 + r2)
-    # This check in AIPS will never get triggered, since r2 >= 0 implies
-    # abs(cos_theta) <= 1
-    #if np.any(np.abs(cos_theta) > 1.0):
-    #    raise ValueError('(x, y) coordinates out of range')
     scale = (1.0 + cos_theta) / 2.0
     sin_el = cos_el0 * scale * y + sin_el0 * cos_theta
-    # This check in AIPS will also never be triggered, as scale = 4 / (4 + r2)
-    # and scale * y reaches a maximum of 1 for (x,y) = (0,2), so both cos_theta
-    # and scale * y lie between -1 and 1, as does their convex combination
-    if np.any(np.abs(sin_el) > 1.0):
-        raise ValueError('(x, y) coordinates out of range')
     el = np.arcsin(sin_el)
-    # cos_el = np.cos(el)
-    # This check in AIPS throws out the case when cos(el) ~ 0, i.e. when
-    # the target point lands on one of the poles of the sphere. This is not
-    # such a big disaster - just use the reference point azimuth value as guidance.
-    #if np.any(np.abs(cos_el) < 1e-5):
-    #    raise ValueError('Target point too close to pole of sphere - azimuth undefined')
-    # The M-check in AIPS can be avoided by using arctan2 instead of arcsin
-    # This follows the same approach as in the AIPS code for ARC
+    # The M-check in AIPS NEWPOS can be avoided by using arctan2 instead of arcsin.
+    # This follows the same approach as in the AIPS code for ARC, and improves
+    # azimuth accuracy substantially for large (x, y) values.
     # This term is cos(el) * cos(el0) * sin(delta_az)
     num = x * scale * cos_el0
     # This term is cos(el) * cos(el0) * cos(delta_az)
@@ -540,12 +479,12 @@ def plane_to_sphere_STG(az0, el0, x, y):
 #--------------------------------------------------------------------------------------------------
 
 # Maps projection code to appropriate function
-sphere_to_plane = {'SIN' : sphere_to_plane_SIN, 
-                   'TAN' : sphere_to_plane_TAN, 
-                   'ARC' : sphere_to_plane_ARC,
-                   'STG' : sphere_to_plane_STG}
+sphere_to_plane = {'SIN' : sphere_to_plane_sin, 
+                   'TAN' : sphere_to_plane_tan, 
+                   'ARC' : sphere_to_plane_arc,
+                   'STG' : sphere_to_plane_stg}
 
-plane_to_sphere = {'SIN' : plane_to_sphere_SIN,
-                   'TAN' : plane_to_sphere_TAN, 
-                   'ARC' : plane_to_sphere_ARC,
-                   'STG' : plane_to_sphere_STG}
+plane_to_sphere = {'SIN' : plane_to_sphere_sin,
+                   'TAN' : plane_to_sphere_tan, 
+                   'ARC' : plane_to_sphere_arc,
+                   'STG' : plane_to_sphere_stg}
