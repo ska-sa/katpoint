@@ -12,16 +12,17 @@ correspond to the (L, M) direction cosines calculated in [Ref1]_ and [Ref2]_.
 
 Any spherical coordinate system can be used in the projections, as long as the
 target and reference points are expressed in the same system of longitude and
-latitude. The latitude coordinate is referred to as *elevation*, but could also
-be geodetic latitude or declination. It ranges between -pi/2 and pi/2 radians,
-with zero representing the equator, pi/2 the north pole and -pi/2 the south pole.
+latitude. The latitudinal coordinate is referred to as *elevation*, but could 
+also be geodetic latitude or declination. It ranges between -pi/2 and pi/2
+radians, with zero representing the equator, pi/2 the north pole and -pi/2 the
+south pole.
 
-The longitude coordinate is referred to as *azimuth*, but could also be
+The longitudinal coordinate is referred to as *azimuth*, but could also be
 geodetic longitude or right ascension. It can be any value in radians. The fact
 that azimuth increases clockwise while right ascension and geodetic longitude
 increase anti-clockwise is not a concern, as it simply changes the direction
 of the *x*-axis on the plane (which is defined to point in the direction of
-increasing longitude coordinate).
+increasing longitudinal coordinate).
 
 The projection plane is tangent to the sphere at the reference point, which also
 coincides with the origin of the plane. All projections in this module are
