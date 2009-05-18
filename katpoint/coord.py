@@ -23,7 +23,13 @@ import projection
 #--- Helper functions
 #--------------------------------------------------------------------------------------------------
 
-def unix_to_ephem_time(secs_since_epoch):
+def degrees(x):
+    return x * 180.0 / np.pi
+
+def radians(x):
+    return x * np.pi / 180.0
+
+def _unix_to_ephem_time(secs_since_epoch):
     """Convert seconds-since-Unix-epoch local time to a UTC PyEphem Date object."""
     timestamp = list(time.gmtime(np.floor(secs_since_epoch))[:6])
     timestamp[5] += secs_since_epoch - np.floor(secs_since_epoch)
@@ -130,25 +136,43 @@ class Source(object):
     def pointing(self, antenna, timestamps):
         """Calculate source (az, el) coordinates as seen from antenna at timestamp(s)."""
         def _scalar_pointing(t):
-            """Calculate source az/el at a single time instant."""
-            antenna._observer.date = unix_to_ephem_time(t)
+            """Calculate (az, el) coordinates for a single time instant."""
+            antenna._observer.date = _unix_to_ephem_time(t)
             self._body.compute(antenna._observer)
             return self._body.az, self._body.alt
         if np.isscalar(timestamps):
             return _scalar_pointing(timestamps)
         else:
             azel = np.array([_scalar_pointing(t) for t in timestamps])
-            return ref_azel[:, 0], ref_azel[:, 1]
-            
+            return azel[:, 0], azel[:, 1]
+    
     def flux_density_Jy(self, obs_freq_Hz):
-        """Calculate flux density for given observation frequency, as per Baars 1977."""
+        """Calculate flux density for given observation frequency.
+        
+        This uses a polynomial flux model of the form
+        
+        log10 S[Jy] = a + b*log10(f[MHz]) + c*(log10(f[MHz]))^2
+        
+        as used in Baars 1977.
+        
+        Parameters
+        ----------
+        obs_freq_Hz : float
+            Frequency at which to evaluate flux density
+        
+        Returns
+        -------
+        flux_density_Jy : float
+            Flux density in Jy, or None if frequency is out of range or source
+            does not have flux info
+        
+        """
         if None in [self.min_freq_Hz, self.max_freq_Hz, self.coefs]:
-            # Target has no specified flux density
+            # Source has no specified flux density
             return None
         if (obs_freq_Hz < self.min_freq_Hz) or (obs_freq_Hz > self.max_freq_Hz):
             # Frequency out of range for flux calculation of source
             return None
-        # log10 S[Jy] = a + b*log10(f[MHz]) + c*(log10(f[MHz]))^2
         log10_freq = np.log10(obs_freq_Hz * 1e-6)
         log10_flux = 0.0
         acc = 1.0
@@ -208,12 +232,12 @@ def add_to_source_catalogue(filename):
 #--- Projections
 #--------------------------------------------------------------------------------------------------
 
-def sphere_to_plane(source, antenna, az, el, timestamps, projection_type='ARC', spherical_type='AZEL'):
+def sphere_to_plane(source, antenna, az, el, timestamps, projection_type='ARC'):
     # The source (az, el) coordinates will serve as reference point on the sphere
     ref_az, ref_el = source.pointing(antenna, timestamps)
     return projection.sphere_to_plane[projection_type](ref_az, ref_el, az, el)
 
-def plane_to_sphere(source, antenna, x, y, timestamps, projection_type='ARC', spherical_type='AZEL'):
+def plane_to_sphere(source, antenna, x, y, timestamps, projection_type='ARC'):
     # The source (az, el) coordinates will serve as reference point on the sphere
     ref_az, ref_el = source.pointing(antenna, timestamps)
     return projection.plane_to_sphere[projection_type](ref_az, ref_el, x, y)
