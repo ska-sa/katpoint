@@ -58,22 +58,22 @@ class Antenna(object):
     """
     def __init__(self, name, lat, long, alt, diam):
         self.name = name
-        self._observer = ephem.Observer()
-        self._observer.lat = lat
-        self._observer.long = long
-        self._observer.elevation = float(alt)
+        self.observer = ephem.Observer()
+        self.observer.lat = lat
+        self.observer.long = long
+        self.observer.elevation = float(alt)
         self.diam = float(diam)
     
     def __str__(self):
         return "%s: %d-m dish at %s %s, elevation %f m" % (self.name, self.diam,
-               self._observer.lat, self._observer.long, self._observer.elevation)
+               self.observer.lat, self.observer.long, self.observer.elevation)
     
     def sidereal_time(self, secs_since_epoch):
         """Calculate sidereal time for local timestamp(s)."""
         def _scalar_sidereal_time(t):
             """Calculate sidereal time at a single time instant."""
-            self._observer.date = unix_to_ephem_time(t)
-            return self._observer.sidereal_time()
+            self.observer.date = unix_to_ephem_time(t)
+            return self.observer.sidereal_time()
         if np.isscalar(secs_since_epoch):
             return _scalar_sidereal_time(secs_since_epoch)
         else:
@@ -119,27 +119,27 @@ class Source(object):
     
     """
     def __init__(self, body, min_freq_Hz=None, max_freq_Hz=None, coefs=None):
-        self._body = body
-        self.name = self._body.name
+        self.body = body
+        self.name = self.body.name
         self.min_freq_Hz = min_freq_Hz
         self.max_freq_Hz = max_freq_Hz
         self.coefs = coefs
     
     def __str__(self):
         if None in [self.min_freq_Hz, self.max_freq_Hz, self.coefs]:
-            return "%s: %s, no flux info" % (self.name, self._body.__class__.__name__)
+            return "%s: %s, no flux info" % (self.name, self.body.__class__.__name__)
         else:
             return "%s: %s, flux defined for %.3f - %.3f GHz" % \
-                   (self.name, self._body.__class__.__name__,
+                   (self.name, self.body.__class__.__name__,
                     self.min_freq_Hz * 1e-9, self.max_freq_Hz * 1e-9)
             
     def pointing(self, antenna, timestamps):
         """Calculate source (az, el) coordinates as seen from antenna at timestamp(s)."""
         def _scalar_pointing(t):
             """Calculate (az, el) coordinates for a single time instant."""
-            antenna._observer.date = _unix_to_ephem_time(t)
-            self._body.compute(antenna._observer)
-            return self._body.az, self._body.alt
+            antenna.observer.date = _unix_to_ephem_time(t)
+            self.body.compute(antenna.observer)
+            return self.body.az, self.body.alt
         if np.isscalar(timestamps):
             return _scalar_pointing(timestamps)
         else:
@@ -183,6 +183,10 @@ class Source(object):
 
 # Dict used to look up sources by name -> de facto catalogue
 source_catalogue = {}
+# Add special PyEphem bodies, such as solar system objects
+specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
+for name in specials:
+    source_catalogue[name] = Source(eval('ephem.%s()' % name))
 
 def add_to_source_catalogue(filename):
     """Add contents of source CSV or TLE file to existing catalogue of sources.
@@ -205,18 +209,23 @@ def add_to_source_catalogue(filename):
         # Load FixedBody sources from CSV file
         for row in csv.reader(cat_file, skipinitialspace=True):
             if (len(row) == 7) and (row[0][0] != '#'):
-                name, epoch, ra, dec, min_freq, max_freq, coefs = row
+                names, epoch, ra, dec, min_freq, max_freq, coefs = row
+                names = names.split()
                 body = ephem.FixedBody()
-                body.name = name
+                body.name = names[0]
                 body._epoch = epoch_map[epoch]
                 body._ra = ra
                 body._dec = dec
                 coefs = tuple([float(num) for num in coefs.strip(' ()').split()])
                 min_freq, max_freq = 1e6 * float(min_freq), 1e6 * float(max_freq)
                 if (min_freq <= 0.0) and (max_freq <= 0.0):
-                    source_catalogue[name] = Source(body)
+                    source = Source(body)
+                    for name in names:
+                        source_catalogue[name] = source
                 else:
-                    source_catalogue[name] = Source(body, min_freq, max_freq, coefs)
+                    source = Source(body, min_freq, max_freq, coefs)
+                    for name in names:
+                        source_catalogue[name] = source
     elif ext == '.tle':
         lines = cat_file.readlines()
         if len(lines) % 3 > 0:
