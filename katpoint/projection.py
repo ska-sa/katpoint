@@ -177,7 +177,7 @@ def plane_to_sphere_sin(az0, el0, x, y):
     Raises
     ------
     ValueError
-        If the radius of (x, y) > 1.0
+        If input values are out of range, or the radius of (x, y) > 1.0
     
     Notes
     -----
@@ -185,6 +185,8 @@ def plane_to_sphere_sin(az0, el0, x, y):
     'slant orthographic' projection as in WCSLIB.
         
     """
+    if np.any(np.abs(el0) > np.pi / 2.0):
+        raise ValueError('Elevation angle outside range of +- pi/2 radians')
     sin2_theta = x * x + y * y
     if np.any(sin2_theta > 1.0):
         raise ValueError('Length of (x, y) vector bigger than 1.0')
@@ -268,7 +270,14 @@ def plane_to_sphere_tan(az0, el0, x, y):
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
     
+    Raises
+    ------
+    ValueError
+        If input values are out of range
+        
     """
+    if np.any(np.abs(el0) > np.pi / 2.0):
+        raise ValueError('Elevation angle outside range of +- pi/2 radians')
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     # This term is cos(el) * cos(daz) / cos(theta)
     den = cos_el0 - y * sin_el0
@@ -359,9 +368,11 @@ def plane_to_sphere_arc(az0, el0, x, y):
     Raises
     ------
     ValueError
-        If the radius of (x, y) > pi
+        If input values are out of range, or the radius of (x, y) > pi
     
     """
+    if np.any(np.abs(el0) > np.pi / 2.0):
+        raise ValueError('Elevation angle outside range of +- pi/2 radians')
     theta = np.sqrt(x * x + y * y)
     if np.any(theta > np.pi):
         raise ValueError('Length of (x, y) vector bigger than pi')
@@ -457,7 +468,14 @@ def plane_to_sphere_stg(az0, el0, x, y):
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
     
+    Raises
+    ------
+    ValueError
+        If input values are out of range
+        
     """
+    if np.any(np.abs(el0) > np.pi / 2.0):
+        raise ValueError('Elevation angle outside range of +- pi/2 radians')
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     # This is the square of 2 sin(theta) / (1 + cos(theta))
     r2 = x * x + y * y
