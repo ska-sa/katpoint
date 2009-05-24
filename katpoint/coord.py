@@ -13,6 +13,7 @@ and CASA.
 import time
 import csv
 import os.path
+import re
 
 import numpy as np
 import ephem
@@ -181,12 +182,27 @@ class Source(object):
             acc *= log10_freq
         return 10.0 ** log10_flux
 
+class StationaryBody(object):
+    """Stationary body with fixed (az, el) coordinates."""
+    def __init__(self, az, el, name=None):
+        self.az = ephem.degrees(az)
+        self.el = ephem.degrees(el)
+        self.alt = self.el # alternative terminology
+        if name is None:
+            name = "Az: %s El: %s" % (self.az, self.el)
+        self.name = name
+
+    def compute(self, observer):
+        pass
+         # az / el is fixed :)
+    
 # Dict used to look up sources by name -> de facto catalogue
 source_catalogue = {}
 # Add special PyEphem bodies, such as solar system objects
 specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
 for name in specials:
-    source_catalogue[name] = Source(eval('ephem.%s()' % name))
+    source_catalogue[name.lower()] = Source(eval('ephem.%s()' % name))
+source_catalogue['zenith'] = Source(StationaryBody('0.0', '90.0', 'Zenith'))
 
 def add_to_source_catalogue(filename):
     """Add contents of source CSV or TLE file to existing catalogue of sources.
@@ -221,11 +237,11 @@ def add_to_source_catalogue(filename):
                 if (min_freq <= 0.0) and (max_freq <= 0.0):
                     source = Source(body)
                     for name in names:
-                        source_catalogue[name] = source
+                        source_catalogue[name.lower()] = source
                 else:
                     source = Source(body, min_freq, max_freq, coefs)
                     for name in names:
-                        source_catalogue[name] = source
+                        source_catalogue[name.lower()] = source
     elif ext == '.tle':
         lines = cat_file.readlines()
         if len(lines) % 3 > 0:
@@ -234,9 +250,30 @@ def add_to_source_catalogue(filename):
             tle = lines[n:n + 3]
             tle[0] = tle[0].strip().replace(' ', '_')
             body = ephem.readtle(*tle)
-            source_catalogue[body.name] = Source(body)
+            source_catalogue[body.name.lower()] = Source(body)
     else:
         raise ValueError('Unrecognised source file extension (need .csv or .tle)')
+
+def construct_source(name):
+    clean_name = name.strip().lower()
+    # Look for fixed (ra, dec) sources
+    match = re.match('ra: (.+) dec: (.+)', clean_name)
+    if match:
+        body = ephem.FixedBody()
+        body.name = name
+        body._epoch = ephem.J2000
+        body._ra = ephem.hours(match.group(1))
+        body._dec = ephem.degrees(match.group(2))
+        return Source(body)
+    # Look for stationary (az, el) sources
+    match = re.match('az: (.+) el: (.+)', clean_name)
+    if match:
+        return Source(StationaryBody(match.group(1), match.group(2)))
+    # Do a named source lookup
+    try:
+        return source_catalogue[clean_name]
+    except KeyError:
+        raise KeyError("Unknown source '%s'" % name)
 
 #--------------------------------------------------------------------------------------------------
 #--- Projections
