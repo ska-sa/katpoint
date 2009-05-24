@@ -237,11 +237,11 @@ def add_to_source_catalogue(filename):
                 if (min_freq <= 0.0) and (max_freq <= 0.0):
                     source = Source(body)
                     for name in names:
-                        source_catalogue[name.lower()] = source
+                        source_catalogue[name.lower().replace(' ', '')] = source
                 else:
                     source = Source(body, min_freq, max_freq, coefs)
                     for name in names:
-                        source_catalogue[name.lower()] = source
+                        source_catalogue[name.lower().replace(' ', '')] = source
     elif ext == '.tle':
         lines = cat_file.readlines()
         if len(lines) % 3 > 0:
@@ -250,7 +250,7 @@ def add_to_source_catalogue(filename):
             tle = lines[n:n + 3]
             tle[0] = tle[0].strip().replace(' ', '_')
             body = ephem.readtle(*tle)
-            source_catalogue[body.name.lower()] = Source(body)
+            source_catalogue[body.name.lower().replace(' ', '')] = Source(body)
     else:
         raise ValueError('Unrecognised source file extension (need .csv or .tle)')
 
@@ -271,7 +271,7 @@ def construct_source(name):
         return Source(StationaryBody(match.group(1), match.group(2)))
     # Do a named source lookup
     try:
-        return source_catalogue[clean_name]
+        return source_catalogue[clean_name.replace(' ', '')]
     except KeyError:
         raise KeyError("Unknown source '%s'" % name)
 
