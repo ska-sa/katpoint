@@ -24,10 +24,10 @@ import projection
 #--- Helper functions
 #--------------------------------------------------------------------------------------------------
 
-def degrees(x):
+def rad2deg(x):
     return x * 180.0 / np.pi
 
-def radians(x):
+def deg2rad(x):
     return x * np.pi / 180.0
 
 def _unix_to_ephem_time(secs_since_epoch):
