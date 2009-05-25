@@ -248,7 +248,7 @@ def add_to_source_catalogue(filename):
             raise ValueError("Source TLE file is malformed: wrong number of lines")
         for n in range(0, len(lines), 3):
             tle = lines[n:n + 3]
-            tle[0] = tle[0].strip().replace(' ', '_')
+            tle[0] = tle[0].strip()
             body = ephem.readtle(*tle)
             source_catalogue[body.name.lower().replace(' ', '')] = Source(body)
     else:
