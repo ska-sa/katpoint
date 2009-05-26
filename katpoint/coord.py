@@ -66,7 +66,7 @@ class Antenna(object):
         self.diam = float(diam)
     
     def __str__(self):
-        return "%s: %d-m dish at %s %s, elevation %f m" % (self.name, self.diam,
+        return "%s: %d-m dish at lat %s, long %s, elevation %f m" % (self.name, self.diam,
                self.observer.lat, self.observer.long, self.observer.elevation)
     
     def sidereal_time(self, secs_since_epoch):
