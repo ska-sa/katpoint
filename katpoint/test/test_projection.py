@@ -1,10 +1,11 @@
 """Tests for the projection module."""
+# pylint: disable-msg=C0103,W0212
 
 import unittest
 import numpy as np
 from scape import projection
 try:
-    import aips_projection
+    from .aips_projection import newpos, dircos
     found_aips = True
 except ImportError:
     found_aips = False
@@ -46,9 +47,10 @@ class TestProjectionSIN(unittest.TestCase):
             x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
             for n in xrange(len(az)):
                 az_aips[n], el_aips[n], ierr = \
-                aips_projection.newpos(2, self.az0[n], self.el0[n], self.x[n], self.y[n])
+                newpos(2, self.az0[n], self.el0[n], self.x[n], self.y[n])
                 x_aips[n], y_aips[n], ierr = \
-                aips_projection.dircos(2, self.az0[n], self.el0[n], az[n], el[n])
+                dircos(2, self.az0[n], self.el0[n], az[n], el[n])
+            self.assertEqual(ierr, 0)
             assert_angles_almost_equal(az, az_aips, decimal=9)
             assert_angles_almost_equal(el, el_aips, decimal=9)
             np.testing.assert_almost_equal(xx, x_aips, decimal=9)
@@ -146,9 +148,10 @@ class TestProjectionTAN(unittest.TestCase):
             x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
             for n in xrange(len(az)):
                 az_aips[n], el_aips[n], ierr = \
-                aips_projection.newpos(3, az0[n], el0[n], x[n], y[n])
+                newpos(3, az0[n], el0[n], x[n], y[n])
                 x_aips[n], y_aips[n], ierr = \
-                aips_projection.dircos(3, az0[n], el0[n], az[n], el[n])
+                dircos(3, az0[n], el0[n], az[n], el[n])
+            self.assertEqual(ierr, 0)
             assert_angles_almost_equal(az, az_aips, decimal=10)
             assert_angles_almost_equal(el, el_aips, decimal=10)
             np.testing.assert_almost_equal(xx, x_aips, decimal=10)
@@ -239,9 +242,10 @@ class TestProjectionARC(unittest.TestCase):
             x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
             for n in xrange(len(az)):
                 az_aips[n], el_aips[n], ierr = \
-                aips_projection.newpos(4, self.az0[n], self.el0[n], self.x[n], self.y[n])
+                newpos(4, self.az0[n], self.el0[n], self.x[n], self.y[n])
                 x_aips[n], y_aips[n], ierr = \
-                aips_projection.dircos(4, self.az0[n], self.el0[n], az[n], el[n])
+                dircos(4, self.az0[n], self.el0[n], az[n], el[n])
+            self.assertEqual(ierr, 0)
             assert_angles_almost_equal(az, az_aips, decimal=8)
             assert_angles_almost_equal(el, el_aips, decimal=8)
             np.testing.assert_almost_equal(xx, x_aips, decimal=8)
@@ -347,9 +351,10 @@ class TestProjectionSTG(unittest.TestCase):
             x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
             for n in xrange(len(az)):
                 az_aips[n], el_aips[n], ierr = \
-                aips_projection.newpos(9, self.az0[n], self.el0[n], self.x[n], self.y[n])
+                newpos(9, self.az0[n], self.el0[n], self.x[n], self.y[n])
                 x_aips[n], y_aips[n], ierr = \
-                aips_projection.dircos(9, self.az0[n], self.el0[n], az[n], el[n])
+                dircos(9, self.az0[n], self.el0[n], az[n], el[n])
+            self.assertEqual(ierr, 0)
             # AIPS NEWPOS STG has poor accuracy on azimuth angle (large closure errors by itself)
             # assert_angles_almost_equal(az, az_aips, decimal=9)
             assert_angles_almost_equal(el, el_aips, decimal=9)

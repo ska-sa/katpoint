@@ -18,7 +18,8 @@ import re
 import numpy as np
 import ephem
 
-import projection
+from .projection import sphere_to_plane as projection_sphere_to_plane
+from .projection import plane_to_sphere as projection_plane_to_sphere
 
 #--------------------------------------------------------------------------------------------------
 #--- Helper functions
@@ -47,33 +48,34 @@ class Antenna(object):
     ----------
     name : string
         Name of antenna
-    lat : string or float
+    latitude : string or float
         Latitude, either in 'D:M:S' string format, or as a float in radians
-    long : string or float
+    longitude : string or float
         Longitude, either in 'D:M:S' string format, or as a float in radians
-    alt : string or float
+    altitude : string or float
         Altitude, in meters
-    diam : string or float
+    diameter : string or float
         Dish diameter, in meters
     
     """
-    def __init__(self, name, lat, long, alt, diam):
+    def __init__(self, name, latitude, longitude, altitude, diameter):
         self.name = name
         self.observer = ephem.Observer()
-        self.observer.lat = lat
-        self.observer.long = long
-        self.observer.elevation = float(alt)
-        self.diam = float(diam)
+        self.observer.lat = latitude
+        self.observer.long = longitude
+        self.observer.elevation = float(altitude)
+        self.diameter = float(diameter)
     
     def __str__(self):
-        return "%s: %d-m dish at lat %s, long %s, elevation %f m" % (self.name, self.diam,
+        return "%s: %d-m dish at lat %s, long %s, elevation %f m" % (self.name, self.diameter,
                self.observer.lat, self.observer.long, self.observer.elevation)
     
     def sidereal_time(self, secs_since_epoch):
         """Calculate sidereal time for local timestamp(s)."""
         def _scalar_sidereal_time(t):
             """Calculate sidereal time at a single time instant."""
-            self.observer.date = unix_to_ephem_time(t)
+            self.observer.date = _unix_to_ephem_time(t)
+            # pylint: disable-msg=E1101
             return self.observer.sidereal_time()
         if np.isscalar(secs_since_epoch):
             return _scalar_sidereal_time(secs_since_epoch)
@@ -147,7 +149,7 @@ class Source(object):
             azel = np.array([_scalar_pointing(t) for t in timestamps])
             return azel[:, 0], azel[:, 1]
     
-    def flux_density_Jy(self, obs_freq_Hz):
+    def flux_density(self, obs_freq_Hz):
         """Calculate flux density for given observation frequency.
         
         This uses a polynomial flux model of the form
@@ -163,7 +165,7 @@ class Source(object):
         
         Returns
         -------
-        flux_density_Jy : float
+        flux_density : float
             Flux density in Jy, or None if frequency is out of range or source
             does not have flux info
         
@@ -200,8 +202,8 @@ class StationaryBody(object):
 source_catalogue = {}
 # Add special PyEphem bodies, such as solar system objects
 specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
-for name in specials:
-    source_catalogue[name.lower()] = Source(eval('ephem.%s()' % name))
+for s in specials:
+    source_catalogue[s.lower()] = Source(eval('ephem.%s()' % s))
 source_catalogue['zenith'] = Source(StationaryBody('0.0', '90.0', 'Zenith'))
 
 def add_to_source_catalogue(filename):
@@ -282,9 +284,9 @@ def construct_source(name):
 def sphere_to_plane(source, antenna, az, el, timestamps, projection_type='ARC'):
     # The source (az, el) coordinates will serve as reference point on the sphere
     ref_az, ref_el = source.pointing(antenna, timestamps)
-    return projection.sphere_to_plane[projection_type](ref_az, ref_el, az, el)
+    return projection_sphere_to_plane[projection_type](ref_az, ref_el, az, el)
 
 def plane_to_sphere(source, antenna, x, y, timestamps, projection_type='ARC'):
     # The source (az, el) coordinates will serve as reference point on the sphere
     ref_az, ref_el = source.pointing(antenna, timestamps)
-    return projection.plane_to_sphere[projection_type](ref_az, ref_el, x, y)
+    return projection_plane_to_sphere[projection_type](ref_az, ref_el, x, y)
