@@ -18,8 +18,8 @@ import re
 import numpy as np
 import ephem
 
-from .projection import sphere_to_plane as projection_sphere_to_plane
-from .projection import plane_to_sphere as projection_plane_to_sphere
+from .projection import sphere_to_plane as project_sphere_to_plane
+from .projection import plane_to_sphere as project_plane_to_sphere
 
 #--------------------------------------------------------------------------------------------------
 #--- Helper functions
@@ -284,9 +284,9 @@ def construct_source(name):
 def sphere_to_plane(source, antenna, az, el, timestamps, projection_type='ARC'):
     # The source (az, el) coordinates will serve as reference point on the sphere
     ref_az, ref_el = source.pointing(antenna, timestamps)
-    return projection_sphere_to_plane[projection_type](ref_az, ref_el, az, el)
+    return project_sphere_to_plane[projection_type](ref_az, ref_el, az, el)
 
 def plane_to_sphere(source, antenna, x, y, timestamps, projection_type='ARC'):
     # The source (az, el) coordinates will serve as reference point on the sphere
     ref_az, ref_el = source.pointing(antenna, timestamps)
-    return projection_plane_to_sphere[projection_type](ref_az, ref_el, x, y)
+    return project_plane_to_sphere[projection_type](ref_az, ref_el, x, y)
