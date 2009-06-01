@@ -22,7 +22,7 @@ class TestProjectionSIN(unittest.TestCase):
         self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
         self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
-        # (x,y) points within unit circle
+        # (x, y) points within unit circle
         theta = max_theta * np.random.rand(N)
         phi = 2 * np.pi * np.random.rand(N)
         self.x = np.sin(theta) * np.cos(phi)
@@ -217,7 +217,7 @@ class TestProjectionARC(unittest.TestCase):
         self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
         self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
-        # (x,y) points within circle of radius pi
+        # (x, y) points within circle of radius pi
         theta = max_theta * np.random.rand(N)
         phi = 2 * np.pi * np.random.rand(N)
         self.x = theta * np.cos(phi)
