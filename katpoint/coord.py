@@ -25,6 +25,9 @@ from .projection import plane_to_sphere as project_plane_to_sphere
 #--- Helper functions
 #--------------------------------------------------------------------------------------------------
 
+# The speed of light, in metres per second
+lightspeed = ephem.c
+
 def rad2deg(x):
     return x * 180.0 / np.pi
 
