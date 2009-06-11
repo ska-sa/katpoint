@@ -11,7 +11,8 @@ and CASA.
 """
 
 from .antenna import Antenna, construct_antenna
-from .target import Target, construct_target, construct_azel, construct_radec
+from .target import Target, construct_target, construct_azel_target, construct_radec_target
+from .catalogue import Catalogue
 from .ephem_extra import lightspeed, rad2deg, deg2rad
 
 from .projection import sphere_to_plane as _sphere_to_plane
