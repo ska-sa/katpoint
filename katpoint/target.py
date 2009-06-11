@@ -58,7 +58,7 @@ class Target(object):
     
     def get_description(self):
         """Machine-friendly string representation of target object."""
-        names = ' / '.join([self.name] + self.aliases)
+        names = ' | '.join([self.name] + self.aliases)
         tags = ' '.join(self.tags)
         fluxinfo = None
         if self.min_freq_Hz and self.max_freq_Hz and self.coefs:
@@ -98,6 +98,30 @@ class Target(object):
         
         return ', '.join(fields)
     
+    def add_tags(self, tags):
+        """Add tags to target object.
+        
+        This is a convenience function to add extra tags to a target, while
+        checking the sanity of the tags.
+        
+        Parameters
+        ----------
+        tags : string, list of strings, or None
+            Tag or list of tags to add
+        
+        Returns
+        -------
+        target : :class:`Target` object
+            Updated target object
+        
+        """
+        if tags is None:
+            tags = []
+        if isinstance(tags, basestring):
+            tags = [tags]
+        self.tags += tags
+        return self
+        
     def radec(self, antenna, timestamps):
         """Calculate target (ra, dec) coordinates as seen from antenna at time(s).
         
@@ -179,7 +203,7 @@ def construct_target(description):
     
         <name list>, <tags>, <longitudinal>, <latitudinal>, <flux info>
     
-    The <name list> contains a slash-separated list of alternate names for the
+    The <name list> contains a pipe-separated list of alternate names for the
     target, with the preferred name either indicated by a prepended asterisk or
     assumed to be the first name in the list. The names may contain spaces, and
     the list may be empty. The <tags> field contains a space-separated list of
@@ -195,7 +219,7 @@ def construct_target(description):
     are Baars polynomial coefficients. The <flux info> may be enclosed in
     parentheses to distinguish it from the other fields. An example string is::
     
-        name1 / *name 2, radec cal, 12:34:56.7, -04:34:34.2, (1000.0 2000.0 1.0)
+        name1 | *name 2, radec cal, 12:34:56.7, -04:34:34.2, (1000.0 2000.0 1.0)
     
     For *special* and *star* body types, only the target name is required. The
     *special* body name is assumed to be a PyEphem class name, and is typically
@@ -205,8 +229,9 @@ def construct_target(description):
     For *tle* bodies, the final field in the description string should contain
     the three lines of the TLE. If the name list is empty, the target name is
     taken from the TLE instead. The *xephem* body contains a string in XEphem
-    database format as the final field, with commas replaced by tildes. If the
-    name list is empty, the target name is taken from the XEphem string instead.
+    EDB database format as the final field, with commas replaced by tildes. If
+    the name list is empty, the target name is taken from the XEphem string
+    instead.
     
     Parameters
     ----------
@@ -227,12 +252,14 @@ def construct_target(description):
     fields = [s.strip() for s in description.split(',')]
     if len(fields) < 2:
         raise ValueError('Target description string must have at least two fields')
-    # Check if first name starts with body type tag, which indicates a missing (and empty) names field
+    # Check if first name starts with body type tag, while the next field does not
+    # This indicates a missing names field -> add an empty name list in front
     body_types = ['azel', 'radec', 'tle', 'special', 'star', 'xephem']
-    if np.any([fields[0].startswith(s) for s in body_types]):
+    if np.any([fields[0].startswith(s) for s in body_types]) and \
+       not np.any([fields[1].startswith(s) for s in body_types]):
         fields = [''] + fields
     # Extract preferred name from name list (starred or first entry), and make the rest aliases
-    names = [s.strip() for s in fields[0].split('/')]
+    names = [s.strip() for s in fields[0].split('|')]
     if len(names) == 0:
         preferred_name, aliases = '', []
     else:
@@ -315,11 +342,11 @@ def construct_target(description):
     return Target(body, tags, aliases, min_freq_Hz, max_freq_Hz, coefs)
 
 #--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  construct_azel
+#--- FUNCTION :  construct_azel_target
 #--------------------------------------------------------------------------------------------------
 
-def construct_azel(az, el):
-    """Convenience function to create stationary target (*azel* body type).
+def construct_azel_target(az, el):
+    """Convenience function to create unnamed stationary target (*azel* body type).
     
     The input parameters will also accept :class:`ephem.Angle` objects, as these
     are floats in radians internally.
@@ -340,11 +367,11 @@ def construct_azel(az, el):
     return Target(StationaryBody(az, el), ['azel'])
 
 #--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  construct_radec
+#--- FUNCTION :  construct_radec_target
 #--------------------------------------------------------------------------------------------------
 
-def construct_radec(ra, dec):
-    """Convenience function to create fixed target (*radec* body type).
+def construct_radec_target(ra, dec):
+    """Convenience function to create unnamed fixed target (*radec* body type).
     
     The input parameters will also accept :class:`ephem.Angle` objects, as these
     are floats in radians internally.
