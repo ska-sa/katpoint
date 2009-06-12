@@ -295,7 +295,12 @@ def construct_target(description):
             body.name = preferred_name
         else:
             body.name = "Ra: %s Dec: %s" % (ra, dec)
-        body._epoch = ephem.J2000
+        if 'b1900' in tags:
+            body._epoch = ephem.B1900
+        elif 'b1950' in tags:
+            body._epoch = ephem.B1950
+        else
+            body._epoch = ephem.J2000
         body._ra = ra
         body._dec = dec
     
@@ -378,7 +383,7 @@ def construct_radec_target(ra, dec):
     """Convenience function to create unnamed fixed target (*radec* body type).
     
     The input parameters will also accept :class:`ephem.Angle` objects, as these
-    are floats in radians internally.
+    are floats in radians internally. The epoch is assumed to be J2000.
     
     Parameters
     ----------
