@@ -66,11 +66,13 @@ class Target(object):
                                        ' '.join([str(s) for s in self.coefs]))
         fields = [names, tags]
         if self.tags[0] == 'azel':
+            # Check if it's an unnamed target with a default name
             if names.startswith('Az:'):
                 fields = [tags]
             fields += [str(self.body.az), str(self.body.el)]
         
         elif self.tags[0] == 'radec':
+            # Check if it's an unnamed target with a default name
             if names.startswith('Ra:'):
                 fields = [tags]
             fields += [str(self.body._ra), str(self.body._dec)]
@@ -102,7 +104,9 @@ class Target(object):
         """Add tags to target object.
         
         This is a convenience function to add extra tags to a target, while
-        checking the sanity of the tags.
+        checking the sanity of the tags. It also prevents duplicate tags without
+        resorting to a tag set, which would be problematic since the tag order
+        is meaningful (tags[0] is the body type).
         
         Parameters
         ----------
@@ -119,7 +123,7 @@ class Target(object):
             tags = []
         if isinstance(tags, basestring):
             tags = [tags]
-        self.tags += tags
+        self.tags.extend([tag for tag in tags if not tag in self.tags])
         return self
         
     def radec(self, antenna, timestamps):
@@ -396,3 +400,32 @@ def construct_radec_target(ra, dec):
     body._ra = ra
     body._dec = dec
     return Target(body, ['radec'])
+
+#--------------------------------------------------------------------------------------------------
+#--- FUNCTION :  separation
+#--------------------------------------------------------------------------------------------------
+
+def separation(target1, target2, antenna, timestamp):
+    """Angular separation between two targets.
+    
+    Parameters
+    ----------
+    target1 : :class:`Target` object
+        First target
+    target2 : :class:`Target` object
+        Second target
+    antenna : class:`Antenna` object
+        Antenna that observes both targets and from where separation is measured
+    timestamp : float
+        Timestamp when separation is measured, in seconds since Unix epoch
+    
+    Returns
+    -------
+    separation : :class:`ephem.Angle` object
+        Angular separation between the targets, in radians
+    
+    """
+    antenna.observer.date = unix_to_ephem_time(timestamp)
+    target1.body.compute(antenna.observer)
+    target2.body.compute(antenna.observer)
+    return ephem.separation(target1.body, target2.body)
