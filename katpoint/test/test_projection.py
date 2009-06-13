@@ -15,7 +15,7 @@ def assert_angles_almost_equal(x, y, decimal):
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
 
 class TestProjectionSIN(unittest.TestCase):
-    
+    """Test orthographic projection."""
     def setUp(self):
         N = 100
         max_theta = np.pi / 2.0
@@ -111,7 +111,7 @@ class TestProjectionSIN(unittest.TestCase):
         self.assertRaises(ValueError, projection.plane_to_sphere_sin, 0.0, 0.0, 0.0, 2.0)
 
 class TestProjectionTAN(unittest.TestCase):
-    
+    """Test gnomonic projection."""
     def setUp(self):
         N = 100
         # Stay away from edge of hemisphere
@@ -209,7 +209,7 @@ class TestProjectionTAN(unittest.TestCase):
         assert_angles_almost_equal(ae, [np.pi, -np.pi / 4.0], decimal=12)        
 
 class TestProjectionARC(unittest.TestCase):
-    
+    """Test zenithal equidistant projection."""
     def setUp(self):
         N = 100
         # Stay away from edge of circle
@@ -317,7 +317,7 @@ class TestProjectionARC(unittest.TestCase):
         self.assertRaises(ValueError, projection.plane_to_sphere_arc, 0.0, 0.0, 0.0, 4.0)
 
 class TestProjectionSTG(unittest.TestCase):
-    
+    """Test stereographic projection."""
     def setUp(self):
         N = 100
         # Stay well away from point of projection
