@@ -157,8 +157,8 @@ class Target(object):
         if np.isscalar(timestamps):
             return _scalar_radec(timestamps)
         else:
-            azel = np.array([_scalar_radec(t) for t in timestamps])
-            return azel[:, 0], azel[:, 1]
+            radec = np.array([_scalar_radec(t) for t in timestamps])
+            return radec[:, 0], radec[:, 1]
     
     def flux_density(self, obs_freq_Hz):
         """Calculate flux density for given observation frequency.

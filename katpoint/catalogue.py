@@ -298,3 +298,61 @@ class Catalogue(object):
                           self.iterfilter(tags, flux_Jy_limit, flux_freq_Hz, el_deg_limit,
                                           dist_deg_limit, proximity_targets, antenna, timestamp)],
                          add_specials=False)
+        
+    def sort(self, key='name', ascending=True, flux_freq_Hz=None, antenna=None, timestamp=None):
+        """Sort targets in catalogue.
+        
+        Parameters
+        ----------
+        key : {'name', 'ra', 'dec', 'az', 'el', 'flux'}, optional
+            Sort the targets according to this field
+        ascending : {True, False}, optional
+            True if key should be sorted in ascending order
+        flux_freq_Hz : float, optional
+            Frequency at which to evaluate the flux density, in Hz
+        antenna : :class:`katpoint.Antenna` object, optional
+            Antenna which points at targets (needed for position-based sorting)
+        timestamp : float, optional
+            Timestamp at which to evaluate target positions, in seconds since
+            Unix epoch. If None, the current time is used.
+        
+        Returns
+        -------
+        sorted : :class:`Catalogue` object
+            Sorted catalogue
+        
+        Raises
+        ------
+        ValueError
+            If some required parameters are missing or key is unknown
+        
+        """
+        # If targets are sorted based on position, an antenna and timestamp are needed
+        if key in ['ra', 'dec', 'az', 'el']:
+            if antenna is None:
+                raise ValueError('Antenna object needed to calculate target position')
+            if timestamp is None:
+                timestamp = time.time()
+        # Set up index list that will be sorted
+        if key == 'name':
+            index = [target.name for target in self.targets]
+        elif key == 'ra':
+            index = [target.radec(antenna, timestamp)[0] for target in self.targets]
+        elif key == 'dec':
+            index = [target.radec(antenna, timestamp)[1] for target in self.targets]
+        elif key == 'az':
+            index = [antenna.point(target, timestamp)[0] for target in self.targets]
+        elif key == 'el':
+            index = [antenna.point(target, timestamp)[1] for target in self.targets]
+        elif key == 'flux':
+            if not flux_freq_Hz:
+                raise ValueError('Please specify frequency at which to measure flux density')
+            index = [target.flux_density(flux_freq_Hz) for target in self.targets]
+        else:
+            raise ValueError('Unknown key to sort on')
+        # Sort index indirectly, either in ascending or descending order
+        if ascending:
+            self.targets = np.array(self.targets)[np.argsort(index)].tolist()
+        else:
+            self.targets = np.array(self.targets)[np.flipud(np.argsort(index))].tolist()
+        return self
