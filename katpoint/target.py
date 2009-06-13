@@ -295,11 +295,12 @@ def construct_target(description):
             body.name = preferred_name
         else:
             body.name = "Ra: %s Dec: %s" % (ra, dec)
+        # Extract epoch info from tags
         if 'b1900' in tags:
             body._epoch = ephem.B1900
         elif 'b1950' in tags:
             body._epoch = ephem.B1950
-        else
+        else:
             body._epoch = ephem.J2000
         body._ra = ra
         body._dec = dec
