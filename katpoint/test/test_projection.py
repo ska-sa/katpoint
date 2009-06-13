@@ -3,7 +3,7 @@
 
 import unittest
 import numpy as np
-from scape import projection
+from katpoint import projection
 try:
     from .aips_projection import newpos, dircos
     found_aips = True
