@@ -136,6 +136,120 @@ class Catalogue(object):
                 self.lookup.pop(_hash(alias))
             self.targets.remove(target)
     
+    def iterfilter(self, tags=None, flux_Jy_limit=None, flux_freq_Hz=None, el_deg_limit=None,
+                   dist_deg_limit=None, proximity_targets=None, antenna=None, timestamp=None):
+        """Iterator which returns targets satisfying various criteria.
+        
+        Parameters
+        ----------
+        tags : string, or sequence of strings, optional
+            Tag or list of tags which targets should have. Tags prepended with
+            a tilde (~) indicate tags which targets should *not* have. If None
+            or an empty list, all tags are accepted.
+        flux_Jy_limit : float or sequence of 2 floats, optional
+            Allowed flux density range, in Jy. If this is a single number, it is
+            the lower limit, otherwise it takes the form [lower, upper]. If None,
+            any flux density is accepted.
+        flux_freq_Hz : float, optional
+            Frequency at which to evaluate the flux density, in Hz (required for
+            flux filter)
+        el_deg_limit : float or sequence of 2 floats, optional
+            Allowed elevation range, in degrees. If this is a single number, it
+            is the lower limit, otherwise it takes the form [lower, upper].
+            If None, any elevation is accepted.
+        dist_deg_limit : float or sequence of 2 floats, optional
+            Allowed range of angular distance to proximity targets, in degrees.
+            If this is a single number, it is the lower limit, otherwise it
+            takes the form [lower, upper]. If None, any distance is accepted.
+        proximity_targets : :class:`Target` object, or sequence of objects
+            Target or list of targets used in proximity filter
+        antenna : :class:`katpoint.Antenna` object, optional
+            Antenna which points at targets (needed for position-based filters)
+        timestamp : float, optional
+            Timestamp at which to evaluate target positions, in seconds since
+            Unix epoch. If None, the current time *at each iteration* is used.
+        
+        Returns
+        -------
+        iter : iterator object
+            The generated iterator object which will return filtered targets
+        
+        Raises
+        ------
+        ValueError
+            If some required parameters are missing
+        
+        """
+        tag_filter = not tags is None
+        flux_filter = not flux_Jy_limit is None
+        elevation_filter = not el_deg_limit is None
+        proximity_filter = not dist_deg_limit is None
+        # Copy targets to a new list which will be pruned by filters
+        targets = list(self.targets)
+        
+        # First apply static criteria (tags, flux) which do not depend on timestamp
+        if tag_filter:
+            if isinstance(tags, basestring):
+                tags = [tags]
+            desired_tags = set([tag for tag in tags if tag[0] != '~'])
+            undesired_tags = set([tag[1:] for tag in tags if tag[0] == '~'])
+            if desired_tags:
+                targets = [target for target in targets if set(target.tags) & desired_tags]
+            if undesired_tags:
+                targets = [target for target in targets if not (set(target.tags) & undesired_tags)]
+        
+        if flux_filter:
+            if not flux_freq_Hz:
+                raise ValueError('Please specify frequency at which to measure flux density')
+            if np.isscalar(flux_Jy_limit):
+                flux_Jy_limit = [flux_Jy_limit, np.inf]
+            flux = [target.flux_density(flux_freq_Hz) for target in targets]
+            targets = [target for n, target in enumerate(targets)
+                       if (flux[n] >= flux_Jy_limit[0]) & (flux[n] <= flux_Jy_limit[1])]
+        
+        # Now prepare for dynamic criteria (elevation, proximity) which depend on potentially changing timestamp
+        if elevation_filter:
+            if antenna is None:
+                raise ValueError('Antenna object needed to calculate target elevation')
+            if np.isscalar(el_deg_limit):
+                el_deg_limit = [el_deg_limit, 90.0]
+        
+        if proximity_filter:
+            if proximity_targets is None:
+                raise ValueError('Please specify proximity target(s) for proximity filter')
+            if antenna is None:
+                raise ValueError('Antenna object needed to calculate angular separation of targets')
+            if np.isscalar(dist_deg_limit):
+                dist_deg_limit = [dist_deg_limit, 180.0]
+            if isinstance(proximity_targets, Target):
+                proximity_targets = [proximity_targets]
+        
+        # Keep checking targets while there are some in the list
+        while targets:
+            latest_timestamp = timestamp
+            # Obtain current time if no timestamp is supplied - this will differ for each iteration
+            if (elevation_filter or proximity_filter) and latest_timestamp is None:
+                latest_timestamp = time.time()
+            # Iterate over targets until one is found that satisfies dynamic criteria
+            for n, target in enumerate(targets):
+                if elevation_filter:
+                    el_deg = rad2deg(antenna.point(target, latest_timestamp)[1])
+                    if (el_deg < el_deg_limit[0]) or (el_deg > el_deg_limit[1]):
+                        continue
+                if proximity_filter:
+                    dist_deg = np.array([rad2deg(separation(target, prox_target, antenna, latest_timestamp))
+                                         for prox_target in proximity_targets])
+                    if (dist_deg < dist_deg_limit[0]).any() or (dist_deg > dist_deg_limit[1]).any():
+                        continue
+                # Break if target is found - popping the target inside the for-loop is a bad idea!
+                found_one = n
+                break
+            else:
+                # No targets in list satisfied dynamic criteria - iterator stops
+                return
+            # Return successful target and remove from list to ensure it is not picked again
+            yield targets.pop(found_one)
+    
     def filter(self, tags=None, flux_Jy_limit=None, flux_freq_Hz=None, el_deg_limit=None,
                dist_deg_limit=None, proximity_targets=None, antenna=None, timestamp=None):
         """Filter catalogue on various criteria.
@@ -174,50 +288,13 @@ class Catalogue(object):
         subset : :class:`Catalogue` object
             Filtered catalogue
         
+        Raises
+        ------
+        ValueError
+            If some required parameters are missing
+        
         """
-        # Put targets in a numpy array to allow use of fancy indexing
-        targets = np.array(self.targets)
-        if not flux_Jy_limit is None:
-            if np.isscalar(flux_Jy_limit):
-                flux_Jy_limit = [flux_Jy_limit, np.inf]
-            if not flux_freq_Hz:
-                raise ValueError('Please specify frequency at which to measure flux density')
-            flux = np.array([target.flux_density(flux_freq_Hz) for target in targets])
-            targets = targets[(flux >= flux_Jy_limit[0]) & (flux <= flux_Jy_limit[1])]
-        
-        if not tags is None:
-            if isinstance(tags, basestring):
-                tags = [tags]
-            desired_tags = set([tag for tag in tags if tag[0] != '~'])
-            undesired_tags = set([tag[1:] for tag in tags if tag[0] == '~'])
-            if desired_tags:
-                targets = [target for target in targets if set(target.tags) & desired_tags]
-            if undesired_tags:
-                targets = np.array([target for target in targets if not (set(target.tags) & undesired_tags)])
-        
-        if not el_deg_limit is None:
-            if np.isscalar(el_deg_limit):
-                el_deg_limit = [el_deg_limit, 90.0]
-            if antenna is None:
-                raise ValueError('Antenna object needed to calculate target elevation')
-            if timestamp is None:
-                timestamp = time.time()
-            el_deg = np.array([rad2deg(antenna.point(target, timestamp)[1]) for target in targets])
-            targets = targets[(el_deg >= el_deg_limit[0]) & (el_deg <= el_deg_limit[1])]
-        
-        if (not dist_deg_limit is None) and (not proximity_targets is None):
-            if np.isscalar(dist_deg_limit):
-                dist_deg_limit = [dist_deg_limit, 180.0]
-            if isinstance(proximity_targets, Target):
-                proximity_targets = [proximity_targets]
-            if antenna is None:
-                raise ValueError('Antenna object needed to calculate angular separation of targets')
-            if timestamp is None:
-                timestamp = time.time()
-            dist = np.array([[rad2deg(separation(target1, target2, antenna, timestamp))
-                              for target2 in proximity_targets] for target1 in targets])
-            print dist
-            targets = targets[(dist >= dist_deg_limit[0]).all(axis=1) &
-                              (dist <= dist_deg_limit[1]).all(axis=1)]
-            
-        return Catalogue(targets, add_specials=False)
+        return Catalogue([target for target in
+                          self.iterfilter(tags, flux_Jy_limit, flux_freq_Hz, el_deg_limit,
+                                          dist_deg_limit, proximity_targets, antenna, timestamp)],
+                         add_specials=False)
