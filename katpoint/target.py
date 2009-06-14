@@ -50,12 +50,14 @@ class Target(object):
     
     def __str__(self):
         """Human-friendly string representation of target object."""
+        descr = '%s (%s): <%s>, tags=%s' % \
+                (self.name, ', '.join(self.aliases), self.tags[0], ','.join(self.tags[1:]))
         if None in [self.min_freq_Hz, self.max_freq_Hz, self.coefs]:
-            return "%s: %s body, no flux info" % (self.name, self.tags[0])
+            descr += ', no flux info' 
         else:
-            return "%s: %s body, flux defined for %.3f - %.3f GHz" % \
-                   (self.name, self.tags[0], self.min_freq_Hz * 1e-9, self.max_freq_Hz * 1e-9)
-    
+            descr += ", flux defined for %.3f - %.3f GHz" % (self.min_freq_Hz * 1e-9, self.max_freq_Hz * 1e-9)
+        return descr
+        
     def get_description(self):
         """Machine-friendly string representation of target object."""
         names = ' | '.join([self.name] + self.aliases)
@@ -65,13 +67,14 @@ class Target(object):
             fluxinfo = '(%s %s %s)' % (self.min_freq_Hz * 1e-6, self.max_freq_Hz * 1e-6, 
                                        ' '.join([str(s) for s in self.coefs]))
         fields = [names, tags]
-        if self.tags[0] == 'azel':
+        body_type = self.tags[0].lower()
+        if body_type == 'azel':
             # Check if it's an unnamed target with a default name
             if names.startswith('Az:'):
                 fields = [tags]
             fields += [str(self.body.az), str(self.body.el)]
         
-        elif self.tags[0] == 'radec':
+        elif body_type == 'radec':
             # Check if it's an unnamed target with a default name
             if names.startswith('Ra:'):
                 fields = [tags]
@@ -79,8 +82,8 @@ class Target(object):
             if fluxinfo:
                 fields += [fluxinfo]
                 
-        elif self.tags[0] == 'tle':
-            # XEphem only saves bodies in xephem db format (TLE output will be a hassle)
+        elif body_type == 'tle':
+            # Switch body type to xephem, as XEphem only saves bodies in xephem edb format (no TLE output)
             tags = tags.replace(tags.partition(' ')[0], 'xephem')
             edb_string = self.body.writedb().replace(',', '~')
             # Suppress name if it's the same as in the xephem db string
@@ -90,7 +93,7 @@ class Target(object):
             else:
                 fields = [names, tags, edb_string]
         
-        elif self.tags[0] == 'xephem':
+        elif body_type == 'xephem':
             edb_string = self.body.writedb().replace(',', '~')
             # Suppress name if it's the same as in the xephem db string
             edb_name = edb_string[:edb_string.index('~')]
@@ -272,10 +275,10 @@ def construct_target(description):
             preferred_name, aliases = names[ind][1:], names[:ind] + names[ind + 1:]
         except ValueError:
             preferred_name, aliases = names[0], names[1:]
-    tags = [s.strip().lower() for s in fields[1].split(' ')]
+    tags = [s.strip() for s in fields[1].split(' ')]
     if len(tags) == 0:
         raise ValueError('Target description needs at least one tag (body type)')
-    body_type = tags[0]
+    body_type = tags[0].lower()
     # Remove empty fields starting from the end (useful when parsing CSV files with fixed number of fields)
     while len(fields[-1]) == 0:
         fields.pop()
