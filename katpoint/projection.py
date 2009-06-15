@@ -597,7 +597,7 @@ def plane_to_sphere(antenna, target, x, y, timestamps, projection_type='ARC', co
     if coord_system == 'radec':
         # The target (ra, dec) coordinates will serve as reference point on the sphere
         ref_ra, ref_dec = target.radec(antenna, timestamps)
-        return plane_to_sphere_select[projection_type](ref_az, ref_el, x, y)
+        return plane_to_sphere_select[projection_type](ref_ra, ref_dec, x, y)
     else:
         # The target (az, el) coordinates will serve as reference point on the sphere
         ref_az, ref_el = antenna.point(target, timestamps)

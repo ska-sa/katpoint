@@ -3,8 +3,6 @@
 
 import unittest
 
-import numpy as np
-
 from katpoint import target
 
 class TestTargetConstruction(unittest.TestCase):

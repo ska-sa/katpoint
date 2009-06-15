@@ -3,8 +3,6 @@
 
 import unittest
 
-import numpy as np
-
 from katpoint import antenna
 
 class TestAntennaConstruction(unittest.TestCase):

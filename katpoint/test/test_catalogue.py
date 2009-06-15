@@ -4,8 +4,6 @@
 import unittest
 import time
 
-import numpy as np
-
 from katpoint import catalogue, target, antenna
 
 class TestCatalogueConstruction(unittest.TestCase):

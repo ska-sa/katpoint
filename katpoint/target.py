@@ -86,6 +86,7 @@ class Target(object):
             # Check if it's an unnamed target with a default name
             if names.startswith('Ra:'):
                 fields = [tags]
+            # pylint: disable-msg=W0212
             fields += [str(self.body._ra), str(self.body._dec)]
             if fluxinfo:
                 fields += [fluxinfo]
