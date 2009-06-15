@@ -183,7 +183,7 @@ def construct_antenna(description):
     """
     fields = [s.strip() for s in description.split(',')]
     if not len(fields) in [5, 8]:
-        raise ValueError("Antenna description string has wrong number of fields")
+        raise ValueError("Antenna description string '%s' has wrong number of fields" % description)
     if len(fields) == 8:
         fields = fields[:5] + [fields[5:]]
     return Antenna(*fields)

@@ -267,7 +267,7 @@ def construct_target(description):
     """
     fields = [s.strip() for s in description.split(',')]
     if len(fields) < 2:
-        raise ValueError('Target description string must have at least two fields')
+        raise ValueError("Target description '%s' must have at least two fields" % description)
     # Check if first name starts with body type tag, while the next field does not
     # This indicates a missing names field -> add an empty name list in front
     body_types = ['azel', 'radec', 'tle', 'special', 'star', 'xephem']
@@ -286,7 +286,7 @@ def construct_target(description):
             preferred_name, aliases = names[0], names[1:]
     tags = [s.strip() for s in fields[1].split(' ')]
     if len(tags) == 0:
-        raise ValueError('Target description needs at least one tag (body type)')
+        raise ValueError("Target description '%s' needs at least one tag (body type)" % description)
     body_type = tags[0].lower()
     # Remove empty fields starting from the end (useful when parsing CSV files with fixed number of fields)
     while len(fields[-1]) == 0:
@@ -295,12 +295,14 @@ def construct_target(description):
     # Create appropriate PyEphem body based on body type
     if body_type == 'azel':
         if len(fields) < 4:
-            raise ValueError('Target description contains *azel* body with no (az, el) coordinates')
+            raise ValueError("Target description '%s' contains *azel* body with no (az, el) coordinates"
+                             % description)
         body = StationaryBody(fields[2], fields[3], preferred_name)
     
     elif body_type == 'radec':
         if len(fields) < 4:
-            raise ValueError('Target description contains *radec* body with no (ra, dec) coordinates')
+            raise ValueError("Target description '%s' contains *radec* body with no (ra, dec) coordinates"
+                             % description)
         body = ephem.FixedBody()
         ra, dec = ephem.hours(fields[2]), ephem.degrees(fields[3])
         if preferred_name:
@@ -320,25 +322,28 @@ def construct_target(description):
     elif body_type == 'tle':
         lines = fields[-1].split('\n')
         if len(lines) != 3:
-            raise ValueError('Target description contains *tle* body without the expected three lines')
+            raise ValueError("Target description '%s' contains *tle* body without the expected three lines"
+                             % description)
         if not preferred_name:
             preferred_name = lines[0].strip()
         try:
             body = ephem.readtle(preferred_name, lines[1], lines[2])
         except ValueError:
-            raise ValueError('Target description contains malformed *tle* body')
+            raise ValueError("Target description '%s' contains malformed *tle* body" % description)
     
     elif body_type == 'special':
         try:
             body = eval('ephem.%s()' % preferred_name.capitalize())
         except AttributeError:
-            raise ValueError("Target description contains unknown *special* body '%s'" % preferred_name)
+            raise ValueError("Target description '%s' contains unknown *special* body '%s'"
+                             % (description, preferred_name))
     
     elif body_type == 'star':
         try:
             body = eval("ephem.star('%s')" % ' '.join([w.capitalize() for w in preferred_name.split()]))
         except KeyError:
-            raise ValueError("Target description contains unknown *star* '%s'" % preferred_name)
+            raise ValueError("Target description '%s' contains unknown *star* '%s'"
+                             % (description, preferred_name))
     
     elif body_type == 'xephem':
         edb_string = fields[-1].replace('~', ',')
@@ -347,16 +352,16 @@ def construct_target(description):
         try:
             body = eval("ephem.readdb('%s')" % edb_string)
         except ValueError:
-            raise ValueError("Target description contains malformed *xephem* body")
+            raise ValueError("Target description '%s' contains malformed *xephem* body" % description)
     
     else:
-        raise ValueError("Target description contains unknown body type '%s'" % body_type)
+        raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
     
     # Extract flux info if it is available
     if (len(fields) > 4) and (len(fields[4].strip(' ()')) > 0):
         flux_info = [float(num) for num in fields[4].strip(' ()').split()]
         if len(flux_info) < 3:
-            raise ValueError('Target description has invalid flux info')
+            raise ValueError("Target description '%s' has invalid flux info" % description)
         min_freq_Hz, max_freq_Hz, coefs = 1e6 * flux_info[0], 1e6 * flux_info[1], tuple(flux_info[2:])
     else:
         min_freq_Hz = max_freq_Hz = coefs = None
