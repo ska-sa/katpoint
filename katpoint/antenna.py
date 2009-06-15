@@ -67,7 +67,7 @@ class Antenna(object):
             self.observer = self.ref_observer
     
     def __str__(self):
-        """Human-friendly string representation of antenna object."""
+        """Verbose human-friendly string representation of antenna object."""
         if self.offset:
             return "%s: %d-m dish at ENU offset %s m from lat %s, long %s, alt %s m" % \
                    (self.name, self.diameter, self.offset,
@@ -76,8 +76,12 @@ class Antenna(object):
             return "%s: %d-m dish at lat %s, long %s, alt %s m" % (self.name, self.diameter,
                    self.observer.lat, self.observer.long, self.observer.elevation)
     
+    def __repr__(self):
+        """Short human-friendly string representation of antenna object."""
+        return "<Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
+    
     def get_description(self):
-        """Machine-friendly string representation of antenna object."""
+        """Complete string representation of antenna object, sufficient to reconstruct it."""
         if self.offset:
             return "%s, %s, %s, %s, %s, %s, %s, %s" % (self.name, self.ref_observer.lat,
                    self.ref_observer.long, self.ref_observer.elevation, self.diameter,
@@ -91,7 +95,7 @@ class Antenna(object):
         
         Parameters
         ----------
-        target : :class:`katpoint.target.Target` object
+        target : :class:`Target` object
             Target object to point at
         timestamps : float or sequence
             Local timestamp(s) in seconds since Unix epoch

@@ -3,7 +3,7 @@
 import logging
 import time
 
-import ephem
+import ephem.stars
 import numpy as np
 
 from .target import construct_target, Target, separation
@@ -42,6 +42,14 @@ class Catalogue(object):
         if targets is None:
             targets = []
         self.add(targets, tags)
+    
+    def __str__(self):
+        """Verbose human-friendly string representation of catalogue object."""
+        return '\n'.join(['%s' % (target,) for target in self.targets])
+    
+    def __repr__(self):
+        """Short human-friendly string representation of catalogue object."""
+        return "<Catalogue targets=%d names=%d at 0x%x>" % (len(self.targets), len(self.names()), id(self))
     
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object."""
@@ -163,7 +171,7 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        antenna : :class:`katpoint.Antenna` object, optional
+        antenna : :class:`Antenna` object, optional
             Antenna which points at targets (needed for position-based filters)
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
@@ -277,7 +285,7 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        antenna : :class:`katpoint.Antenna` object, optional
+        antenna : :class:`Antenna` object, optional
             Antenna which points at targets (needed for position-based filters)
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
@@ -310,7 +318,7 @@ class Catalogue(object):
             True if key should be sorted in ascending order
         flux_freq_Hz : float, optional
             Frequency at which to evaluate the flux density, in Hz
-        antenna : :class:`katpoint.Antenna` object, optional
+        antenna : :class:`Antenna` object, optional
             Antenna which points at targets (needed for position-based sorting)
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since

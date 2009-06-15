@@ -49,22 +49,30 @@ class Target(object):
         self.coefs = coefs
     
     def __str__(self):
-        """Human-friendly string representation of target object."""
-        descr = '%s (%s): <%s>, tags=%s' % \
-                (self.name, ', '.join(self.aliases), self.tags[0], ','.join(self.tags[1:]))
+        """Verbose human-friendly string representation of target object."""
+        descr = str(self.name)
+        if self.aliases:
+            descr += ' (%s)' % (', '.join(self.aliases),)
+        descr += ': [%s]' % (self.tags[0],)
+        if self.tags[1:]:
+            descr += ', tags=%s' % (','.join(self.tags[1:]),)
         if None in [self.min_freq_Hz, self.max_freq_Hz, self.coefs]:
-            descr += ', no flux info' 
+            descr += ', no flux info'
         else:
             descr += ", flux defined for %.3f - %.3f GHz" % (self.min_freq_Hz * 1e-9, self.max_freq_Hz * 1e-9)
         return descr
-        
+    
+    def __repr__(self):
+        """Short human-friendly string representation of antenna object."""
+        return "<Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
+    
     def get_description(self):
-        """Machine-friendly string representation of target object."""
+        """Complete string representation of antenna object, sufficient to reconstruct it."""
         names = ' | '.join([self.name] + self.aliases)
         tags = ' '.join(self.tags)
         fluxinfo = None
         if self.min_freq_Hz and self.max_freq_Hz and self.coefs:
-            fluxinfo = '(%s %s %s)' % (self.min_freq_Hz * 1e-6, self.max_freq_Hz * 1e-6, 
+            fluxinfo = '(%s %s %s)' % (self.min_freq_Hz * 1e-6, self.max_freq_Hz * 1e-6,
                                        ' '.join([str(s) for s in self.coefs]))
         fields = [names, tags]
         body_type = self.tags[0].lower()
@@ -81,7 +89,7 @@ class Target(object):
             fields += [str(self.body._ra), str(self.body._dec)]
             if fluxinfo:
                 fields += [fluxinfo]
-                
+        
         elif body_type == 'tle':
             # Switch body type to xephem, as XEphem only saves bodies in xephem edb format (no TLE output)
             tags = tags.replace(tags.partition(' ')[0], 'xephem')
@@ -128,7 +136,7 @@ class Target(object):
             tags = [tags]
         self.tags.extend([tag for tag in tags if not tag in self.tags])
         return self
-        
+    
     def radec(self, antenna, timestamps):
         """Calculate target (ra, dec) coordinates as seen from antenna at time(s).
         
@@ -139,7 +147,7 @@ class Target(object):
         
         Parameters
         ----------
-        antenna : :class:`katpoint.antenna.Antenna` object
+        antenna : :class:`Antenna` object
             Antenna which points at target
         timestamps : float or sequence
             Local timestamp(s) in seconds since Unix epoch
@@ -167,7 +175,7 @@ class Target(object):
         """Calculate flux density for given observation frequency.
         
         This uses a polynomial flux model of the form::
-        
+            
             log10 S[Jy] = a + b*log10(f[MHz]) + c*(log10(f[MHz]))^2
         
         as used in Baars 1977.
@@ -207,7 +215,7 @@ def construct_target(description):
     
     The description string contains up to five comma-separated fields, with the
     format::
-    
+        
         <name list>, <tags>, <longitudinal>, <latitudinal>, <flux info>
     
     The <name list> contains a pipe-separated list of alternate names for the
@@ -225,7 +233,7 @@ def construct_target(description):
     range for which the flux model is valid (in MHz), and the rest of the numbers
     are Baars polynomial coefficients. The <flux info> may be enclosed in
     parentheses to distinguish it from the other fields. An example string is::
-    
+        
         name1 | *name 2, radec cal, 12:34:56.7, -04:34:34.2, (1000.0 2000.0 1.0)
     
     For *special* and *star* body types, only the target name is required. The
@@ -327,7 +335,7 @@ def construct_target(description):
     
     elif body_type == 'star':
         try:
-            body = eval("ephem.star('%s')" % preferred_name.capitalize())
+            body = eval("ephem.star('%s')" % ' '.join([w.capitalize() for w in preferred_name.split()]))
         except KeyError:
             raise ValueError("Target description contains unknown *star* '%s'" % preferred_name)
     
@@ -434,7 +442,4 @@ def separation(target1, target2, antenna, timestamp):
         Angular separation between the targets, in radians
     
     """
-    antenna.observer.date = unix_to_ephem_time(timestamp)
-    target1.body.compute(antenna.observer)
-    target2.body.compute(antenna.observer)
-    return ephem.separation(target1.body, target2.body)
+    return ephem.separation(target1.radec(antenna, timestamp), target2.radec(antenna, timestamp))

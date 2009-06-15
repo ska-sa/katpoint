@@ -528,9 +528,9 @@ def sphere_to_plane(antenna, target, az, el, timestamps, projection_type='ARC', 
     
     Parameters
     ----------
-    antenna : :class:`antenna.Antenna` object
+    antenna : :class:`Antenna` object
         Antenna pointing at target
-    target : :class:`target.Target` object
+    target : :class:`Target` object
         Target object serving as origin for projected coordinates
     az : float or array
         Azimuth or right ascension, in radians
@@ -571,9 +571,9 @@ def plane_to_sphere(antenna, target, x, y, timestamps, projection_type='ARC', co
     
     Parameters
     ----------
-    antenna : :class:`antenna.Antenna` object
+    antenna : :class:`Antenna` object
         Antenna pointing at target
-    target : :class:`target.Target` object
+    target : :class:`Target` object
         Target object serving as origin for projected coordinates
     x : float or array
         Azimuth-like coordinate(s) on plane, in radians
