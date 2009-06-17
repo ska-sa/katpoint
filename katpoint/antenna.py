@@ -90,14 +90,14 @@ class Antenna(object):
             return "%s, %s, %s, %s, %s" % (self.name, self.observer.lat,
                    self.observer.long, self.observer.elevation, self.diameter)
     
-    def point(self, target, timestamps):
+    def point(self, target, timestamp):
         """Calculate target (az, el) coordinates as seen from antenna at time(s).
         
         Parameters
         ----------
         target : :class:`Target` object
             Target object to point at
-        timestamps : float or sequence
+        timestamp : float or sequence
             Local timestamp(s) in seconds since Unix epoch
         
         Returns
@@ -113,10 +113,10 @@ class Antenna(object):
             self.observer.date = unix_to_ephem_time(t)
             target.body.compute(self.observer)
             return target.body.az, target.body.alt
-        if np.isscalar(timestamps):
-            return _scalar_point(timestamps)
+        if np.isscalar(timestamp):
+            return _scalar_point(timestamp)
         else:
-            azel = np.array([_scalar_point(t) for t in timestamps])
+            azel = np.array([_scalar_point(t) for t in timestamp])
             return azel[:, 0], azel[:, 1]
     
     def sidereal_time(self, secs_since_epoch):

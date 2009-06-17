@@ -144,8 +144,8 @@ class Catalogue(object):
                 self.lookup.pop(_hash(alias))
             self.targets.remove(target)
     
-    def iterfilter(self, tags=None, flux_Jy_limit=None, flux_freq_Hz=None, el_deg_limit=None,
-                   dist_deg_limit=None, proximity_targets=None, antenna=None, timestamp=None):
+    def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_Hz=None, el_limit_deg=None,
+                   dist_limit_deg=None, proximity_targets=None, antenna=None, timestamp=None):
         """Iterator which returns targets satisfying various criteria.
         
         Parameters
@@ -154,18 +154,18 @@ class Catalogue(object):
             Tag or list of tags which targets should have. Tags prepended with
             a tilde (~) indicate tags which targets should *not* have. If None
             or an empty list, all tags are accepted.
-        flux_Jy_limit : float or sequence of 2 floats, optional
+        flux_limit_Jy : float or sequence of 2 floats, optional
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,
             any flux density is accepted.
         flux_freq_Hz : float, optional
             Frequency at which to evaluate the flux density, in Hz (required for
             flux filter)
-        el_deg_limit : float or sequence of 2 floats, optional
+        el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
             If None, any elevation is accepted.
-        dist_deg_limit : float or sequence of 2 floats, optional
+        dist_limit_deg : float or sequence of 2 floats, optional
             Allowed range of angular distance to proximity targets, in degrees.
             If this is a single number, it is the lower limit, otherwise it
             takes the form [lower, upper]. If None, any distance is accepted.
@@ -189,9 +189,9 @@ class Catalogue(object):
         
         """
         tag_filter = not tags is None
-        flux_filter = not flux_Jy_limit is None
-        elevation_filter = not el_deg_limit is None
-        proximity_filter = not dist_deg_limit is None
+        flux_filter = not flux_limit_Jy is None
+        elevation_filter = not el_limit_deg is None
+        proximity_filter = not dist_limit_deg is None
         # Copy targets to a new list which will be pruned by filters
         targets = list(self.targets)
         
@@ -209,26 +209,26 @@ class Catalogue(object):
         if flux_filter:
             if not flux_freq_Hz:
                 raise ValueError('Please specify frequency at which to measure flux density')
-            if np.isscalar(flux_Jy_limit):
-                flux_Jy_limit = [flux_Jy_limit, np.inf]
+            if np.isscalar(flux_limit_Jy):
+                flux_limit_Jy = [flux_limit_Jy, np.inf]
             flux = [target.flux_density(flux_freq_Hz) for target in targets]
             targets = [target for n, target in enumerate(targets)
-                       if (flux[n] >= flux_Jy_limit[0]) & (flux[n] <= flux_Jy_limit[1])]
+                       if (flux[n] >= flux_limit_Jy[0]) & (flux[n] <= flux_limit_Jy[1])]
         
         # Now prepare for dynamic criteria (elevation, proximity) which depend on potentially changing timestamp
         if elevation_filter:
             if antenna is None:
                 raise ValueError('Antenna object needed to calculate target elevation')
-            if np.isscalar(el_deg_limit):
-                el_deg_limit = [el_deg_limit, 90.0]
+            if np.isscalar(el_limit_deg):
+                el_limit_deg = [el_limit_deg, 90.0]
         
         if proximity_filter:
             if proximity_targets is None:
                 raise ValueError('Please specify proximity target(s) for proximity filter')
             if antenna is None:
                 raise ValueError('Antenna object needed to calculate angular separation of targets')
-            if np.isscalar(dist_deg_limit):
-                dist_deg_limit = [dist_deg_limit, 180.0]
+            if np.isscalar(dist_limit_deg):
+                dist_limit_deg = [dist_limit_deg, 180.0]
             if isinstance(proximity_targets, Target):
                 proximity_targets = [proximity_targets]
         
@@ -242,12 +242,12 @@ class Catalogue(object):
             for n, target in enumerate(targets):
                 if elevation_filter:
                     el_deg = rad2deg(antenna.point(target, latest_timestamp)[1])
-                    if (el_deg < el_deg_limit[0]) or (el_deg > el_deg_limit[1]):
+                    if (el_deg < el_limit_deg[0]) or (el_deg > el_limit_deg[1]):
                         continue
                 if proximity_filter:
                     dist_deg = np.array([rad2deg(separation(target, prox_target, antenna, latest_timestamp))
                                          for prox_target in proximity_targets])
-                    if (dist_deg < dist_deg_limit[0]).any() or (dist_deg > dist_deg_limit[1]).any():
+                    if (dist_deg < dist_limit_deg[0]).any() or (dist_deg > dist_limit_deg[1]).any():
                         continue
                 # Break if target is found - popping the target inside the for-loop is a bad idea!
                 found_one = n
@@ -258,8 +258,8 @@ class Catalogue(object):
             # Return successful target and remove from list to ensure it is not picked again
             yield targets.pop(found_one)
     
-    def filter(self, tags=None, flux_Jy_limit=None, flux_freq_Hz=None, el_deg_limit=None,
-               dist_deg_limit=None, proximity_targets=None, antenna=None, timestamp=None):
+    def filter(self, tags=None, flux_limit_Jy=None, flux_freq_Hz=None, el_limit_deg=None,
+               dist_limit_deg=None, proximity_targets=None, antenna=None, timestamp=None):
         """Filter catalogue on various criteria.
         
         Parameters
@@ -268,18 +268,18 @@ class Catalogue(object):
             Tag or list of tags which targets should have. Tags prepended with
             a tilde (~) indicate tags which targets should *not* have. If None
             or an empty list, all tags are accepted.
-        flux_Jy_limit : float or sequence of 2 floats, optional
+        flux_limit_Jy : float or sequence of 2 floats, optional
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,
             any flux density is accepted.
         flux_freq_Hz : float, optional
             Frequency at which to evaluate the flux density, in Hz (required for
             flux filter)
-        el_deg_limit : float or sequence of 2 floats, optional
+        el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
             If None, any elevation is accepted.
-        dist_deg_limit : float or sequence of 2 floats, optional
+        dist_limit_deg : float or sequence of 2 floats, optional
             Allowed range of angular distance to proximity targets, in degrees.
             If this is a single number, it is the lower limit, otherwise it
             takes the form [lower, upper]. If None, any distance is accepted.
@@ -303,8 +303,8 @@ class Catalogue(object):
         
         """
         return Catalogue([target for target in
-                          self.iterfilter(tags, flux_Jy_limit, flux_freq_Hz, el_deg_limit,
-                                          dist_deg_limit, proximity_targets, antenna, timestamp)],
+                          self.iterfilter(tags, flux_limit_Jy, flux_freq_Hz, el_limit_deg,
+                                          dist_limit_deg, proximity_targets, antenna, timestamp)],
                          add_specials=False)
         
     def sort(self, key='name', ascending=True, flux_freq_Hz=None, antenna=None, timestamp=None):

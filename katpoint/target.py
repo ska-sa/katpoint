@@ -138,7 +138,7 @@ class Target(object):
         self.tags.extend([tag for tag in tags if not tag in self.tags])
         return self
     
-    def radec(self, antenna, timestamps):
+    def radec(self, antenna, timestamp):
         """Calculate target (ra, dec) coordinates as seen from antenna at time(s).
         
         This calculates the *apparent topocentric position* for the epoch-of-date
@@ -150,7 +150,7 @@ class Target(object):
         ----------
         antenna : :class:`Antenna` object
             Antenna which points at target
-        timestamps : float or sequence
+        timestamp : float or sequence
             Local timestamp(s) in seconds since Unix epoch
         
         Returns
@@ -166,10 +166,10 @@ class Target(object):
             antenna.observer.date = unix_to_ephem_time(t)
             self.body.compute(antenna.observer)
             return self.body.ra, self.body.dec
-        if np.isscalar(timestamps):
-            return _scalar_radec(timestamps)
+        if np.isscalar(timestamp):
+            return _scalar_radec(timestamp)
         else:
-            radec = np.array([_scalar_radec(t) for t in timestamps])
+            radec = np.array([_scalar_radec(t) for t in timestamp])
             return radec[:, 0], radec[:, 1]
     
     def flux_density(self, obs_freq_Hz):

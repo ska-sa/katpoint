@@ -40,14 +40,14 @@ class TestCatalogueFilterSort(unittest.TestCase):
         cat = cat.filter(tags=['special', '~radec'])
         self.assertEqual(len(cat.targets), len(catalogue.specials), 'Number of targets incorrect')
         cat.add(self.flux_target)
-        cat2 = cat.filter(flux_Jy_limit=50.0, flux_freq_Hz=1.5e6)
+        cat2 = cat.filter(flux_limit_Jy=50.0, flux_freq_Hz=1.5e6)
         self.assertEqual(len(cat2.targets), 1, 'Number of targets with sufficient flux should be 1')
         cat.add(target.construct_target('Zenith, azel, 0, 90'))
         ant = antenna.construct_antenna(self.antenna)
-        cat3 = cat.filter(el_deg_limit=85, antenna=ant, timestamp=self.timestamp)
+        cat3 = cat.filter(el_limit_deg=85, antenna=ant, timestamp=self.timestamp)
         self.assertEqual(len(cat3.targets), 1, 'Number of targets close to zenith should be 1')
         sun = target.construct_target('Sun, special')
-        cat4 = cat.filter(dist_deg_limit=[0.0, 1.0], proximity_targets=sun,
+        cat4 = cat.filter(dist_limit_deg=[0.0, 1.0], proximity_targets=sun,
                           antenna=ant, timestamp=self.timestamp)
         self.assertEqual(len(cat4.targets), 1, 'Number of targets close to Sun should be 1')
     

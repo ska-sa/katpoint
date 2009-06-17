@@ -517,7 +517,7 @@ plane_to_sphere_select = {'SIN' : plane_to_sphere_sin,
 #--- Top-level projection routines
 #--------------------------------------------------------------------------------------------------
 
-def sphere_to_plane(antenna, target, az, el, timestamps, projection_type='ARC', coord_system='azel'):
+def sphere_to_plane(antenna, target, az, el, timestamp, projection_type='ARC', coord_system='azel'):
     """Project spherical coordinates to plane with target position as reference.
     
     This is a convenience function that projects spherical coordinates to a 
@@ -536,7 +536,7 @@ def sphere_to_plane(antenna, target, az, el, timestamps, projection_type='ARC', 
         Azimuth or right ascension, in radians
     el : float or array
         Elevation or declination, in radians
-    timestamps : float or array
+    timestamp : float or array
         Local timestamp(s) in seconds since Unix epoch
     projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional
         Type of spherical projection
@@ -553,14 +553,14 @@ def sphere_to_plane(antenna, target, az, el, timestamps, projection_type='ARC', 
     """
     if coord_system == 'radec':
         # The target (ra, dec) coordinates will serve as reference point on the sphere
-        ref_ra, ref_dec = target.radec(antenna, timestamps)
+        ref_ra, ref_dec = target.radec(antenna, timestamp)
         return sphere_to_plane_select[projection_type](ref_ra, ref_dec, az, el)
     else:
         # The target (az, el) coordinates will serve as reference point on the sphere
-        ref_az, ref_el = antenna.point(target, timestamps)
+        ref_az, ref_el = antenna.point(target, timestamp)
         return sphere_to_plane_select[projection_type](ref_az, ref_el, az, el)
 
-def plane_to_sphere(antenna, target, x, y, timestamps, projection_type='ARC', coord_system='azel'):
+def plane_to_sphere(antenna, target, x, y, timestamp, projection_type='ARC', coord_system='azel'):
     """Deproject plane coordinates to sphere with target position as reference.
     
     This is a convenience function that deprojects plane coordinates to a
@@ -579,7 +579,7 @@ def plane_to_sphere(antenna, target, x, y, timestamps, projection_type='ARC', co
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    timestamps : float or array
+    timestamp : float or array
         Local timestamp(s) in seconds since Unix epoch
     projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional
         Type of spherical projection
@@ -596,9 +596,9 @@ def plane_to_sphere(antenna, target, x, y, timestamps, projection_type='ARC', co
     """
     if coord_system == 'radec':
         # The target (ra, dec) coordinates will serve as reference point on the sphere
-        ref_ra, ref_dec = target.radec(antenna, timestamps)
+        ref_ra, ref_dec = target.radec(antenna, timestamp)
         return plane_to_sphere_select[projection_type](ref_ra, ref_dec, x, y)
     else:
         # The target (az, el) coordinates will serve as reference point on the sphere
-        ref_az, ref_el = antenna.point(target, timestamps)
+        ref_az, ref_el = antenna.point(target, timestamp)
         return plane_to_sphere_select[projection_type](ref_az, ref_el, x, y)
