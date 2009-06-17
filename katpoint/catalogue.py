@@ -49,7 +49,8 @@ class Catalogue(object):
     
     def __repr__(self):
         """Short human-friendly string representation of catalogue object."""
-        return "<Catalogue targets=%d names=%d at 0x%x>" % (len(self.targets), len(self.names()), id(self))
+        return "<katpoint.Catalogue targets=%d names=%d at 0x%x>" % \
+               (len(self.targets), len(self.names()), id(self))
     
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object."""

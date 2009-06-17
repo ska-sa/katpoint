@@ -64,7 +64,7 @@ class Target(object):
     
     def __repr__(self):
         """Short human-friendly string representation of antenna object."""
-        return "<Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
+        return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
     
     def get_description(self):
         """Complete string representation of antenna object, sufficient to reconstruct it."""
@@ -237,6 +237,27 @@ class Target(object):
             radec = np.array([_scalar_radec(t) for t in timestamp])
             return radec[:, 0], radec[:, 1]
     
+    def az_increases(self, antenna, timestamp):
+        """Check if azimuth of target increases with time at given timestamp.
+        
+        This will be true if the antenna has to turn clockwise to keep tracking
+        the target at the given timestamp.
+        
+        Parameters
+        ----------
+        antenna : :class:`Antenna` object
+            Antenna which points at target
+        timestamp : float or sequence
+            Local timestamp(s) in seconds since Unix epoch
+        
+        Returns
+        -------
+        az_increases : bool
+            True if azimuth increases with time at the given timestamp
+        
+        """
+        return self.azel(antenna, timestamp + 1.0)[0] > self.azel(antenna, timestamp)[0]
+        
     def flux_density(self, obs_freq_Hz):
         """Calculate flux density for given observation frequency.
         

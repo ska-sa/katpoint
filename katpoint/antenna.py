@@ -78,7 +78,7 @@ class Antenna(object):
     
     def __repr__(self):
         """Short human-friendly string representation of antenna object."""
-        return "<Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
+        return "<katpoint.Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
     
     def get_description(self):
         """Complete string representation of antenna object, sufficient to reconstruct it."""
