@@ -55,7 +55,13 @@ class Catalogue(object):
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object."""
         return self.lookup[_hash(name)]
-    
+
+    def find(self, name):
+        try:
+            return self.lookup[_hash(name)]
+        except KeyError:
+            return None
+
     def __iter__(self):
         """Iterate over targets in catalogue."""
         return iter(self.targets)

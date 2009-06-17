@@ -65,6 +65,9 @@ class Target(object):
     def __repr__(self):
         """Short human-friendly string representation of antenna object."""
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
+        
+    def is_stationary(self):
+        return self.tags[0].lower() == "azel"
     
     def get_description(self):
         """Complete string representation of antenna object, sufficient to reconstruct it."""
