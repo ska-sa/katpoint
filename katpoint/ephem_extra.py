@@ -76,6 +76,10 @@ class StationaryBody(object):
             ra, dec = observer.radec_of(self.az, self.el)
             self.ra = ra
             self.dec = dec
+            # This is a kludge, as XEphem provides no way to convert apparent
+            # (ra, dec) back to astrometric (ra, dec)
+            self.a_ra = ra
+            self.a_dec = dec
 
 #--------------------------------------------------------------------------------------------------
 #--- Geodetic coordinate transformations

@@ -241,7 +241,7 @@ class Catalogue(object):
             # Iterate over targets until one is found that satisfies dynamic criteria
             for n, target in enumerate(targets):
                 if elevation_filter:
-                    el_deg = rad2deg(antenna.point(target, latest_timestamp)[1])
+                    el_deg = rad2deg(target.azel(antenna, latest_timestamp)[1])
                     if (el_deg < el_limit_deg[0]) or (el_deg > el_limit_deg[1]):
                         continue
                 if proximity_filter:
@@ -349,9 +349,9 @@ class Catalogue(object):
         elif key == 'dec':
             index = [target.radec(antenna, timestamp)[1] for target in self.targets]
         elif key == 'az':
-            index = [antenna.point(target, timestamp)[0] for target in self.targets]
+            index = [target.azel(antenna, timestamp)[0] for target in self.targets]
         elif key == 'el':
-            index = [antenna.point(target, timestamp)[1] for target in self.targets]
+            index = [target.azel(antenna, timestamp)[1] for target in self.targets]
         elif key == 'flux':
             if not flux_freq_Hz:
                 raise ValueError('Please specify frequency at which to measure flux density')

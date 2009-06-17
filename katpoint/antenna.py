@@ -90,36 +90,7 @@ class Antenna(object):
             return "%s, %s, %s, %s, %s" % (self.name, self.observer.lat,
                    self.observer.long, self.observer.elevation, self.diameter)
     
-    def point(self, target, timestamp):
-        """Calculate target (az, el) coordinates as seen from antenna at time(s).
-        
-        Parameters
-        ----------
-        target : :class:`Target` object
-            Target object to point at
-        timestamp : float or sequence
-            Local timestamp(s) in seconds since Unix epoch
-        
-        Returns
-        -------
-        az : :class:`ephem.Angle` object, or sequence of objects
-            Azimuth angle(s), in radians
-        el : :class:`ephem.Angle` object, or sequence of objects
-            Elevation angle(s), in radians
-        
-        """
-        def _scalar_point(t):
-            """Calculate (az, el) coordinates for a single time instant."""
-            self.observer.date = unix_to_ephem_time(t)
-            target.body.compute(self.observer)
-            return target.body.az, target.body.alt
-        if np.isscalar(timestamp):
-            return _scalar_point(timestamp)
-        else:
-            azel = np.array([_scalar_point(t) for t in timestamp])
-            return azel[:, 0], azel[:, 1]
-    
-    def sidereal_time(self, secs_since_epoch):
+    def sidereal_time(self, timestamp):
         """Calculate sidereal time for local timestamp(s).
         
         This is a vectorised function that returns the local sidereal time at
@@ -127,7 +98,7 @@ class Antenna(object):
         
         Parameters
         ----------
-        secs_since_epoch : float or sequence
+        timestamp : float or sequence
             Local timestamp(s) in seconds since Unix epoch
         
         Returns
@@ -141,10 +112,10 @@ class Antenna(object):
             self.observer.date = unix_to_ephem_time(t)
             # pylint: disable-msg=E1101
             return self.observer.sidereal_time()
-        if np.isscalar(secs_since_epoch):
-            return _scalar_sidereal_time(secs_since_epoch)
+        if np.isscalar(timestamp):
+            return _scalar_sidereal_time(timestamp)
         else:
-            return np.array([_scalar_sidereal_time(t) for t in secs_since_epoch])
+            return np.array([_scalar_sidereal_time(t) for t in timestamp])
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_antenna

@@ -138,13 +138,43 @@ class Target(object):
         self.tags.extend([tag for tag in tags if not tag in self.tags])
         return self
     
+    def azel(self, antenna, timestamp):
+        """Calculate target (az, el) coordinates as seen from antenna at time(s).
+        
+        Parameters
+        ----------
+        antenna : :class:`Antenna` object
+            Antenna which points at target
+        timestamp : float or sequence
+            Local timestamp(s) in seconds since Unix epoch
+        
+        Returns
+        -------
+        az : :class:`ephem.Angle` object, or sequence of objects
+            Azimuth angle(s), in radians
+        el : :class:`ephem.Angle` object, or sequence of objects
+            Elevation angle(s), in radians
+        
+        """
+        def _scalar_azel(t):
+            """Calculate (az, el) coordinates for a single time instant."""
+            antenna.observer.date = unix_to_ephem_time(t)
+            self.body.compute(antenna.observer)
+            return self.body.az, self.body.alt
+        if np.isscalar(timestamp):
+            return _scalar_azel(timestamp)
+        else:
+            azel = np.array([_scalar_azel(t) for t in timestamp])
+            return azel[:, 0], azel[:, 1]
+    
     def radec(self, antenna, timestamp):
         """Calculate target (ra, dec) coordinates as seen from antenna at time(s).
         
-        This calculates the *apparent topocentric position* for the epoch-of-date
-        in equatorial coordinates. Take note that this is *not* the "star-atlas"
-        position of the target, but the position as seen from the antenna at the
-        given times. The difference is on the order of a few arcminutes.
+        This calculates the *apparent topocentric position* of the target for
+        the epoch-of-date in equatorial coordinates. Take note that this is
+        *not* the "star-atlas" position of the target, but the position as seen
+        from the antenna at the given times. The difference is on the order of a
+        few arcminutes.
         
         Parameters
         ----------
@@ -166,6 +196,41 @@ class Target(object):
             antenna.observer.date = unix_to_ephem_time(t)
             self.body.compute(antenna.observer)
             return self.body.ra, self.body.dec
+        if np.isscalar(timestamp):
+            return _scalar_radec(timestamp)
+        else:
+            radec = np.array([_scalar_radec(t) for t in timestamp])
+            return radec[:, 0], radec[:, 1]
+    
+    def astrometric_radec(self, antenna, timestamp):
+        """Calculate target (ra, dec) coordinates as seen from antenna at time(s).
+        
+        This calculates the *astrometric geocentric position* for the star atlas
+        epoch contained in the target, in equatorial coordinates. Some targets
+        are unable to provide this, notably stationary (*azel*) targets, which
+        provide the *apparent topocentric position* instead. The difference is
+        on the order of a few arcminutes.
+        
+        Parameters
+        ----------
+        antenna : :class:`Antenna` object
+            Antenna which points at target
+        timestamp : float or sequence
+            Local timestamp(s) in seconds since Unix epoch
+        
+        Returns
+        -------
+        ra : :class:`ephem.Angle` object, or sequence of objects
+            Right ascension, in radians
+        dec : :class:`ephem.Angle` object, or sequence of objects
+            Declination, in radians
+        
+        """
+        def _scalar_radec(t):
+            """Calculate (ra, dec) coordinates for a single time instant."""
+            antenna.observer.date = unix_to_ephem_time(t)
+            self.body.compute(antenna.observer)
+            return self.body.a_ra, self.body.a_dec
         if np.isscalar(timestamp):
             return _scalar_radec(timestamp)
         else:

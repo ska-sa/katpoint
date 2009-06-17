@@ -557,7 +557,7 @@ def sphere_to_plane(antenna, target, az, el, timestamp, projection_type='ARC', c
         return sphere_to_plane_select[projection_type](ref_ra, ref_dec, az, el)
     else:
         # The target (az, el) coordinates will serve as reference point on the sphere
-        ref_az, ref_el = antenna.point(target, timestamp)
+        ref_az, ref_el = target.azel(antenna, timestamp)
         return sphere_to_plane_select[projection_type](ref_az, ref_el, az, el)
 
 def plane_to_sphere(antenna, target, x, y, timestamp, projection_type='ARC', coord_system='azel'):
@@ -600,5 +600,5 @@ def plane_to_sphere(antenna, target, x, y, timestamp, projection_type='ARC', coo
         return plane_to_sphere_select[projection_type](ref_ra, ref_dec, x, y)
     else:
         # The target (az, el) coordinates will serve as reference point on the sphere
-        ref_az, ref_el = antenna.point(target, timestamp)
+        ref_az, ref_el = target.azel(antenna, timestamp)
         return plane_to_sphere_select[projection_type](ref_az, ref_el, x, y)
