@@ -381,3 +381,40 @@ class Catalogue(object):
         else:
             self.targets = np.array(self.targets)[np.flipud(np.argsort(index))].tolist()
         return self
+    
+    def uplist(self, antenna, timestamp=None, flux_freq_Hz=None):
+        """Print out list of targets in catalogue, sorted by decreasing elevation.
+        
+        This prints out the name, azimuth and elevation of each target in the
+        catalogue, in order of decreasing elevation. It indicates the horizon
+        itself by a line of dashes. It also displays the target flux density
+        if a frequency is supplied.
+        
+        Parameters
+        ----------
+        antenna : :class:`Antenna` object
+            Antenna which points at targets
+        timestamp : float, optional
+            Timestamp at which to evaluate target positions, in seconds since
+            Unix epoch. If None, the current time is used.
+        flux_freq_Hz : float, optional
+            Frequency at which to evaluate flux density, in Hz
+        
+        """
+        if timestamp is None:
+            timestamp = time.time()
+        above_horizon = True
+        print
+        print 'Target                    Azimuth    Elevation    Flux'
+        print '------                    -------    ---------    ----'
+        for target in self.sort('el', antenna=antenna, timestamp=timestamp, ascending=False):
+            az, el = target.azel(antenna, timestamp)
+            flux = target.flux_density(flux_freq_Hz)
+            if above_horizon and el < 0.0:
+                # Draw horizon line
+                print '------------------------------------------------------'
+                above_horizon = False
+            if not flux is None:
+                print '%-20s %12s %12s %7.1f' % (target.name, az, el, flux)
+            else:
+                print '%-20s %12s %12s' % (target.name, az, el)
