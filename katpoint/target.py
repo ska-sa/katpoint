@@ -67,6 +67,7 @@ class Target(object):
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
         
     def is_stationary(self):
+        """Check if target is stationary, i.e. its (az, el) coordinates are fixed."""
         return self.tags[0].lower() == "azel"
     
     def get_description(self):

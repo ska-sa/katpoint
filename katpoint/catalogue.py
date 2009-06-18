@@ -53,15 +53,24 @@ class Catalogue(object):
                (len(self.targets), len(self.names()), id(self))
     
     def __getitem__(self, name):
-        """Look up target name in catalogue and return target object."""
-        return self.lookup[_hash(name)]
-
-    def find(self, name):
+        """Look up target name in catalogue and return target object.
+        
+        Parameters
+        ----------
+        name : string
+            Target name to look up (can be alias as well)
+        
+        Returns
+        -------
+        target : :class:`Target` object, or None
+            Associated target object, or None if no target was found
+        
+        """
         try:
             return self.lookup[_hash(name)]
         except KeyError:
             return None
-
+    
     def __iter__(self):
         """Iterate over targets in catalogue."""
         return iter(self.targets)
@@ -112,7 +121,8 @@ class Catalogue(object):
                 self.targets.append(target)
                 for name in [target.name] + target.aliases:
                     self.lookup[_hash(name)] = target
-                logger.debug("Added '%s' [%s] (and %d aliases)" % (target.name, target.tags[0], len(target.aliases)))
+                logger.debug("Added '%s' [%s] (and %d aliases)" % 
+                             (target.name, target.tags[0], len(target.aliases)))
     
     def add_tle(self, lines, tags=None):
         """Add Two-Line Element (TLE) targets to catalogue.
