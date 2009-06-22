@@ -30,11 +30,18 @@ class Catalogue(object):
         True if *special* bodies specified in :data:`specials` should be added
     add_stars:  {False, True}, optional
         True if *star* bodies from PyEphem star catalogue should be added
+    default_antenna : :class:`Antenna` object, optional
+        Default antenna to use for position calculations for all targets
+    default_flux_freq_Hz : float, optional
+        Default frequency at which to evaluate flux density of all targets, in Hz
     
     """
-    def __init__(self, targets=None, tags=None, add_specials=True, add_stars=False):
+    def __init__(self, targets=None, tags=None, add_specials=True, add_stars=False,
+                 default_antenna=None, default_flux_freq_Hz=None):
         self.lookup = {}
         self.targets = []
+        self.default_antenna = default_antenna
+        self.default_flux_freq_Hz = default_flux_freq_Hz
         if add_specials:
             self.add(['%s, special' % (name,) for name in specials], tags)
         if add_stars:
@@ -50,7 +57,7 @@ class Catalogue(object):
     def __repr__(self):
         """Short human-friendly string representation of catalogue object."""
         return "<katpoint.Catalogue targets=%d names=%d at 0x%x>" % \
-               (len(self.targets), len(self.names()), id(self))
+               (len(self.targets), len(self.lookup.keys()), id(self))
     
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object.
@@ -75,27 +82,6 @@ class Catalogue(object):
         """Iterate over targets in catalogue."""
         return iter(self.targets)
     
-    def iternames(self):
-        """Iterator over known target names in catalogue which can be searched for.
-        
-        There are potentially more names than targets in the catalogue, as the
-        same target can have many names.
-        
-        """
-        for target in self.targets:
-            yield target.name
-            for alias in target.aliases:
-                yield alias
-    
-    def names(self):
-        """List of known target names in catalogue which can be searched for.
-        
-        There are potentially more names than targets in the catalogue, as the
-        same target can have many names.
-        
-        """
-        return [name for name in self.iternames()]
-    
     def add(self, targets, tags=None):
         """Add targets to catalogue.
         
@@ -105,7 +91,7 @@ class Catalogue(object):
             Target or list of targets to add to catalogue (may also be file object)
         tags : string or sequence of strings, optional
             Tag or list of tags to add to *targets*
-        
+                
         """
         if isinstance(targets, basestring) or isinstance(targets, Target):
             targets = [targets]
@@ -115,9 +101,11 @@ class Catalogue(object):
             if not isinstance(target, Target):
                 raise ValueError('List of targets should either contain Target objects or description strings')
             if self.lookup.has_key(_hash(target.name)):
-                logger.debug("Skipped '%s' [%s]" % (target.name, target.tags[0]))
+                logger.warn("Skipped '%s' [%s] (already in catalogue)" % (target.name, target.tags[0]))
             else:
                 target.add_tags(tags)
+                target.default_antenna = self.default_antenna
+                target.default_flux_freq_Hz = self.default_flux_freq_Hz
                 self.targets.append(target)
                 for name in [target.name] + target.aliases:
                     self.lookup[_hash(name)] = target
@@ -176,8 +164,7 @@ class Catalogue(object):
             the lower limit, otherwise it takes the form [lower, upper]. If None,
             any flux density is accepted.
         flux_freq_Hz : float, optional
-            Frequency at which to evaluate the flux density, in Hz (required for
-            flux filter)
+            Frequency at which to evaluate the flux density, in Hz
         el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
@@ -189,7 +176,7 @@ class Catalogue(object):
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
         antenna : :class:`Antenna` object, optional
-            Antenna which points at targets (needed for position-based filters)
+            Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time *at each iteration* is used.
@@ -224,8 +211,6 @@ class Catalogue(object):
                 targets = [target for target in targets if not (set(target.tags) & undesired_tags)]
         
         if flux_filter:
-            if not flux_freq_Hz:
-                raise ValueError('Please specify frequency at which to measure flux density')
             if np.isscalar(flux_limit_Jy):
                 flux_limit_Jy = [flux_limit_Jy, np.inf]
             flux = [target.flux_density(flux_freq_Hz) for target in targets]
@@ -233,17 +218,12 @@ class Catalogue(object):
                        if (flux[n] >= flux_limit_Jy[0]) & (flux[n] <= flux_limit_Jy[1])]
         
         # Now prepare for dynamic criteria (elevation, proximity) which depend on potentially changing timestamp
-        if elevation_filter:
-            if antenna is None:
-                raise ValueError('Antenna object needed to calculate target elevation')
-            if np.isscalar(el_limit_deg):
-                el_limit_deg = [el_limit_deg, 90.0]
+        if elevation_filter and np.isscalar(el_limit_deg):
+            el_limit_deg = [el_limit_deg, 90.0]
         
         if proximity_filter:
             if proximity_targets is None:
                 raise ValueError('Please specify proximity target(s) for proximity filter')
-            if antenna is None:
-                raise ValueError('Antenna object needed to calculate angular separation of targets')
             if np.isscalar(dist_limit_deg):
                 dist_limit_deg = [dist_limit_deg, 180.0]
             if isinstance(proximity_targets, Target):
@@ -290,8 +270,7 @@ class Catalogue(object):
             the lower limit, otherwise it takes the form [lower, upper]. If None,
             any flux density is accepted.
         flux_freq_Hz : float, optional
-            Frequency at which to evaluate the flux density, in Hz (required for
-            flux filter)
+            Frequency at which to evaluate the flux density, in Hz
         el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
@@ -303,7 +282,7 @@ class Catalogue(object):
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
         antenna : :class:`Antenna` object, optional
-            Antenna which points at targets (needed for position-based filters)
+            Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time is used.
@@ -336,7 +315,7 @@ class Catalogue(object):
         flux_freq_Hz : float, optional
             Frequency at which to evaluate the flux density, in Hz
         antenna : :class:`Antenna` object, optional
-            Antenna which points at targets (needed for position-based sorting)
+            Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time is used.
@@ -352,12 +331,6 @@ class Catalogue(object):
             If some required parameters are missing or key is unknown
         
         """
-        # If targets are sorted based on position, an antenna and timestamp are needed
-        if key in ['ra', 'dec', 'az', 'el']:
-            if antenna is None:
-                raise ValueError('Antenna object needed to calculate target position')
-            if timestamp is None:
-                timestamp = time.time()
         # Set up index list that will be sorted
         if key == 'name':
             index = [target.name for target in self.targets]
@@ -370,8 +343,6 @@ class Catalogue(object):
         elif key == 'el':
             index = [target.azel(antenna, timestamp)[1] for target in self.targets]
         elif key == 'flux':
-            if not flux_freq_Hz:
-                raise ValueError('Please specify frequency at which to measure flux density')
             index = [target.flux_density(flux_freq_Hz) for target in self.targets]
         else:
             raise ValueError('Unknown key to sort on')
@@ -382,17 +353,18 @@ class Catalogue(object):
             self.targets = np.array(self.targets)[np.flipud(np.argsort(index))].tolist()
         return self
     
-    def uplist(self, antenna, timestamp=None, flux_freq_Hz=None):
+    def visibility_list(self, antenna=None, timestamp=None, flux_freq_Hz=None):
         """Print out list of targets in catalogue, sorted by decreasing elevation.
         
         This prints out the name, azimuth and elevation of each target in the
         catalogue, in order of decreasing elevation. It indicates the horizon
         itself by a line of dashes. It also displays the target flux density
-        if a frequency is supplied.
+        if a frequency is supplied. It is useful to quickly see which sources
+        are visible.
         
         Parameters
         ----------
-        antenna : :class:`Antenna` object
+        antenna : :class:`Antenna` object, optional
             Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
@@ -401,15 +373,30 @@ class Catalogue(object):
             Frequency at which to evaluate flux density, in Hz
         
         """
+        above_horizon = True
+        if antenna is None:
+            antenna = self.default_antenna
+        if antenna is None:
+            raise ValueError('Antenna object needed to calculate target position')
         if timestamp is None:
             timestamp = time.time()
-        above_horizon = True
+        title = "Targets visible from antenna '%s' at %s" % \
+                (antenna.name, time.strftime('%Y/%m/%d %H:%M:%S %Z', time.localtime(timestamp)))
+        if flux_freq_Hz is None:
+            flux_freq_Hz = self.default_flux_freq_Hz
+        if not flux_freq_Hz is None:
+            title += ', with flux density evaluated at %.3f GHz' % (flux_freq_Hz / 1e9,)
+        print title
         print
         print 'Target                    Azimuth    Elevation    Flux'
         print '------                    -------    ---------    ----'
         for target in self.sort('el', antenna=antenna, timestamp=timestamp, ascending=False):
             az, el = target.azel(antenna, timestamp)
-            flux = target.flux_density(flux_freq_Hz)
+            # If no flux frequency is given, do not attempt to evaluate the flux, as it will fail
+            if not flux_freq_Hz is None:
+                flux = target.flux_density(flux_freq_Hz)
+            else:
+                flux = None
             if above_horizon and el < 0.0:
                 # Draw horizon line
                 print '------------------------------------------------------'
