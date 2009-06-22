@@ -12,7 +12,7 @@ and CASA.
 
 from .antenna import Antenna, construct_antenna
 
-from .target import Target, construct_target, construct_azel_target, construct_radec_target, separation
+from .target import Target, construct_target, construct_azel_target, construct_radec_target
 
 from .catalogue import Catalogue, specials
 

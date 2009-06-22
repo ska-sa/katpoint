@@ -374,6 +374,28 @@ class Target(object):
             acc *= log10_freq
         return 10.0 ** log10_flux
 
+    def separation(self, other_target, antenna=None, timestamp=None):
+        """Angular separation between this target and another one.
+        
+        Parameters
+        ----------
+        other_target : :class:`Target` object
+            The other target
+        antenna : class:`Antenna` object, optional
+            Antenna that observes both targets, from where separation is measured
+        timestamp : float, optional
+            Timestamp when separation is measured, in seconds since Unix epoch
+            (defaults to now)
+        
+        Returns
+        -------
+        separation : :class:`ephem.Angle` object
+            Angular separation between the targets, in radians
+        
+        """
+        antenna, timestamp = self._set_antenna_timestamp_defaults(antenna, timestamp)
+        return ephem.separation(self.radec(antenna, timestamp), other_target.radec(antenna, timestamp))
+
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_target
 #--------------------------------------------------------------------------------------------------
@@ -590,29 +612,3 @@ def construct_radec_target(ra, dec):
     body._ra = ra
     body._dec = dec
     return Target(body, ['radec'])
-
-#--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  separation
-#--------------------------------------------------------------------------------------------------
-
-def separation(target1, target2, antenna, timestamp):
-    """Angular separation between two targets.
-    
-    Parameters
-    ----------
-    target1 : :class:`Target` object
-        First target
-    target2 : :class:`Target` object
-        Second target
-    antenna : class:`Antenna` object
-        Antenna that observes both targets and from where separation is measured
-    timestamp : float
-        Timestamp when separation is measured, in seconds since Unix epoch
-    
-    Returns
-    -------
-    separation : :class:`ephem.Angle` object
-        Angular separation between the targets, in radians
-    
-    """
-    return ephem.separation(target1.radec(antenna, timestamp), target2.radec(antenna, timestamp))

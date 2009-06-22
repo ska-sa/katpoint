@@ -6,7 +6,7 @@ import time
 import ephem.stars
 import numpy as np
 
-from .target import construct_target, Target, separation
+from .target import construct_target, Target
 from .ephem_extra import rad2deg
 
 logger = logging.getLogger("katpoint.catalogue")
@@ -242,7 +242,7 @@ class Catalogue(object):
                     if (el_deg < el_limit_deg[0]) or (el_deg > el_limit_deg[1]):
                         continue
                 if proximity_filter:
-                    dist_deg = np.array([rad2deg(separation(target, prox_target, antenna, latest_timestamp))
+                    dist_deg = np.array([rad2deg(target.separation(prox_target, antenna, latest_timestamp))
                                          for prox_target in proximity_targets])
                     if (dist_deg < dist_limit_deg[0]).any() or (dist_deg > dist_limit_deg[1]).any():
                         continue

@@ -79,4 +79,3 @@ class TestFluxDensity(unittest.TestCase):
     def test_flux_density(self):
         """Test flux density calculation."""
         self.assertEqual(self.flux_target.flux_density(1.5e6), 100.0, 'Flux calculation wrong')
-        
