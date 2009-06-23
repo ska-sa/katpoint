@@ -2,9 +2,21 @@
 
 import logging
 import time
+import re
 
 import ephem.stars
 import numpy as np
+# This is needed for tab completion, but is ignored if no IPython is installed
+try:
+    import IPython.ipapi
+except ImportError:
+    pass
+# The same goes for readline
+try:
+    import readline
+    readline_found = True
+except ImportError:
+    readline_found = False
 
 from .target import construct_target, Target
 from .ephem_extra import rad2deg
@@ -16,6 +28,10 @@ specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Ura
 def _hash(name):
     """Normalise string to make name lookup more robust."""
     return name.strip().lower().replace(' ', '')
+
+#--------------------------------------------------------------------------------------------------
+#--- CLASS :  Catalogue
+#--------------------------------------------------------------------------------------------------
 
 class Catalogue(object):
     """A searchable and filterable catalogue of targets.
@@ -81,6 +97,18 @@ class Catalogue(object):
     def __iter__(self):
         """Iterate over targets in catalogue."""
         return iter(self.targets)
+    
+    def iternames(self):
+        """Iterator over known target names in catalogue which can be searched for.
+        
+        There are potentially more names than targets in the catalogue, as the
+        same target can have many names.
+        
+        """
+        for target in self.targets:
+            yield target.name
+            for alias in target.aliases:
+                yield alias
     
     def add(self, targets, tags=None):
         """Add targets to catalogue.
@@ -405,3 +433,38 @@ class Catalogue(object):
                 print '%-20s %12s %12s %7.1f' % (target.name, az, el, flux)
             else:
                 print '%-20s %12s %12s' % (target.name, az, el)
+
+#--------------------------------------------------------------------------------------------------
+#--- FUNCTION :  _catalogue_completer
+#--------------------------------------------------------------------------------------------------
+
+cat_lookup_match = re.compile(r"""(?:.*\=)?(.*)\[(?P<quote>['|"])(?!.*(?P=quote))(.*)$""")
+
+def _catalogue_completer(self, event):
+    """Custom IPython completer for catalogue name lookups.
+    
+    This is inspired by Darren Dale's custom dict-like completer for h5py.
+    
+    """
+    # Parse command line as (ignored = )base['start_of_name
+    base, start_of_name = cat_lookup_match.split(event.line)[1:4:2]
+    
+    # Avoid calling any functions during eval()...
+    if '(' in base:
+        raise IPython.ipapi.TryNext
+    
+    # Obtain catalogue object from user namespace
+    try:
+        cat = eval(base, self.shell.user_ns)
+    except:
+        raise IPython.ipapi.TryNext
+    
+    # Only continue if this object is actually a Catalogue
+    if not isinstance(cat, Catalogue):
+        raise IPython.ipapi.TryNext
+    
+    if readline_found:
+        # Remove space from delimiter list, so completion works past spaces in names
+        readline.set_completer_delims('\t\n`!@#$^&*()=+[{]}\\|;:\'",<>?')
+    
+    return [name for name in cat.iternames() if name[:len(start_of_name)] == start_of_name]
