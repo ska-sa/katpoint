@@ -1,5 +1,7 @@
 """Antenna object wrapping its location and dish diameter."""
 
+import time
+
 import numpy as np
 import ephem
 
@@ -90,7 +92,7 @@ class Antenna(object):
             return "%s, %s, %s, %s, %s" % (self.name, self.observer.lat,
                    self.observer.long, self.observer.elevation, self.diameter)
     
-    def sidereal_time(self, timestamp):
+    def sidereal_time(self, timestamp=None):
         """Calculate sidereal time for local timestamp(s).
         
         This is a vectorised function that returns the local sidereal time at
@@ -98,8 +100,8 @@ class Antenna(object):
         
         Parameters
         ----------
-        timestamp : float or sequence
-            Local timestamp(s) in seconds since Unix epoch
+        timestamp : float or sequence, optional
+            Local timestamp(s) in seconds since Unix epoch (defaults to now)
         
         Returns
         -------
@@ -107,6 +109,8 @@ class Antenna(object):
             Local sidereal time(s)
         
         """
+        if timestamp is None:
+            timestamp = time.time()
         def _scalar_sidereal_time(t):
             """Calculate sidereal time at a single time instant."""
             self.observer.date = unix_to_ephem_time(t)
