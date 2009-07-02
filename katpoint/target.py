@@ -76,7 +76,7 @@ class Target(object):
         return descr
     
     def __repr__(self):
-        """Short human-friendly string representation of antenna object."""
+        """Short human-friendly string representation of target object."""
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
     
     def _set_timestamp_antenna_defaults(self, timestamp, antenna):
