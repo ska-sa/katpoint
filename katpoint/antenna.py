@@ -52,6 +52,8 @@ class Antenna(object):
         self.ref_observer.lat = latitude
         self.ref_observer.long = longitude
         self.ref_observer.elevation = float(altitude)
+        # All astrometric ra/dec coordinates will be in J2000 epoch
+        self.ref_observer.epoch = ephem.J2000
         # Disable ephem's built-in refraction model, since it's for optical wavelengths
         self.ref_observer.pressure = 0.0
         if offset:
@@ -63,7 +65,8 @@ class Antenna(object):
             self.observer.lat = lat
             self.observer.long = lon
             self.observer.elevation = alt
-            self.observer.pressure = self.ref_observer.pressure
+            self.observer.epoch = ephem.J2000
+            self.observer.pressure = 0.0
         else:
             self.offset = None
             self.observer = self.ref_observer

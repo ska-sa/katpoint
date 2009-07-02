@@ -224,14 +224,15 @@ class Target(object):
             azel = np.array([_scalar_azel(t) for t in timestamp])
             return azel[:, 0], azel[:, 1]
     
-    def radec(self, timestamp=None, antenna=None):
+    def apparent_radec(self, timestamp=None, antenna=None):
         """Calculate target's apparent (ra, dec) coordinates as seen from antenna at time(s).
         
         This calculates the *apparent topocentric position* of the target for
         the epoch-of-date in equatorial coordinates. Take note that this is
-        *not* the "star-atlas" position of the target, but the position as seen
-        from the antenna at the given times. The difference is on the order of a
-        few arcminutes.
+        *not* the "star-atlas" position of the target, but the position as is
+        actually seen from the antenna at the given times. The difference is on
+        the order of a few arcminutes. These are the coordinates that a telescope
+        with an equatorial mount would use to track the target.
         
         Parameters
         ----------
@@ -268,11 +269,12 @@ class Target(object):
     def astrometric_radec(self, timestamp=None, antenna=None):
         """Calculate target's astrometric (ra, dec) coordinates as seen from antenna at time(s).
         
-        This calculates the *astrometric geocentric position* for the star atlas
-        epoch contained in the target, in equatorial coordinates. Some targets
-        are unable to provide this, notably stationary (*azel*) targets, which
-        provide the *apparent topocentric position* instead. The difference is
-        on the order of a few arcminutes.
+        This calculates the J2000 *astrometric geocentric position* of the
+        target, in equatorial coordinates. This is its star atlas position for
+        the epoch of J2000. Some targets are unable to provide this (due to a
+        limitation of pyephem), notably stationary (*azel*) targets, and provide
+        the *apparent topocentric position* instead. The difference is on the
+        order of a few arcminutes.
         
         Parameters
         ----------
@@ -305,6 +307,9 @@ class Target(object):
         else:
             radec = np.array([_scalar_radec(t) for t in timestamp])
             return radec[:, 0], radec[:, 1]
+    
+    # The default (ra, dec) coordinates are the astrometric ones
+    radec = astrometric_radec
     
     def az_increases(self, timestamp=None, antenna=None):
         """Check if azimuth of target increases with time at given timestamp.
@@ -399,7 +404,9 @@ class Target(object):
         
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        return ephem.separation(self.radec(timestamp, antenna), other_target.radec(timestamp, antenna))
+        # Work in apparent (ra, dec), as this is the most reliable common coordinate frame in ephem
+        return ephem.separation(self.apparent_radec(timestamp, antenna),
+                                other_target.apparent_radec(timestamp, antenna))
 
     def sphere_to_plane(self, az, el, timestamp=None, antenna=None, projection_type='ARC', coord_system='azel'):
         """Project spherical coordinates to plane with target position as reference.
