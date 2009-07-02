@@ -6,6 +6,7 @@ import numpy as np
 import ephem
 
 from .ephem_extra import unix_to_ephem_time, StationaryBody
+from .projection import sphere_to_plane, plane_to_sphere
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Target
@@ -399,6 +400,88 @@ class Target(object):
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         return ephem.separation(self.radec(timestamp, antenna), other_target.radec(timestamp, antenna))
+
+    def sphere_to_plane(self, az, el, timestamp=None, antenna=None, projection_type='ARC', coord_system='azel'):
+        """Project spherical coordinates to plane with target position as reference.
+    
+        This is a convenience function that projects spherical coordinates to a 
+        plane with the target position as the origin of the plane. The function is
+        vectorised and can operate on single or multiple timestamps, as well as
+        single or multiple coordinate vectors. The spherical coordinates may be
+        (az, el) or (ra, dec), and the projection type can also be specified.
+    
+        Parameters
+        ----------
+        az : float or array
+            Azimuth or right ascension, in radians
+        el : float or array
+            Elevation or declination, in radians
+        timestamp : float or array, optional
+            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna pointing at target (defaults to default antenna)
+        projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional
+            Type of spherical projection
+        coord_system : {'azel', 'radec'}, optional
+            Spherical coordinate system
+    
+        Returns
+        -------
+        x : float or array
+            Azimuth-like coordinate(s) on plane, in radians
+        y : float or array
+            Elevation-like coordinate(s) on plane, in radians
+    
+        """
+        if coord_system == 'radec':
+            # The target (ra, dec) coordinates will serve as reference point on the sphere
+            ref_ra, ref_dec = self.radec(timestamp, antenna)
+            return sphere_to_plane[projection_type](ref_ra, ref_dec, az, el)
+        else:
+            # The target (az, el) coordinates will serve as reference point on the sphere
+            ref_az, ref_el = self.azel(timestamp, antenna)
+            return sphere_to_plane[projection_type](ref_az, ref_el, az, el)
+
+    def plane_to_sphere(self, x, y, timestamp=None, antenna=None, projection_type='ARC', coord_system='azel'):
+        """Deproject plane coordinates to sphere with target position as reference.
+    
+        This is a convenience function that deprojects plane coordinates to a
+        sphere with the target position as the origin of the plane. The function is
+        vectorised and can operate on single or multiple timestamps, as well as
+        single or multiple coordinate vectors. The spherical coordinates may be
+        (az, el) or (ra, dec), and the projection type can also be specified.
+    
+        Parameters
+        ----------
+        x : float or array
+            Azimuth-like coordinate(s) on plane, in radians
+        y : float or array
+            Elevation-like coordinate(s) on plane, in radians
+        timestamp : float or array, optional
+            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna pointing at target (defaults to default antenna)
+        projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional
+            Type of spherical projection
+        coord_system : {'azel', 'radec'}, optional
+            Spherical coordinate system
+    
+        Returns
+        -------
+        az : float or array
+            Azimuth or right ascension, in radians
+        el : float or array
+            Elevation or declination, in radians
+    
+        """
+        if coord_system == 'radec':
+            # The target (ra, dec) coordinates will serve as reference point on the sphere
+            ref_ra, ref_dec = self.radec(timestamp, antenna)
+            return plane_to_sphere[projection_type](ref_ra, ref_dec, x, y)
+        else:
+            # The target (az, el) coordinates will serve as reference point on the sphere
+            ref_az, ref_el = self.azel(timestamp, antenna)
+            return plane_to_sphere[projection_type](ref_az, ref_el, x, y)
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_target
