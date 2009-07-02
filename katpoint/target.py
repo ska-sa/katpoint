@@ -29,16 +29,16 @@ class Target(object):
         Descriptive tags associated with target, starting with its body type
     aliases : list of strings, optional
         Alternate names of target
-    min_freq_Hz : float, optional
-        Minimum frequency for which flux density estimate is valid, in Hz
-    max_freq_Hz : float, optional
-        Maximum frequency for which flux density estimate is valid, in Hz
+    min_freq_MHz : float, optional
+        Minimum frequency for which flux density estimate is valid, in MHz
+    max_freq_MHz : float, optional
+        Maximum frequency for which flux density estimate is valid, in MHz
     coefs : sequence of floats, optional
         Coefficients of Baars polynomial used to estimate flux density
     antenna : :class:`Antenna` object, optional
         Default antenna to use for position calculations
-    flux_freq_Hz : float, optional
-        Default frequency at which to evaluate flux density, in Hz
+    flux_freq_MHz : float, optional
+        Default frequency at which to evaluate flux density, in MHz
         
     Arguments
     ---------
@@ -46,8 +46,8 @@ class Target(object):
         Name of target
     
     """
-    def __init__(self, body, tags, aliases=None, min_freq_Hz=None, max_freq_Hz=None, coefs=None,
-                 antenna=None, flux_freq_Hz=None):
+    def __init__(self, body, tags, aliases=None, min_freq_MHz=None, max_freq_MHz=None, coefs=None,
+                 antenna=None, flux_freq_MHz=None):
         self.body = body
         self.name = self.body.name
         self.tags = tags
@@ -55,11 +55,11 @@ class Target(object):
             self.aliases = []
         else:
             self.aliases = aliases
-        self.min_freq_Hz = min_freq_Hz
-        self.max_freq_Hz = max_freq_Hz
+        self.min_freq_MHz = min_freq_MHz
+        self.max_freq_MHz = max_freq_MHz
         self.coefs = coefs
         self.antenna = antenna
-        self.flux_freq_Hz = flux_freq_Hz
+        self.flux_freq_MHz = flux_freq_MHz
     
     def __str__(self):
         """Verbose human-friendly string representation of target object."""
@@ -69,10 +69,10 @@ class Target(object):
         descr += ': [%s]' % (self.tags[0],)
         if self.tags[1:]:
             descr += ', tags=%s' % (','.join(self.tags[1:]),)
-        if None in [self.min_freq_Hz, self.max_freq_Hz, self.coefs]:
+        if None in [self.min_freq_MHz, self.max_freq_MHz, self.coefs]:
             descr += ', no flux info'
         else:
-            descr += ", flux defined for %.3f - %.3f GHz" % (self.min_freq_Hz * 1e-9, self.max_freq_Hz * 1e-9)
+            descr += ", flux defined for %f - %f MHz" % (self.min_freq_MHz, self.max_freq_MHz)
         return descr
     
     def __repr__(self):
@@ -122,8 +122,8 @@ class Target(object):
         names = ' | '.join([self.name] + self.aliases)
         tags = ' '.join(self.tags)
         fluxinfo = None
-        if self.min_freq_Hz and self.max_freq_Hz and self.coefs:
-            fluxinfo = '(%s %s %s)' % (self.min_freq_Hz * 1e-6, self.max_freq_Hz * 1e-6,
+        if self.min_freq_MHz and self.max_freq_MHz and self.coefs:
+            fluxinfo = '(%s %s %s)' % (self.min_freq_MHz, self.max_freq_MHz,
                                        ' '.join([str(s) for s in self.coefs]))
         fields = [names, tags]
         body_type = self.tags[0].lower()
@@ -333,7 +333,7 @@ class Target(object):
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         return self.azel(timestamp + 1.0, antenna)[0] > self.azel(timestamp, antenna)[0]
         
-    def flux_density(self, flux_freq_Hz=None):
+    def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency.
         
         This uses a polynomial flux model of the form::
@@ -345,8 +345,8 @@ class Target(object):
         
         Parameters
         ----------
-        flux_freq_Hz : float, optional
-            Frequency at which to evaluate flux density, in Hz
+        flux_freq_MHz : float, optional
+            Frequency at which to evaluate flux density, in MHz
         
         Returns
         -------
@@ -360,17 +360,17 @@ class Target(object):
             If no frequency is specified, and no default frequency was set either
         
         """
-        if flux_freq_Hz is None:
-            flux_freq_Hz = self.flux_freq_Hz
-        if flux_freq_Hz is None:
+        if flux_freq_MHz is None:
+            flux_freq_MHz = self.flux_freq_MHz
+        if flux_freq_MHz is None:
             raise ValueError('Please specify frequency at which to measure flux density')
-        if None in [self.min_freq_Hz, self.max_freq_Hz, self.coefs]:
+        if None in [self.min_freq_MHz, self.max_freq_MHz, self.coefs]:
             # Target has no specified flux density
             return None
-        if (flux_freq_Hz < self.min_freq_Hz) or (flux_freq_Hz > self.max_freq_Hz):
+        if (flux_freq_MHz < self.min_freq_MHz) or (flux_freq_MHz > self.max_freq_MHz):
             # Frequency out of range for flux calculation of target
             return None
-        log10_freq = np.log10(flux_freq_Hz * 1e-6)
+        log10_freq = np.log10(flux_freq_MHz)
         log10_flux = 0.0
         acc = 1.0
         for coeff in self.coefs:
@@ -638,11 +638,11 @@ def construct_target(description):
         flux_info = [float(num) for num in fields[4].strip(' ()').split()]
         if len(flux_info) < 3:
             raise ValueError("Target description '%s' has invalid flux info" % description)
-        min_freq_Hz, max_freq_Hz, coefs = 1e6 * flux_info[0], 1e6 * flux_info[1], tuple(flux_info[2:])
+        min_freq_MHz, max_freq_MHz, coefs = flux_info[0], flux_info[1], tuple(flux_info[2:])
     else:
-        min_freq_Hz = max_freq_Hz = coefs = None
+        min_freq_MHz = max_freq_MHz = coefs = None
     
-    return Target(body, tags, aliases, min_freq_Hz, max_freq_Hz, coefs)
+    return Target(body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs)
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_azel_target

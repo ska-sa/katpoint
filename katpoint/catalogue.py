@@ -48,16 +48,16 @@ class Catalogue(object):
         True if *star* bodies from PyEphem star catalogue should be added
     antenna : :class:`Antenna` object, optional
         Default antenna to use for position calculations for all targets
-    flux_freq_Hz : float, optional
-        Default frequency at which to evaluate flux density of all targets, in Hz
+    flux_freq_MHz : float, optional
+        Default frequency at which to evaluate flux density of all targets, in MHz
     
     """
     def __init__(self, targets=None, tags=None, add_specials=True, add_stars=False,
-                 antenna=None, flux_freq_Hz=None):
+                 antenna=None, flux_freq_MHz=None):
         self.lookup = {}
         self.targets = []
         self.antenna = antenna
-        self.flux_freq_Hz = flux_freq_Hz
+        self.flux_freq_MHz = flux_freq_MHz
         if add_specials:
             self.add(['%s, special' % (name,) for name in specials], tags)
         if add_stars:
@@ -133,7 +133,7 @@ class Catalogue(object):
             else:
                 target.add_tags(tags)
                 target.antenna = self.antenna
-                target.flux_freq_Hz = self.flux_freq_Hz
+                target.flux_freq_MHz = self.flux_freq_MHz
                 self.targets.append(target)
                 for name in [target.name] + target.aliases:
                     self.lookup[_hash(name)] = target
@@ -177,7 +177,7 @@ class Catalogue(object):
                 self.lookup.pop(_hash(alias))
             self.targets.remove(target)
     
-    def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_Hz=None, el_limit_deg=None,
+    def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, el_limit_deg=None,
                    dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Iterator which returns targets satisfying various criteria.
         
@@ -191,8 +191,8 @@ class Catalogue(object):
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,
             any flux density is accepted.
-        flux_freq_Hz : float, optional
-            Frequency at which to evaluate the flux density, in Hz
+        flux_freq_MHz : float, optional
+            Frequency at which to evaluate the flux density, in MHz
         el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
@@ -241,7 +241,7 @@ class Catalogue(object):
         if flux_filter:
             if np.isscalar(flux_limit_Jy):
                 flux_limit_Jy = [flux_limit_Jy, np.inf]
-            flux = [target.flux_density(flux_freq_Hz) for target in targets]
+            flux = [target.flux_density(flux_freq_MHz) for target in targets]
             targets = [target for n, target in enumerate(targets)
                        if (flux[n] >= flux_limit_Jy[0]) & (flux[n] <= flux_limit_Jy[1])]
         
@@ -283,7 +283,7 @@ class Catalogue(object):
             # Return successful target and remove from list to ensure it is not picked again
             yield targets.pop(found_one)
     
-    def filter(self, tags=None, flux_limit_Jy=None, flux_freq_Hz=None, el_limit_deg=None,
+    def filter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, el_limit_deg=None,
                dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Filter catalogue on various criteria.
         
@@ -297,8 +297,8 @@ class Catalogue(object):
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,
             any flux density is accepted.
-        flux_freq_Hz : float, optional
-            Frequency at which to evaluate the flux density, in Hz
+        flux_freq_MHz : float, optional
+            Frequency at which to evaluate the flux density, in MHz
         el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
@@ -327,11 +327,11 @@ class Catalogue(object):
         
         """
         return Catalogue([target for target in
-                          self.iterfilter(tags, flux_limit_Jy, flux_freq_Hz, el_limit_deg,
+                          self.iterfilter(tags, flux_limit_Jy, flux_freq_MHz, el_limit_deg,
                                           dist_limit_deg, proximity_targets, timestamp, antenna)],
                          add_specials=False)
         
-    def sort(self, key='name', ascending=True, flux_freq_Hz=None, timestamp=None, antenna=None):
+    def sort(self, key='name', ascending=True, flux_freq_MHz=None, timestamp=None, antenna=None):
         """Sort targets in catalogue.
         
         Parameters
@@ -340,8 +340,8 @@ class Catalogue(object):
             Sort the targets according to this field
         ascending : {True, False}, optional
             True if key should be sorted in ascending order
-        flux_freq_Hz : float, optional
-            Frequency at which to evaluate the flux density, in Hz
+        flux_freq_MHz : float, optional
+            Frequency at which to evaluate the flux density, in MHz
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time is used.
@@ -371,7 +371,7 @@ class Catalogue(object):
         elif key == 'el':
             index = [target.azel(timestamp, antenna)[1] for target in self.targets]
         elif key == 'flux':
-            index = [target.flux_density(flux_freq_Hz) for target in self.targets]
+            index = [target.flux_density(flux_freq_MHz) for target in self.targets]
         else:
             raise ValueError('Unknown key to sort on')
         # Sort index indirectly, either in ascending or descending order
@@ -381,7 +381,7 @@ class Catalogue(object):
             self.targets = np.array(self.targets)[np.flipud(np.argsort(index))].tolist()
         return self
     
-    def visibility_list(self, timestamp=None, antenna=None, flux_freq_Hz=None):
+    def visibility_list(self, timestamp=None, antenna=None, flux_freq_MHz=None):
         """Print out list of targets in catalogue, sorted by decreasing elevation.
         
         This prints out the name, azimuth and elevation of each target in the
@@ -397,8 +397,8 @@ class Catalogue(object):
             Unix epoch. If None, the current time is used.
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
-        flux_freq_Hz : float, optional
-            Frequency at which to evaluate flux density, in Hz
+        flux_freq_MHz : float, optional
+            Frequency at which to evaluate flux density, in MHz
         
         """
         above_horizon = True
@@ -410,10 +410,10 @@ class Catalogue(object):
             raise ValueError('Antenna object needed to calculate target position')
         title = "Targets visible from antenna '%s' at %s" % \
                 (antenna.name, time.strftime('%Y/%m/%d %H:%M:%S %Z', time.localtime(timestamp)))
-        if flux_freq_Hz is None:
-            flux_freq_Hz = self.flux_freq_Hz
-        if not flux_freq_Hz is None:
-            title += ', with flux density evaluated at %.3f GHz' % (flux_freq_Hz / 1e9,)
+        if flux_freq_MHz is None:
+            flux_freq_MHz = self.flux_freq_MHz
+        if not flux_freq_MHz is None:
+            title += ', with flux density evaluated at %f MHz' % (flux_freq_MHz,)
         print title
         print
         print 'Target                    Azimuth    Elevation    Flux'
@@ -421,8 +421,8 @@ class Catalogue(object):
         for target in self.sort('el', timestamp=timestamp, antenna=antenna, ascending=False):
             az, el = target.azel(timestamp, antenna)
             # If no flux frequency is given, do not attempt to evaluate the flux, as it will fail
-            if not flux_freq_Hz is None:
-                flux = target.flux_density(flux_freq_Hz)
+            if not flux_freq_MHz is None:
+                flux = target.flux_density(flux_freq_MHz)
             else:
                 flux = None
             if above_horizon and el < 0.0:
