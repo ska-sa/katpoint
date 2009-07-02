@@ -67,4 +67,4 @@ class TestCatalogueFilterSort(unittest.TestCase):
         self.assertEqual(str(cat5.targets[0].body.alt), '-76:13:14.2', 'Sorting on el failed')
         cat.add(self.flux_target)
         cat6 = cat.sort(key='flux', ascending=False, flux_freq_MHz=1.5)
-        self.assertEqual(cat6.targets[0].flux_density(1.5e6), 100.0, 'Sorting on flux failed')
+        self.assertEqual(cat6.targets[0].flux_density(1.5), 100.0, 'Sorting on flux failed')
