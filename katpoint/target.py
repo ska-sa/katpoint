@@ -15,7 +15,10 @@ class Target(object):
     """A target which can be pointed at by an antenna.
     
     This is a wrapper around a PyEphem :class:`ephem.Body` that adds flux
-    density and descriptive tags.
+    density, alternate names and descriptive tags. For convenience, a default
+    antenna and flux frequency can be set, to simplify the calling of pointing
+    and flux density methods. These are not stored as part of the target object,
+    however.
     
     Parameters
     ----------
@@ -31,9 +34,9 @@ class Target(object):
         Maximum frequency for which flux density estimate is valid, in Hz
     coefs : sequence of floats, optional
         Coefficients of Baars polynomial used to estimate flux density
-    default_antenna : :class:`Antenna` object, optional
+    antenna : :class:`Antenna` object, optional
         Default antenna to use for position calculations
-    default_flux_freq_Hz : float, optional
+    flux_freq_Hz : float, optional
         Default frequency at which to evaluate flux density, in Hz
         
     Arguments
@@ -43,7 +46,7 @@ class Target(object):
     
     """
     def __init__(self, body, tags, aliases=None, min_freq_Hz=None, max_freq_Hz=None, coefs=None,
-                 default_antenna=None, default_flux_freq_Hz=None):
+                 antenna=None, flux_freq_Hz=None):
         self.body = body
         self.name = self.body.name
         self.tags = tags
@@ -54,8 +57,8 @@ class Target(object):
         self.min_freq_Hz = min_freq_Hz
         self.max_freq_Hz = max_freq_Hz
         self.coefs = coefs
-        self.default_antenna = default_antenna
-        self.default_flux_freq_Hz = default_flux_freq_Hz
+        self.antenna = antenna
+        self.flux_freq_Hz = flux_freq_Hz
     
     def __str__(self):
         """Verbose human-friendly string representation of target object."""
@@ -75,25 +78,25 @@ class Target(object):
         """Short human-friendly string representation of antenna object."""
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
     
-    def _set_antenna_timestamp_defaults(self, antenna, timestamp):
-        """Set defaults for antenna and timestamp, if they are unspecified.
+    def _set_timestamp_antenna_defaults(self, timestamp, antenna):
+        """Set defaults for timestamp and antenna, if they are unspecified.
         
-        If *antenna* is None, it is replaced by the default antenna for the
-        target. If *timestamp* is None, it is replaced by the current time.
+        If *timestamp* is None, it is replaced by the current time. If *antenna*
+        is None, it is replaced by the default antenna for the target. 
         
         Parameters
         ----------
-        antenna : :class:`Antenna` object, or None
-            Antenna which points at target
         timestamp : float or sequence, or None
             Local timestamp(s) in seconds since Unix epoch
+        antenna : :class:`Antenna` object, or None
+            Antenna which points at target
         
         Returns
         -------
-        antenna : :class:`Antenna` object
-            Antenna which points at target
         timestamp : float or sequence
             Local timestamp(s) in seconds since Unix epoch
+        antenna : :class:`Antenna` object
+            Antenna which points at target
         
         Raises
         ------
@@ -101,13 +104,13 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
         
         """
-        if antenna is None:
-            antenna = self.default_antenna
-        if antenna is None:
-            raise ValueError('Antenna object needed to calculate target position')
         if timestamp is None:
             timestamp = time.time()
-        return antenna, timestamp
+        if antenna is None:
+            antenna = self.antenna
+        if antenna is None:
+            raise ValueError('Antenna object needed to calculate target position')
+        return timestamp, antenna
     
     def is_stationary(self):
         """Check if target is stationary, i.e. its (az, el) coordinates are fixed."""
@@ -185,15 +188,15 @@ class Target(object):
         self.tags.extend([tag for tag in tags if not tag in self.tags])
         return self
     
-    def azel(self, antenna=None, timestamp=None):
+    def azel(self, timestamp=None, antenna=None):
         """Calculate target (az, el) coordinates as seen from antenna at time(s).
         
         Parameters
         ----------
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at target
         timestamp : float or sequence, optional
             Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at target (defaults to default antenna)
         
         Returns
         -------
@@ -208,7 +211,7 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
         
         """
-        antenna, timestamp = self._set_antenna_timestamp_defaults(antenna, timestamp)
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_azel(t):
             """Calculate (az, el) coordinates for a single time instant."""
             antenna.observer.date = unix_to_ephem_time(t)
@@ -220,8 +223,8 @@ class Target(object):
             azel = np.array([_scalar_azel(t) for t in timestamp])
             return azel[:, 0], azel[:, 1]
     
-    def radec(self, antenna=None, timestamp=None):
-        """Calculate target (ra, dec) coordinates as seen from antenna at time(s).
+    def radec(self, timestamp=None, antenna=None):
+        """Calculate target's apparent (ra, dec) coordinates as seen from antenna at time(s).
         
         This calculates the *apparent topocentric position* of the target for
         the epoch-of-date in equatorial coordinates. Take note that this is
@@ -231,10 +234,10 @@ class Target(object):
         
         Parameters
         ----------
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at target
         timestamp : float or sequence, optional
             Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at target (defaults to default antenna)
         
         Returns
         -------
@@ -249,7 +252,7 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
         
         """
-        antenna, timestamp = self._set_antenna_timestamp_defaults(antenna, timestamp)
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
             antenna.observer.date = unix_to_ephem_time(t)
@@ -261,8 +264,8 @@ class Target(object):
             radec = np.array([_scalar_radec(t) for t in timestamp])
             return radec[:, 0], radec[:, 1]
     
-    def astrometric_radec(self, antenna=None, timestamp=None):
-        """Calculate target (ra, dec) coordinates as seen from antenna at time(s).
+    def astrometric_radec(self, timestamp=None, antenna=None):
+        """Calculate target's astrometric (ra, dec) coordinates as seen from antenna at time(s).
         
         This calculates the *astrometric geocentric position* for the star atlas
         epoch contained in the target, in equatorial coordinates. Some targets
@@ -272,10 +275,10 @@ class Target(object):
         
         Parameters
         ----------
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at target
         timestamp : float or sequence, optional
             Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at target (defaults to default antenna)
         
         Returns
         -------
@@ -290,7 +293,7 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
         
         """
-        antenna, timestamp = self._set_antenna_timestamp_defaults(antenna, timestamp)
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
             antenna.observer.date = unix_to_ephem_time(t)
@@ -302,7 +305,7 @@ class Target(object):
             radec = np.array([_scalar_radec(t) for t in timestamp])
             return radec[:, 0], radec[:, 1]
     
-    def az_increases(self, antenna=None, timestamp=None):
+    def az_increases(self, timestamp=None, antenna=None):
         """Check if azimuth of target increases with time at given timestamp.
         
         This will be true if the antenna has to turn clockwise to keep tracking
@@ -310,10 +313,10 @@ class Target(object):
         
         Parameters
         ----------
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at target
         timestamp : float or sequence, optional
             Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at target (defaults to default antenna)
         
         Returns
         -------
@@ -326,8 +329,8 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
         
         """
-        antenna, timestamp = self._set_antenna_timestamp_defaults(antenna, timestamp)
-        return self.azel(antenna, timestamp + 1.0)[0] > self.azel(antenna, timestamp)[0]
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+        return self.azel(timestamp + 1.0, antenna)[0] > self.azel(timestamp, antenna)[0]
         
     def flux_density(self, flux_freq_Hz=None):
         """Calculate flux density for given observation frequency.
@@ -357,7 +360,7 @@ class Target(object):
         
         """
         if flux_freq_Hz is None:
-            flux_freq_Hz = self.default_flux_freq_Hz
+            flux_freq_Hz = self.flux_freq_Hz
         if flux_freq_Hz is None:
             raise ValueError('Please specify frequency at which to measure flux density')
         if None in [self.min_freq_Hz, self.max_freq_Hz, self.coefs]:
@@ -374,18 +377,19 @@ class Target(object):
             acc *= log10_freq
         return 10.0 ** log10_flux
 
-    def separation(self, other_target, antenna=None, timestamp=None):
+    def separation(self, other_target, timestamp=None, antenna=None):
         """Angular separation between this target and another one.
         
         Parameters
         ----------
         other_target : :class:`Target` object
             The other target
-        antenna : class:`Antenna` object, optional
-            Antenna that observes both targets, from where separation is measured
         timestamp : float, optional
             Timestamp when separation is measured, in seconds since Unix epoch
             (defaults to now)
+        antenna : class:`Antenna` object, optional
+            Antenna that observes both targets, from where separation is measured
+            (defaults to default antenna of this target)
         
         Returns
         -------
@@ -393,8 +397,8 @@ class Target(object):
             Angular separation between the targets, in radians
         
         """
-        antenna, timestamp = self._set_antenna_timestamp_defaults(antenna, timestamp)
-        return ephem.separation(self.radec(antenna, timestamp), other_target.radec(antenna, timestamp))
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+        return ephem.separation(self.radec(timestamp, antenna), other_target.radec(timestamp, antenna))
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_target

@@ -553,11 +553,11 @@ def sphere_to_plane(antenna, target, az, el, timestamp, projection_type='ARC', c
     """
     if coord_system == 'radec':
         # The target (ra, dec) coordinates will serve as reference point on the sphere
-        ref_ra, ref_dec = target.radec(antenna, timestamp)
+        ref_ra, ref_dec = target.radec(timestamp, antenna)
         return sphere_to_plane_select[projection_type](ref_ra, ref_dec, az, el)
     else:
         # The target (az, el) coordinates will serve as reference point on the sphere
-        ref_az, ref_el = target.azel(antenna, timestamp)
+        ref_az, ref_el = target.azel(timestamp, antenna)
         return sphere_to_plane_select[projection_type](ref_az, ref_el, az, el)
 
 def plane_to_sphere(antenna, target, x, y, timestamp, projection_type='ARC', coord_system='azel'):
@@ -596,9 +596,9 @@ def plane_to_sphere(antenna, target, x, y, timestamp, projection_type='ARC', coo
     """
     if coord_system == 'radec':
         # The target (ra, dec) coordinates will serve as reference point on the sphere
-        ref_ra, ref_dec = target.radec(antenna, timestamp)
+        ref_ra, ref_dec = target.radec(timestamp, antenna)
         return plane_to_sphere_select[projection_type](ref_ra, ref_dec, x, y)
     else:
         # The target (az, el) coordinates will serve as reference point on the sphere
-        ref_az, ref_el = target.azel(antenna, timestamp)
+        ref_az, ref_el = target.azel(timestamp, antenna)
         return plane_to_sphere_select[projection_type](ref_az, ref_el, x, y)

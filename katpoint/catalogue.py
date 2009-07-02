@@ -46,18 +46,18 @@ class Catalogue(object):
         True if *special* bodies specified in :data:`specials` should be added
     add_stars:  {False, True}, optional
         True if *star* bodies from PyEphem star catalogue should be added
-    default_antenna : :class:`Antenna` object, optional
+    antenna : :class:`Antenna` object, optional
         Default antenna to use for position calculations for all targets
-    default_flux_freq_Hz : float, optional
+    flux_freq_Hz : float, optional
         Default frequency at which to evaluate flux density of all targets, in Hz
     
     """
     def __init__(self, targets=None, tags=None, add_specials=True, add_stars=False,
-                 default_antenna=None, default_flux_freq_Hz=None):
+                 antenna=None, flux_freq_Hz=None):
         self.lookup = {}
         self.targets = []
-        self.default_antenna = default_antenna
-        self.default_flux_freq_Hz = default_flux_freq_Hz
+        self.antenna = antenna
+        self.flux_freq_Hz = flux_freq_Hz
         if add_specials:
             self.add(['%s, special' % (name,) for name in specials], tags)
         if add_stars:
@@ -132,8 +132,8 @@ class Catalogue(object):
                 logger.warn("Skipped '%s' [%s] (already in catalogue)" % (target.name, target.tags[0]))
             else:
                 target.add_tags(tags)
-                target.default_antenna = self.default_antenna
-                target.default_flux_freq_Hz = self.default_flux_freq_Hz
+                target.antenna = self.antenna
+                target.flux_freq_Hz = self.flux_freq_Hz
                 self.targets.append(target)
                 for name in [target.name] + target.aliases:
                     self.lookup[_hash(name)] = target
@@ -178,7 +178,7 @@ class Catalogue(object):
             self.targets.remove(target)
     
     def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_Hz=None, el_limit_deg=None,
-                   dist_limit_deg=None, proximity_targets=None, antenna=None, timestamp=None):
+                   dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Iterator which returns targets satisfying various criteria.
         
         Parameters
@@ -203,11 +203,11 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time *at each iteration* is used.
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at targets (defaults to default antenna)
         
         Returns
         -------
@@ -266,11 +266,11 @@ class Catalogue(object):
             # Iterate over targets until one is found that satisfies dynamic criteria
             for n, target in enumerate(targets):
                 if elevation_filter:
-                    el_deg = rad2deg(target.azel(antenna, latest_timestamp)[1])
+                    el_deg = rad2deg(target.azel(latest_timestamp, antenna)[1])
                     if (el_deg < el_limit_deg[0]) or (el_deg > el_limit_deg[1]):
                         continue
                 if proximity_filter:
-                    dist_deg = np.array([rad2deg(target.separation(prox_target, antenna, latest_timestamp))
+                    dist_deg = np.array([rad2deg(target.separation(prox_target, latest_timestamp, antenna))
                                          for prox_target in proximity_targets])
                     if (dist_deg < dist_limit_deg[0]).any() or (dist_deg > dist_limit_deg[1]).any():
                         continue
@@ -284,7 +284,7 @@ class Catalogue(object):
             yield targets.pop(found_one)
     
     def filter(self, tags=None, flux_limit_Jy=None, flux_freq_Hz=None, el_limit_deg=None,
-               dist_limit_deg=None, proximity_targets=None, antenna=None, timestamp=None):
+               dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Filter catalogue on various criteria.
         
         Parameters
@@ -309,11 +309,11 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time is used.
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at targets (defaults to default antenna)
         
         Returns
         -------
@@ -328,10 +328,10 @@ class Catalogue(object):
         """
         return Catalogue([target for target in
                           self.iterfilter(tags, flux_limit_Jy, flux_freq_Hz, el_limit_deg,
-                                          dist_limit_deg, proximity_targets, antenna, timestamp)],
+                                          dist_limit_deg, proximity_targets, timestamp, antenna)],
                          add_specials=False)
         
-    def sort(self, key='name', ascending=True, flux_freq_Hz=None, antenna=None, timestamp=None):
+    def sort(self, key='name', ascending=True, flux_freq_Hz=None, timestamp=None, antenna=None):
         """Sort targets in catalogue.
         
         Parameters
@@ -342,11 +342,11 @@ class Catalogue(object):
             True if key should be sorted in ascending order
         flux_freq_Hz : float, optional
             Frequency at which to evaluate the flux density, in Hz
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time is used.
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at targets (defaults to default antenna)
         
         Returns
         -------
@@ -363,13 +363,13 @@ class Catalogue(object):
         if key == 'name':
             index = [target.name for target in self.targets]
         elif key == 'ra':
-            index = [target.radec(antenna, timestamp)[0] for target in self.targets]
+            index = [target.radec(timestamp, antenna)[0] for target in self.targets]
         elif key == 'dec':
-            index = [target.radec(antenna, timestamp)[1] for target in self.targets]
+            index = [target.radec(timestamp, antenna)[1] for target in self.targets]
         elif key == 'az':
-            index = [target.azel(antenna, timestamp)[0] for target in self.targets]
+            index = [target.azel(timestamp, antenna)[0] for target in self.targets]
         elif key == 'el':
-            index = [target.azel(antenna, timestamp)[1] for target in self.targets]
+            index = [target.azel(timestamp, antenna)[1] for target in self.targets]
         elif key == 'flux':
             index = [target.flux_density(flux_freq_Hz) for target in self.targets]
         else:
@@ -381,7 +381,7 @@ class Catalogue(object):
             self.targets = np.array(self.targets)[np.flipud(np.argsort(index))].tolist()
         return self
     
-    def visibility_list(self, antenna=None, timestamp=None, flux_freq_Hz=None):
+    def visibility_list(self, timestamp=None, antenna=None, flux_freq_Hz=None):
         """Print out list of targets in catalogue, sorted by decreasing elevation.
         
         This prints out the name, azimuth and elevation of each target in the
@@ -392,34 +392,34 @@ class Catalogue(object):
         
         Parameters
         ----------
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at targets
         timestamp : float, optional
             Timestamp at which to evaluate target positions, in seconds since
             Unix epoch. If None, the current time is used.
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at targets (defaults to default antenna)
         flux_freq_Hz : float, optional
             Frequency at which to evaluate flux density, in Hz
         
         """
         above_horizon = True
-        if antenna is None:
-            antenna = self.default_antenna
-        if antenna is None:
-            raise ValueError('Antenna object needed to calculate target position')
         if timestamp is None:
             timestamp = time.time()
+        if antenna is None:
+            antenna = self.antenna
+        if antenna is None:
+            raise ValueError('Antenna object needed to calculate target position')
         title = "Targets visible from antenna '%s' at %s" % \
                 (antenna.name, time.strftime('%Y/%m/%d %H:%M:%S %Z', time.localtime(timestamp)))
         if flux_freq_Hz is None:
-            flux_freq_Hz = self.default_flux_freq_Hz
+            flux_freq_Hz = self.flux_freq_Hz
         if not flux_freq_Hz is None:
             title += ', with flux density evaluated at %.3f GHz' % (flux_freq_Hz / 1e9,)
         print title
         print
         print 'Target                    Azimuth    Elevation    Flux'
         print '------                    -------    ---------    ----'
-        for target in self.sort('el', antenna=antenna, timestamp=timestamp, ascending=False):
-            az, el = target.azel(antenna, timestamp)
+        for target in self.sort('el', timestamp=timestamp, antenna=antenna, ascending=False):
+            az, el = target.azel(timestamp, antenna)
             # If no flux frequency is given, do not attempt to evaluate the flux, as it will fail
             if not flux_freq_Hz is None:
                 flux = target.flux_density(flux_freq_Hz)
