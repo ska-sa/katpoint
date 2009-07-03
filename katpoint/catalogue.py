@@ -60,6 +60,7 @@ class Catalogue(object):
         self.flux_freq_MHz = flux_freq_MHz
         if add_specials:
             self.add(['%s, special' % (name,) for name in specials], tags)
+            self.add('Zenith, azel, 0, 90', tags)
         if add_stars:
             self.add(['%s, star' % (name,) for name in ephem.stars.stars.iterkeys()], tags)
         if targets is None:
