@@ -18,7 +18,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         cat = catalogue.Catalogue(add_specials=True, add_stars=True)
         cat.add(target.construct_target('Sun, special'))
         num_targets = len(cat.targets)
-        self.assertEqual(num_targets, len(catalogue.specials) + 94, 'Number of targets incorrect')
+        self.assertEqual(num_targets, len(catalogue.specials) + 1 + 94, 'Number of targets incorrect')
         test_target = cat.targets[0]
         self.assertEqual(test_target.get_description(), cat[test_target.name].get_description(), 'Lookup failed')
         self.assertEqual(cat['Non-existent'], None, 'Lookup of non-existent target failed')
@@ -53,7 +53,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
     def test_sort_catalogue(self):
         """Test sorting of catalogues."""
         cat = catalogue.Catalogue(add_specials=True, add_stars=True)
-        self.assertEqual(len(cat.targets), len(catalogue.specials) + 94, 'Number of targets incorrect')
+        self.assertEqual(len(cat.targets), len(catalogue.specials) + 1 + 94, 'Number of targets incorrect')
         cat1 = cat.sort(key='name')
         self.assertEqual(cat1.targets[0].name, 'Achernar', 'Sorting on name failed')
         ant = antenna.construct_antenna(self.antenna)
@@ -61,10 +61,17 @@ class TestCatalogueFilterSort(unittest.TestCase):
         self.assertEqual(str(cat2.targets[0].body.ra), '0:08:53.09', 'Sorting on ra failed')
         cat3 = cat.sort(key='dec', timestamp=self.timestamp, antenna=ant)
         self.assertEqual(str(cat3.targets[0].body.dec), '-60:25:27.3', 'Sorting on dec failed')
-        cat4 = cat.sort(key='az', timestamp=self.timestamp, antenna=ant)
-        self.assertEqual(str(cat4.targets[0].body.az), '0:05:16.3', 'Sorting on az failed')
+        cat4 = cat.sort(key='az', timestamp=self.timestamp, antenna=ant, ascending=False)
+        self.assertEqual(str(cat4.targets[0].body.az), '359:25:07.3', 'Sorting on az failed')
         cat5 = cat.sort(key='el', timestamp=self.timestamp, antenna=ant)
         self.assertEqual(str(cat5.targets[0].body.alt), '-76:13:14.2', 'Sorting on el failed')
         cat.add(self.flux_target)
         cat6 = cat.sort(key='flux', ascending=False, flux_freq_MHz=1.5)
         self.assertEqual(cat6.targets[0].flux_density(1.5), 100.0, 'Sorting on flux failed')
+
+    def test_visibility_list(self):
+        """Test output of visibility list."""
+        cat = catalogue.Catalogue(add_specials=True, add_stars=True)
+        cat.add(self.flux_target)
+        ant = antenna.construct_antenna(self.antenna)
+        cat.visibility_list(timestamp=self.timestamp, antenna=ant, flux_freq_MHz=1.5)
