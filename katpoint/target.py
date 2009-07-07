@@ -87,15 +87,15 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or sequence, or None
-            Local timestamp(s) in seconds since Unix epoch
+        timestamp : float or string or sequence, or None
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
         antenna : :class:`Antenna` object, or None
             Antenna which points at target
         
         Returns
         -------
-        timestamp : float or sequence
-            Local timestamp(s) in seconds since Unix epoch
+        timestamp : float or string or sequence
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
         antenna : :class:`Antenna` object
             Antenna which points at target
         
@@ -194,8 +194,9 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or sequence, optional
-            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        timestamp : float or string or sequence, optional
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+            (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
         
@@ -236,8 +237,9 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or sequence, optional
-            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        timestamp : float or string or sequence, optional
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+            (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
         
@@ -278,8 +280,9 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or sequence, optional
-            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        timestamp : float or string or sequence, optional
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+            (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
         
@@ -319,8 +322,9 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or sequence, optional
-            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        timestamp : float or string or sequence, optional
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+            (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
         
@@ -390,9 +394,9 @@ class Target(object):
         ----------
         other_target : :class:`Target` object
             The other target
-        timestamp : float, optional
-            Timestamp when separation is measured, in seconds since Unix epoch
-            (defaults to now)
+        timestamp : float or string, optional
+            UTC timestamp when separation is measured, in seconds since Unix
+            epoch or string date/time (defaults to now)
         antenna : class:`Antenna` object, optional
             Antenna that observes both targets, from where separation is measured
             (defaults to default antenna of this target)
@@ -423,8 +427,9 @@ class Target(object):
             Azimuth or right ascension, in radians
         el : float or array
             Elevation or declination, in radians
-        timestamp : float or array, optional
-            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        timestamp : float or string or sequence, optional
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+            (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna pointing at target (defaults to default antenna)
         projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional
@@ -464,8 +469,9 @@ class Target(object):
             Azimuth-like coordinate(s) on plane, in radians
         y : float or array
             Elevation-like coordinate(s) on plane, in radians
-        timestamp : float or array, optional
-            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        timestamp : float or string or sequence, optional
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+            (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna pointing at target (defaults to default antenna)
         projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional
@@ -494,7 +500,7 @@ class Target(object):
 #--- FUNCTION :  construct_target
 #--------------------------------------------------------------------------------------------------
 
-def construct_target(description):
+def construct_target(description, antenna=None, flux_freq_MHz=None):
     """Construct Target object from string representation.
     
     The description string contains up to five comma-separated fields, with the
@@ -536,6 +542,10 @@ def construct_target(description):
     ----------
     description : string
         String containing target name(s), tags, location and flux info
+    antenna : :class:`Antenna` object, optional
+        Default antenna to use for position calculations
+    flux_freq_MHz : float, optional
+        Default frequency at which to evaluate flux density, in MHz
     
     Returns
     -------
@@ -649,7 +659,7 @@ def construct_target(description):
     else:
         min_freq_MHz = max_freq_MHz = coefs = None
     
-    return Target(body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs)
+    return Target(body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs, antenna, flux_freq_MHz)
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_azel_target

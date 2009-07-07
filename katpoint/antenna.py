@@ -103,8 +103,9 @@ class Antenna(object):
         
         Parameters
         ----------
-        timestamp : float or sequence, optional
-            Local timestamp(s) in seconds since Unix epoch (defaults to now)
+        timestamp : float or string or sequence, optional
+            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+            (defaults to now)
         
         Returns
         -------

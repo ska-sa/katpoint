@@ -204,9 +204,10 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        timestamp : float, optional
-            Timestamp at which to evaluate target positions, in seconds since
-            Unix epoch. If None, the current time *at each iteration* is used.
+        timestamp : float or string, optional
+            UTC timestamp at which to evaluate target positions, in seconds
+            since Unix epoch or string date/time. If None, the current time
+            *at each iteration* is used.
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         
@@ -310,9 +311,9 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        timestamp : float, optional
-            Timestamp at which to evaluate target positions, in seconds since
-            Unix epoch. If None, the current time is used.
+        timestamp : float or string, optional
+            UTC timestamp at which to evaluate target positions, in seconds
+            since Unix epoch or string date/time (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         
@@ -343,9 +344,9 @@ class Catalogue(object):
             True if key should be sorted in ascending order
         flux_freq_MHz : float, optional
             Frequency at which to evaluate the flux density, in MHz
-        timestamp : float, optional
-            Timestamp at which to evaluate target positions, in seconds since
-            Unix epoch. If None, the current time is used.
+        timestamp : float or string, optional
+            UTC timestamp at which to evaluate target positions, in seconds
+            since Unix epoch or string date/time (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         
@@ -393,9 +394,9 @@ class Catalogue(object):
         
         Parameters
         ----------
-        timestamp : float, optional
-            Timestamp at which to evaluate target positions, in seconds since
-            Unix epoch. If None, the current time is used.
+        timestamp : float or string, optional
+            UTC timestamp at which to evaluate target positions, in seconds
+            since Unix epoch or string date/time (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         flux_freq_MHz : float, optional

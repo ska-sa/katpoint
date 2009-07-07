@@ -18,13 +18,14 @@ def rad2deg(x):
 def deg2rad(x):
     return x * np.pi / 180.0
 
-def unix_to_ephem_time(secs_since_epoch):
-    """Convert seconds-since-Unix-epoch local time to a UTC PyEphem Date object.
+def unix_to_ephem_time(timestamp):
+    """Convert UTC seconds since Unix epoch to a UTC PyEphem Date object.
     
     Parameters
     ----------
-    secs_since_epoch : float
-        Local time in seconds since Unix epoch (may have fractional part)
+    timestamp : float or string
+        UTC time in seconds since Unix epoch (may have fractional part).
+        Alternately, a string date and/or time accepted by :class:`ephem.Date`.
     
     Returns
     -------
@@ -32,9 +33,12 @@ def unix_to_ephem_time(secs_since_epoch):
         PyEphem UTC timestamp object, required for ephem calculations
     
     """
-    timestamp = list(time.gmtime(np.floor(secs_since_epoch))[:6])
-    timestamp[5] += secs_since_epoch - np.floor(secs_since_epoch)
-    return ephem.Date(tuple(timestamp))
+    if isinstance(timestamp, basestring):
+        return ephem.Date(timestamp)
+    else:
+        timetuple = list(time.gmtime(np.floor(timestamp))[:6])
+        timetuple[5] += timestamp - np.floor(timestamp)
+        return ephem.Date(tuple(timetuple))
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  StationaryBody
