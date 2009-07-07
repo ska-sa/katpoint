@@ -10,6 +10,8 @@ and CASA.
 
 """
 
+import logging
+
 from .antenna import Antenna, construct_antenna
 
 from .target import Target, construct_target, construct_azel_target, construct_radec_target
@@ -28,3 +30,10 @@ except ImportError:
     ip = None
 if not ip is None:
     ip.set_hook('complete_command', _catalogue_completer, re_key = r"(?:.*\=)?(.+?)\[")
+
+# Setup library logger, and suppress spurious logger messages via a null handler
+class _NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+logger = logging.getLogger("katpoint")
+logger.addHandler(_NullHandler())
