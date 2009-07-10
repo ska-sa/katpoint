@@ -64,15 +64,36 @@ class Target(object):
     def __str__(self):
         """Verbose human-friendly string representation of target object."""
         descr = str(self.name)
+        radec = False
         if self.aliases:
             descr += ' (%s)' % (', '.join(self.aliases),)
-        descr += ': [%s]' % (self.tags[0],)
+        if self.tags[0] == 'xephem':
+            edb_string = self.body.writedb()
+            edb_type = edb_string[edb_string.find(',') + 1]
+            if edb_type == 'f':
+                descr += ': [xephem: radec]'
+                radec = True
+            elif edb_type in ['e', 'h', 'p']:
+                descr += ': [xephem: solar system]'
+            elif edb_type == 'E':
+                descr += ': [xephem: earth satellite]'
+            elif edb_type == 'P':
+                descr += ': [xephem: special]'
+        else:
+            descr += ': [%s]' % (self.tags[0],)
         if self.tags[1:]:
             descr += ', tags=%s' % (','.join(self.tags[1:]),)
+        if radec or self.tags[0] == 'radec':
+            descr += ', %s %s' % (self.body._ra, self.body._dec)
+        if self.tags[0] == 'azel':
+            descr += ', %s %s' % (self.body.az, self.body.el)
         if None in [self.min_freq_MHz, self.max_freq_MHz, self.coefs]:
             descr += ', no flux info'
         else:
-            descr += ", flux defined for %f - %f MHz" % (self.min_freq_MHz, self.max_freq_MHz)
+            descr += ', flux defined for %g - %g MHz' % (self.min_freq_MHz, self.max_freq_MHz)
+            flux = self.flux_density(self.flux_freq_MHz)
+            if not flux is None:
+                descr += ', flux=%.1g Jy @ %g MHz' % (flux, self.flux_freq_MHz)
         return descr
     
     def __repr__(self):
