@@ -43,7 +43,8 @@ class Catalogue(object):
     tags : string or sequence of strings, optional
         Tag or list of tags to add to *targets*
     add_specials: {True, False}, optional
-        True if *special* bodies specified in :data:`specials` should be added
+        True if *special* bodies specified in :data:`specials` (and 'Zenith')
+        should be added
     add_stars:  {False, True}, optional
         True if *star* bodies from PyEphem star catalogue should be added
     antenna : :class:`Antenna` object, optional
@@ -56,8 +57,8 @@ class Catalogue(object):
                  antenna=None, flux_freq_MHz=None):
         self.lookup = {}
         self.targets = []
-        self.antenna = antenna
-        self.flux_freq_MHz = flux_freq_MHz
+        self._antenna = antenna
+        self._flux_freq_MHz = flux_freq_MHz
         if add_specials:
             self.add(['%s, special' % (name,) for name in specials], tags)
             self.add('Zenith, azel, 0, 90', tags)
@@ -67,6 +68,33 @@ class Catalogue(object):
             targets = []
         self.add(targets, tags)
     
+    # Provide properties so that default antenna or flux frequency changes are passed on to targets
+    # pylint: disable-msg=E0211,E0202,W0612,W0142
+    def antenna():
+        """Class method which creates antenna property."""
+        doc = 'Default antenna used to calculate target positions.'
+        def fget(self):
+            return self._antenna
+        def fset(self, value):
+            self._antenna = value
+            for target in self.targets:
+                target.antenna = self._antenna
+        return locals()
+    antenna = property(**antenna())
+    
+    # pylint: disable-msg=E0211,E0202,W0612,W0142
+    def flux_freq_MHz():
+        """Class method which creates flux_freq_MHz property."""
+        doc = 'Default frequency at which to evaluate flux density, in MHz.'
+        def fget(self):
+            return self._flux_freq_MHz
+        def fset(self, value):
+            self._flux_freq_MHz = value
+            for target in self.targets:
+                target.flux_freq_MHz = self._flux_freq_MHz
+        return locals()
+    flux_freq_MHz = property(**flux_freq_MHz())
+
     def __str__(self):
         """Verbose human-friendly string representation of catalogue object."""
         return '\n'.join(['%s' % (target,) for target in self.targets])
@@ -348,7 +376,7 @@ class Catalogue(object):
         return Catalogue([target for target in
                           self.iterfilter(tags, flux_limit_Jy, flux_freq_MHz, el_limit_deg,
                                           dist_limit_deg, proximity_targets, timestamp, antenna)],
-                         add_specials=False)
+                         add_specials=False, antenna=self.antenna, flux_freq_MHz=self.flux_freq_MHz)
         
     def sort(self, key='name', ascending=True, flux_freq_MHz=None, timestamp=None, antenna=None):
         """Sort targets in catalogue.
@@ -432,7 +460,7 @@ class Catalogue(object):
         if flux_freq_MHz is None:
             flux_freq_MHz = self.flux_freq_MHz
         if not flux_freq_MHz is None:
-            title += ', with flux density evaluated at %f MHz' % (flux_freq_MHz,)
+            title += ', with flux density evaluated at %g MHz' % (flux_freq_MHz,)
         print title
         print
         print 'Target                    Azimuth    Elevation    Flux'
