@@ -162,6 +162,23 @@ class Catalogue(object):
             logger.warning('Did not receive a multiple of three lines when constructing TLEs')
         self.add(targets, tags)
     
+    def add_edb(self, lines, tags=None):
+        """Add XEphem database format (EDB) targets to catalogue.
+        
+        Parameters
+        ----------
+        lines : sequence of strings
+            List of lines containing a target per line (may also be file object)
+        tags : string or sequence of strings, optional
+            Tag or list of tags to add to targets
+        
+        """
+        targets = []
+        for line in lines:
+            if line[0] != '#':
+                targets.append('xephem,' + line.replace(',', '~'))
+        self.add(targets, tags)
+    
     def remove(self, name):
         """Remove target from catalogue.
         
