@@ -148,12 +148,15 @@ class Catalogue(object):
             Target or list of targets to add to catalogue (may also be file object)
         tags : string or sequence of strings, optional
             Tag or list of tags to add to *targets*
-                
+        
         """
         if isinstance(targets, basestring) or isinstance(targets, Target):
             targets = [targets]
         for target in targets:
             if isinstance(target, basestring):
+                # Ignore strings starting with a hash (assumed to be comments) or only containing whitespace
+                if (target[0] == '#') or (len(target.strip()) == 0):
+                    continue
                 target = construct_target(target)
             if not isinstance(target, Target):
                 raise ValueError('List of targets should either contain Target objects or description strings')
@@ -170,7 +173,7 @@ class Catalogue(object):
                              (target.name, target.tags[0], len(target.aliases)))
     
     def add_tle(self, lines, tags=None):
-        """Add Two-Line Element (TLE) targets to catalogue.
+        """Add NORAD Two-Line Element (TLE) targets to catalogue.
         
         Parameters
         ----------
@@ -182,6 +185,8 @@ class Catalogue(object):
         """
         targets, tle = [], []
         for line in lines:
+            if (line[0] == '#') or (len(line.strip()) == 0):
+                continue
             tle += [line]
             if len(tle) == 3:
                 targets.append('tle,' + ' '.join(tle))
@@ -203,8 +208,9 @@ class Catalogue(object):
         """
         targets = []
         for line in lines:
-            if line[0] != '#':
-                targets.append('xephem,' + line.replace(',', '~'))
+            if (line[0] == '#') or (len(line.strip()) == 0):
+                continue
+            targets.append('xephem,' + line.replace(',', '~'))
         self.add(targets, tags)
     
     def remove(self, name):
