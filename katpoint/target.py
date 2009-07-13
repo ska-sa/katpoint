@@ -91,9 +91,10 @@ class Target(object):
             descr += ', no flux info'
         else:
             descr += ', flux defined for %g - %g MHz' % (self.min_freq_MHz, self.max_freq_MHz)
-            flux = self.flux_density(self.flux_freq_MHz)
-            if not flux is None:
-                descr += ', flux=%.1g Jy @ %g MHz' % (flux, self.flux_freq_MHz)
+            if not self.flux_freq_MHz is None:
+                flux = self.flux_density(self.flux_freq_MHz)
+                if not flux is None:
+                    descr += ', flux=%.1f Jy @ %g MHz' % (flux, self.flux_freq_MHz)
         return descr
     
     def __repr__(self):
