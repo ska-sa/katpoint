@@ -675,7 +675,7 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
         if preferred_name != edb_names[0]:
             aliases.append(edb_names[0])
         for extra_name in edb_names[1:]:
-            if not extra_name in aliases:
+            if not (extra_name in aliases) and not (extra_name == preferred_name):
                 aliases.append(extra_name)
         try:
             body = eval("ephem.readdb('%s')" % edb_string)
