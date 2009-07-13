@@ -1,0 +1,95 @@
+Acamar | Theta Eridani, 13847
+Achernar | Alpha Eridani | Achenar,  7588
+Acrux | Alpha Crucis, 60718
+Adhara | Epsilon Canis Majoris, 33579
+Albireo | Beta Cygni, 95947
+Alcyone | Eta Tauri, 17702
+Aldebaran | Alpha Tauri, 21421
+Algenib | Gamma Pegasi, 1067
+Alnair | Alpha Gruis | Al Nair, 109268
+Alpha Centauri | Rigil Kentaurus | Rigil Kent, 71683
+Alphard | Alpha Hydrae, 46390
+Alphecca | Alpha Coronae Borealis | Alphekka | Gemma | Gnosia | Asteroth, 76267
+Alpheratz | Alpha Andromedae | Sirrah, 677
+Altair | Alpha Aquilae | Atair, 97649
+Ankaa | Alpha Phoenicis, 2081
+Antares | Alpha Scorpii, 80763
+Arcturus | Alpha Bootis, 69673
+Aspidiske | Iota Carinae | Scutulum | Turais, 45556
+Atria | Alpha Trianguli Australis, 82273
+Avior | Epsilon Carinae, 41037
+Bellatrix | Gamma Orionis, 25336
+Canopus | Alpha Carinae, 30438
+Castor | Alpha Geminorum, 36850
+Cebalrai | Beta Ophiuchi | Cheleb | Kelb Alrai | Alrai, 86742
+Chertan | Theta Leonis | Chort | Coxa, 54879
+Deneb | Alpha Cygni, 102098
+Denebola | Beta Leonis, 57632
+Diphda | Beta Ceti | Deneb Kaitos, 3419
+Enif | Epsilon Pegasi, 107315
+Fomalhaut | Alpha Piscis Austrini, 113368
+Gacrux | Gamma Crucis, 61084
+Hadar | Beta Centauri | Agena, 68702
+Hamal | Alpha Arietis | El Nath, 9884
+Homam | Zeta Pegasi, 112029
+Izar | Epsilon Bootis | Pulcherrima, 72105
+Kaus Australis | Epsilon Sagittarii, 90185
+Kornephoros | Beta Herculis, 80816
+Markab | Alpha Pegasi, 113963
+Matar | Eta Pegasi, 112158
+Menkar | Alpha Ceti | Menkab, 14135
+Menkent | Theta Centauri, 68933
+Miaplacidus | Beta Carinae, 45238
+Mirach | Beta Andromedae, 5447
+Mirzam | Beta Canis Majoris | Murzim | Al-Murzim, 30324
+Muphrid | Eta Bootis | Saak, 67927
+Nihal | Beta Leporis, 25606
+Nunki | Sigma Sagittarii, 92855
+Peacock | Alpha Pavonis, 100751
+Pollux | Beta Geminorum, 37826
+Porrima | Gamma Virginis | Arich, 61941
+Procyon | Alpha Canis Minoris, 37279
+Rasalgethi | Alpha Herculis | Ras Algethi, 84345
+Rasalhague | Alpha Ophiuchi | Ras Alhague, 86032
+Regor | Gamma Velorum | Suhail al Muhlif, 39953
+Regulus | Alpha Leonis | Basiliscus, 49669
+Rigel | Beta Orionis, 24436
+Sabik | Eta Ophiuchi, 84012
+Sadalmelik | Alpha Aquarii, 109074
+Sadalsuud | Beta Aquarii, 106278
+Sadr | Gamma Cygni | Sadir | Sador, 100453
+SAO 104461 | Zeta Aquilae | Deneb el Okab, 93747
+SAO 144150 | Theta Aquilae, 99473
+SAO 181543 | Gamma Hydrae | Cauda Hydrae | Dhanab al Shuja, 64962
+SAO 184014 | Delta Scorpii | Dschubba | Dzuba | Iclarcrau | Iclarkrav, 78401
+SAO 198752 | Zeta Puppis | Naos | Suhail Hadar, 39429
+SAO 204371 | Iota Centauri | Alhakim, 65109
+SAO 215365 | Beta Phoenicis, 5165
+SAO 222321 | Mu Velorum, 52727 
+SAO 223603 | Gamma Centauri | Muhlifain, 61932
+SAO 225044 | Eta Centauri, 71352
+SAO 225128 | Alpha Lupi | Kakkab, 71860
+SAO 225938 | Gamma Lupi | Thusia, 76297
+SAO 228201 | Theta Scorpii | Sargas | Girtab, 86228
+SAO 230300 | Alpha Indi, 101772
+SAO 231258 | Beta Gruis, 112122
+SAO 236232 | Delta Velorum, 42913
+SAO 241047 | Epsilon Centauri, 66657
+SAO 255193 | Alpha Tucanae, 110130
+SAO 55306 | Beta Trianguli | Deltotum | Deltoton, 10064
+SAO 65485 | Zeta Herculis, 81693
+SAO 70474 | Epsilon Cygni, 102488
+SAO 81004 | Epsilon Leonis | Ras Elased | Algenubi, 47908
+Scheat | Beta Pegasi, 113881
+Sheratan | Beta Arietis, 8903
+Sirius | Alpha Canis Majoris, 32349
+Skat | Delta Aquarii, 113136
+Spica | Alpha Virginis, 65474
+Suhail | Lambda Velorum, 44816
+Sulafat | Gamma Lyrae | Jugum, 93194
+Unukalhai | Alpha Serpentis | Cor Serpentis, 77070
+Vega | Alpha Lyrae, 91262
+Wezen | Delta Canis Majoris | Wesen, 34444
+Zaurak | Gamma Eridani, 18543
+Zosma | Delta Leonis | Zozma | Duhr, 54872
+Zubeneschamali | Beta Librae | Lanx Australis, 74785
