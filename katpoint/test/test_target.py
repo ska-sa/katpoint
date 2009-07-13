@@ -26,7 +26,9 @@ class TestTargetConstruction(unittest.TestCase):
                               'Moon | Luna, special solarbody',
                               'Aldebaran, star',
                               'Betelgeuse | Maitland, star orion',
-                              'xephem star, Sadr~f|S|F8~20:22:13.7|2.43~40:15:24|-0.93~2.23~2000~0']
+                              'xephem star, Sadr~f|S|F8~20:22:13.7|2.43~40:15:24|-0.93~2.23~2000~0',
+                              'Acamar | Theta Eridani, xephem, HIC 13847~f|S|A4~2:58:16.03~-40:18:17.1~2.906~2000~',
+                              'Kakkab | Alpha Lupi, xephem, HIC 71860 | SAO 225128~f|S|B1~14:41:55.768~-47:23:17.51~2.304~2000~']
         self.invalid_targets = ['Sun',
                                 'Sun, ',
                                 '-30.0, 90.0',
@@ -53,7 +55,8 @@ class TestTargetConstruction(unittest.TestCase):
         valid_strings = [t.get_description() for t in valid_targets]
         for descr in valid_strings:
             self.assertEqual(descr, target.construct_target(descr).get_description(),
-                             'Target description differs from original string')
+                             "Target description ('%s') differs from original string ('%s')" % 
+                             (target.construct_target(descr).get_description(), descr))
         for descr in self.invalid_targets:
             self.assertRaises(ValueError, target.construct_target, descr)
         azel1 = target.construct_target(self.azel_target)

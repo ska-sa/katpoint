@@ -175,7 +175,9 @@ class Target(object):
                 fields = [names, tags, edb_string]
         
         elif body_type == 'xephem':
-            edb_string = self.body.writedb().replace(',', '~')
+            # Replace commas in xephem string with tildes, to avoid clashing with main string structure
+            # Also remove extra spaces added into string by writedb
+            edb_string = '~'.join([edb_field.strip() for edb_field in self.body.writedb().split(',')])
             # Suppress name if it's the same as in the xephem db string
             edb_name = edb_string[:edb_string.index('~')]
             if edb_name == names:
@@ -638,8 +640,11 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
         if len(lines) != 3:
             raise ValueError("Target description '%s' contains *tle* body without the expected three lines"
                              % description)
+        tle_name = lines[0].strip()
         if not preferred_name:
-            preferred_name = lines[0].strip()
+            preferred_name = tle_name
+        if tle_name != preferred_name:
+            aliases.append(tle_name)
         try:
             body = ephem.readtle(preferred_name, lines[1], lines[2])
         except ValueError:
@@ -661,8 +666,17 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
     
     elif body_type == 'xephem':
         edb_string = fields[-1].replace('~', ',')
+        edb_name_field = edb_string.partition(',')[0]
+        edb_names = [name.strip() for name in edb_name_field.split('|')]
         if preferred_name:
-            edb_string.replace(edb_string.partition(',')[0], preferred_name)
+            edb_string = edb_string.replace(edb_name_field, preferred_name)
+        else:
+            preferred_name = edb_names[0]
+        if preferred_name != edb_names[0]:
+            aliases.append(edb_names[0])
+        for extra_name in edb_names[1:]:
+            if not extra_name in aliases:
+                aliases.append(extra_name)
         try:
             body = eval("ephem.readdb('%s')" % edb_string)
         except ValueError:
