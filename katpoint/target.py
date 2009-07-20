@@ -338,34 +338,6 @@ class Target(object):
     # The default (ra, dec) coordinates are the astrometric ones
     radec = astrometric_radec
     
-    def az_increases(self, timestamp=None, antenna=None):
-        """Check if azimuth of target increases with time at given timestamp.
-        
-        This will be true if the antenna has to turn clockwise to keep tracking
-        the target at the given timestamp.
-        
-        Parameters
-        ----------
-        timestamp : float or string or sequence, optional
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
-            (defaults to now)
-        antenna : :class:`Antenna` object, optional
-            Antenna which points at target (defaults to default antenna)
-        
-        Returns
-        -------
-        az_increases : bool
-            True if azimuth increases with time at the given timestamp
-        
-        Raises
-        ------
-        ValueError
-            If no antenna is specified, and no default antenna was set either
-        
-        """
-        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        return self.azel(timestamp + 1.0, antenna)[0] > self.azel(timestamp, antenna)[0]
-        
     def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency.
         
