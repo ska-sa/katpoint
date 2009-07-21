@@ -6,6 +6,7 @@ import test_target
 import test_antenna
 import test_catalogue
 import test_projection
+import test_ephem_extra
 
 def suite():
     loader = unittest.TestLoader()
