@@ -14,6 +14,7 @@ def suite():
     testsuite.addTests(loader.loadTestsFromModule(test_antenna))
     testsuite.addTests(loader.loadTestsFromModule(test_catalogue))
     testsuite.addTests(loader.loadTestsFromModule(test_projection))
+    testsuite.addTests(loader.loadTestsFromModule(test_ephem_extra))
     return testsuite
 
 if __name__ == '__main__':
