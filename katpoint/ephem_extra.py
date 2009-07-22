@@ -12,33 +12,17 @@ import ephem
 # The speed of light, in metres per second
 lightspeed = ephem.c
 
+def is_iterable(x):
+    """Checks if object is iterable (but not a string)."""
+    return hasattr(x, '__iter__')
+    
 def rad2deg(x):
+    """Converts radians to degrees (also works for arrays)."""
     return x * 180.0 / np.pi
 
 def deg2rad(x):
+    """Converts degrees to radians (also works for arrays)."""
     return x * np.pi / 180.0
-
-def unix_to_ephem_time(timestamp):
-    """Convert UTC seconds since Unix epoch to a UTC PyEphem Date object.
-    
-    Parameters
-    ----------
-    timestamp : float or string
-        UTC time in seconds since Unix epoch (may have fractional part).
-        Alternately, a string date and/or time accepted by :class:`ephem.Date`.
-    
-    Returns
-    -------
-    ephem_time : :class:`ephem.Date` object
-        PyEphem UTC timestamp object, required for ephem calculations
-    
-    """
-    if isinstance(timestamp, basestring):
-        return ephem.Date(timestamp)
-    else:
-        timetuple = list(time.gmtime(np.floor(timestamp))[:6])
-        timetuple[5] += timestamp - np.floor(timestamp)
-        return ephem.Date(tuple(timetuple))
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Timestamp
@@ -60,10 +44,9 @@ class Timestamp(object):
     - A floating-point number, directly representing the number of UTC seconds
       since the Unix epoch. Fractional seconds are allowed.
     
-    - A string with :mod:`time` format '%Y-%m-%d', '%Y-%m-%d %H:%M:%S' or
-      '%Y-%m-%d %H:%M:%S.%f', where %f indicates fractional seconds. Examples of
-      each are '1999-12-31', '1999-12-31 12:34:56' and '1999-12-31 12:34:56.789'.
-      The input string is always in UTC.
+    - A string with format 'YYYY-MM-DD HH:MM:SS.SSS' or 'YYYY/MM/DD HH:MM:SS.SSS',
+      or any prefix thereof. Examples are '1999-12-31 12:34:56.789', '1999-12-31',
+      '1999-12-31 12:34:56' and even '1999'. The input string is always in UTC.
     
     - A :class:`ephem.Date` object, which is the standard time representation
       in PyEphem.
@@ -80,23 +63,15 @@ class Timestamp(object):
     
     """
     def __init__(self, timestamp=None):
+        if isinstance(timestamp, basestring):
+            try:
+                timestamp = ephem.Date(timestamp.strip().replace('-', '/'))
+            except ValueError:
+                raise ValueError("Timestamp string '%s' not in correct format - " % (timestamp,) +
+                                 "should be 'YYYY-MM-DD HH:MM:SS' or 'YYYY/MM/DD HH:MM:SS' or prefix thereof " +
+                                 "(all UTC, fractional seconds allowed)")
         if timestamp is None:
             self.secs = time.time()
-        elif isinstance(timestamp, basestring):
-            timestamp = timestamp.strip().partition('.')
-            frac_secs = 0.0
-            if timestamp[1] == '.':
-                frac_secs = float(''.join(timestamp[1:]))
-            try:
-                timestamp = list(time.strptime(timestamp[0], '%Y-%m-%d %H:%M:%S'))
-            except ValueError:
-                try:
-                    timestamp = list(time.strptime(timestamp[0], '%Y-%m-%d'))
-                except ValueError:
-                    raise ValueError("Timestamp string '%s' not in correct format - " % (timestamp[0],) +
-                                     "should be either e.g. '1999-12-31 13:00:04' or '1999-12-31' " +
-                                     "(all UTC, fractional seconds allowed)")
-            self.secs = time.mktime(timestamp[:8] + [0]) - time.timezone + frac_secs
         elif isinstance(timestamp, ephem.Date):
             timestamp = list(timestamp.tuple()) + [0, 0, 0]
             frac_secs = timestamp[5] - np.floor(timestamp[5])
@@ -158,10 +133,14 @@ class Timestamp(object):
         return self.secs
     
     def local(self):
-        """Convert timestamp to local time string representation."""
-        datetime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(np.floor(self.secs)))
-        timezone = time.strftime('%Z', time.localtime(np.floor(self.secs)))
-        frac_secs = self.secs - np.floor(self.secs)
+        """Convert timestamp to local time string representation (for display only)."""
+        int_secs = np.floor(self.secs)
+        frac_secs = np.round(1000.0 * (self.secs - int_secs)) / 1000.0
+        if frac_secs >= 1.0:
+            int_secs += 1.0
+            frac_secs -= 1.0
+        datetime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int_secs))
+        timezone = time.strftime('%Z', time.localtime(int_secs))
         if frac_secs == 0.0:
             return '%s %s' % (datetime, timezone)
         else:
@@ -169,8 +148,12 @@ class Timestamp(object):
     
     def to_string(self):
         """Convert timestamp to UTC string representation."""
-        datetime = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(np.floor(self.secs)))
-        frac_secs = self.secs - np.floor(self.secs)
+        int_secs = np.floor(self.secs)
+        frac_secs = np.round(1000.0 * (self.secs - int_secs)) / 1000.0
+        if frac_secs >= 1.0:
+            int_secs += 1.0
+            frac_secs -= 1.0
+        datetime = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(int_secs))
         if frac_secs == 0.0:
             return datetime
         else:
