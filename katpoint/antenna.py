@@ -83,15 +83,22 @@ class Antenna(object):
         """Short human-friendly string representation of antenna object."""
         return "<katpoint.Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
     
-    def get_description(self):
-        """Complete string representation of antenna object, sufficient to reconstruct it."""
-        if self.offset:
-            return "%s, %s, %s, %s, %s, %s, %s, %s" % (self.name, self.ref_observer.lat,
-                   self.ref_observer.long, self.ref_observer.elevation, self.diameter,
-                   self.offset[0], self.offset[1], self.offset[2])
-        else:    
-            return "%s, %s, %s, %s, %s" % (self.name, self.observer.lat,
-                   self.observer.long, self.observer.elevation, self.diameter)
+    # Provide description string as a read-only property, which is more compact than a method
+    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
+    def description():
+        """Class method which creates description property."""
+        doc = 'Complete string representation of antenna object, sufficient to reconstruct it.'
+        def fget(self):
+            if self.offset:
+                return "%s, %s, %s, %s, %s, %s, %s, %s" % (self.name, self.ref_observer.lat,
+                       self.ref_observer.long, self.ref_observer.elevation, self.diameter,
+                       self.offset[0], self.offset[1], self.offset[2])
+            else:    
+                return "%s, %s, %s, %s, %s" % (self.name, self.observer.lat,
+                       self.observer.long, self.observer.elevation, self.diameter)
+        
+        return locals()
+    description = property(**description())
     
     def sidereal_time(self, timestamp=None):
         """Calculate sidereal time for local timestamp(s).

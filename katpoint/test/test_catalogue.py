@@ -20,7 +20,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         num_targets = len(cat.targets)
         self.assertEqual(num_targets, len(catalogue.specials) + 1 + 94, 'Number of targets incorrect')
         test_target = cat.targets[0]
-        self.assertEqual(test_target.get_description(), cat[test_target.name].get_description(), 'Lookup failed')
+        self.assertEqual(test_target.description, cat[test_target.name].description, 'Lookup failed')
         self.assertEqual(cat['Non-existent'], None, 'Lookup of non-existent target failed')
         cat.add_tle(self.tle_lines, 'tle')
         self.assertEqual(len(cat.targets), num_targets + 1, 'Number of targets incorrect')

@@ -52,19 +52,19 @@ class TestTargetConstruction(unittest.TestCase):
     def test_construct_target(self):
         """Test construction of targets from strings and vice versa."""
         valid_targets = [target.construct_target(descr) for descr in self.valid_targets]
-        valid_strings = [t.get_description() for t in valid_targets]
+        valid_strings = [t.description for t in valid_targets]
         for descr in valid_strings:
-            self.assertEqual(descr, target.construct_target(descr).get_description(),
+            self.assertEqual(descr, target.construct_target(descr).description,
                              "Target description ('%s') differs from original string ('%s')" % 
-                             (target.construct_target(descr).get_description(), descr))
+                             (target.construct_target(descr).description, descr))
         for descr in self.invalid_targets:
             self.assertRaises(ValueError, target.construct_target, descr)
         azel1 = target.construct_target(self.azel_target)
         azel2 = target.construct_azel_target('10:00:00.0', '-10:00:00.0')
-        self.assertEqual(azel1.get_description(), azel2.get_description(), 'Special azel constructor failed')
+        self.assertEqual(azel1.description, azel2.description, 'Special azel constructor failed')
         radec1 = target.construct_target(self.radec_target)
         radec2 = target.construct_radec_target('10:00:00.0', '-10:00:00.0')
-        self.assertEqual(radec1.get_description(), radec2.get_description(), 'Special radec constructor failed')
+        self.assertEqual(radec1.description, radec2.description, 'Special radec constructor failed')
         
     def test_add_tags(self):
         """Test adding tags."""

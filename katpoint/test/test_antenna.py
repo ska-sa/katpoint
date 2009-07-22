@@ -18,9 +18,9 @@ class TestAntennaConstruction(unittest.TestCase):
     def test_construct_antenna(self):
         """Test construction of antennas from strings and vice versa."""
         valid_antennas = [antenna.construct_antenna(descr) for descr in self.valid_antennas]
-        valid_strings = [a.get_description() for a in valid_antennas]
+        valid_strings = [a.description for a in valid_antennas]
         for descr in valid_strings:
-            self.assertEqual(descr, antenna.construct_antenna(descr).get_description(),
+            self.assertEqual(descr, antenna.construct_antenna(descr).description,
                              'Antenna description differs from original string')
         for descr in self.invalid_antennas:
             self.assertRaises(ValueError, antenna.construct_antenna, descr)
