@@ -1,11 +1,9 @@
 """Target object used for pointing and flux density calculation."""
 
-import time
-
 import numpy as np
 import ephem
 
-from .ephem_extra import unix_to_ephem_time, StationaryBody
+from .ephem_extra import Timestamp, StationaryBody, is_iterable
 from .projection import sphere_to_plane, plane_to_sphere
 
 #--------------------------------------------------------------------------------------------------
@@ -84,6 +82,7 @@ class Target(object):
         if self.tags[1:]:
             descr += ', tags=%s' % (','.join(self.tags[1:]),)
         if radec or self.tags[0] == 'radec':
+            # pylint: disable-msg=W0212
             descr += ', %s %s' % (self.body._ra, self.body._dec)
         if self.tags[0] == 'azel':
             descr += ', %s %s' % (self.body.az, self.body.el)
@@ -109,15 +108,15 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or string or sequence, or None
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, or None
+            Timestamp(s) in UTC seconds since Unix epoch (None means now)
         antenna : :class:`Antenna` object, or None
             Antenna which points at target
         
         Returns
         -------
-        timestamp : float or string or sequence
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
+        timestamp : :class:`Timestamp` object or equivalent, or sequence
+            Timestamp(s) in UTC seconds since Unix epoch
         antenna : :class:`Antenna` object
             Antenna which points at target
         
@@ -128,7 +127,7 @@ class Target(object):
         
         """
         if timestamp is None:
-            timestamp = time.time()
+            timestamp = Timestamp()
         if antenna is None:
             antenna = self.antenna
         if antenna is None:
@@ -218,9 +217,8 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or string or sequence, optional
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
-            (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
         
@@ -240,14 +238,14 @@ class Target(object):
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_azel(t):
             """Calculate (az, el) coordinates for a single time instant."""
-            antenna.observer.date = unix_to_ephem_time(t)
+            antenna.observer.date = Timestamp(t).to_ephem_date()
             self.body.compute(antenna.observer)
             return self.body.az, self.body.alt
-        if np.isscalar(timestamp):
-            return _scalar_azel(timestamp)
-        else:
+        if is_iterable(timestamp):
             azel = np.array([_scalar_azel(t) for t in timestamp])
             return azel[:, 0], azel[:, 1]
+        else:
+            return _scalar_azel(timestamp)
     
     def apparent_radec(self, timestamp=None, antenna=None):
         """Calculate target's apparent (ra, dec) coordinates as seen from antenna at time(s).
@@ -261,9 +259,8 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or string or sequence, optional
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
-            (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
         
@@ -283,14 +280,14 @@ class Target(object):
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
-            antenna.observer.date = unix_to_ephem_time(t)
+            antenna.observer.date = Timestamp(t).to_ephem_date()
             self.body.compute(antenna.observer)
             return self.body.ra, self.body.dec
-        if np.isscalar(timestamp):
-            return _scalar_radec(timestamp)
-        else:
+        if is_iterable(timestamp):
             radec = np.array([_scalar_radec(t) for t in timestamp])
             return radec[:, 0], radec[:, 1]
+        else:
+            return _scalar_radec(timestamp)
     
     def astrometric_radec(self, timestamp=None, antenna=None):
         """Calculate target's astrometric (ra, dec) coordinates as seen from antenna at time(s).
@@ -304,9 +301,8 @@ class Target(object):
         
         Parameters
         ----------
-        timestamp : float or string or sequence, optional
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
-            (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
         
@@ -326,14 +322,14 @@ class Target(object):
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
-            antenna.observer.date = unix_to_ephem_time(t)
+            antenna.observer.date = Timestamp(t).to_ephem_date()
             self.body.compute(antenna.observer)
             return self.body.a_ra, self.body.a_dec
-        if np.isscalar(timestamp):
-            return _scalar_radec(timestamp)
-        else:
+        if is_iterable(timestamp):
             radec = np.array([_scalar_radec(t) for t in timestamp])
             return radec[:, 0], radec[:, 1]
+        else:
+            return _scalar_radec(timestamp)
     
     # The default (ra, dec) coordinates are the astrometric ones
     radec = astrometric_radec
@@ -390,9 +386,9 @@ class Target(object):
         ----------
         other_target : :class:`Target` object
             The other target
-        timestamp : float or string, optional
-            UTC timestamp when separation is measured, in seconds since Unix
-            epoch or string date/time (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp when separation is measured, in UTC seconds since Unix
+            epoch (defaults to now)
         antenna : class:`Antenna` object, optional
             Antenna that observes both targets, from where separation is measured
             (defaults to default antenna of this target)
@@ -403,6 +399,7 @@ class Target(object):
             Angular separation between the targets, in radians
         
         """
+        # Get a common timestamp and antenna for both targets
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         # Work in apparent (ra, dec), as this is the most reliable common coordinate frame in ephem
         return ephem.separation(self.apparent_radec(timestamp, antenna),
@@ -423,9 +420,8 @@ class Target(object):
             Azimuth or right ascension, in radians
         el : float or array
             Elevation or declination, in radians
-        timestamp : float or string or sequence, optional
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
-            (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna pointing at target (defaults to default antenna)
         projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional
@@ -465,9 +461,8 @@ class Target(object):
             Azimuth-like coordinate(s) on plane, in radians
         y : float or array
             Elevation-like coordinate(s) on plane, in radians
-        timestamp : float or string or sequence, optional
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
-            (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna pointing at target (defaults to default antenna)
         projection_type : {'ARC', 'SIN', 'TAN', 'STG'}, optional

@@ -1,11 +1,9 @@
 """Antenna object wrapping its location and dish diameter."""
 
-import time
-
 import numpy as np
 import ephem
 
-from .ephem_extra import unix_to_ephem_time, enu_to_ecef, ecef_to_lla
+from .ephem_extra import Timestamp, is_iterable, enu_to_ecef, ecef_to_lla
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Antenna
@@ -113,17 +111,15 @@ class Antenna(object):
             Local sidereal time(s)
         
         """
-        if timestamp is None:
-            timestamp = time.time()
         def _scalar_sidereal_time(t):
             """Calculate sidereal time at a single time instant."""
-            self.observer.date = unix_to_ephem_time(t)
+            self.observer.date = Timestamp(t).to_ephem_date()
             # pylint: disable-msg=E1101
             return self.observer.sidereal_time()
-        if np.isscalar(timestamp):
-            return _scalar_sidereal_time(timestamp)
-        else:
+        if is_iterable(timestamp):
             return np.array([_scalar_sidereal_time(t) for t in timestamp])
+        else:
+            return _scalar_sidereal_time(timestamp)
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_antenna
