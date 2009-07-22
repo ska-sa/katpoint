@@ -1,7 +1,6 @@
 """Target catalogue."""
 
 import logging
-import time
 import re
 
 import ephem.stars
@@ -19,7 +18,7 @@ except ImportError:
     readline_found = False
 
 from .target import construct_target, Target
-from .ephem_extra import rad2deg
+from .ephem_extra import rad2deg, Timestamp
 
 logger = logging.getLogger("katpoint.catalogue")
 
@@ -69,7 +68,7 @@ class Catalogue(object):
         self.add(targets, tags)
     
     # Provide properties so that default antenna or flux frequency changes are passed on to targets
-    # pylint: disable-msg=E0211,E0202,W0612,W0142
+    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
     def antenna():
         """Class method which creates antenna property."""
         doc = 'Default antenna used to calculate target positions.'
@@ -82,7 +81,7 @@ class Catalogue(object):
         return locals()
     antenna = property(**antenna())
     
-    # pylint: disable-msg=E0211,E0202,W0612,W0142
+    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
     def flux_freq_MHz():
         """Class method which creates flux_freq_MHz property."""
         doc = 'Default frequency at which to evaluate flux density, in MHz.'
@@ -255,10 +254,9 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        timestamp : float or string, optional
-            UTC timestamp at which to evaluate target positions, in seconds
-            since Unix epoch or string date/time. If None, the current time
-            *at each iteration* is used.
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp at which to evaluate target positions, in UTC seconds since
+            Unix epoch. If None, the current time *at each iteration* is used.
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         
@@ -315,7 +313,7 @@ class Catalogue(object):
             latest_timestamp = timestamp
             # Obtain current time if no timestamp is supplied - this will differ for each iteration
             if (elevation_filter or proximity_filter) and latest_timestamp is None:
-                latest_timestamp = time.time()
+                latest_timestamp = Timestamp()
             # Iterate over targets until one is found that satisfies dynamic criteria
             for n, target in enumerate(targets):
                 if elevation_filter:
@@ -362,9 +360,9 @@ class Catalogue(object):
             takes the form [lower, upper]. If None, any distance is accepted.
         proximity_targets : :class:`Target` object, or sequence of objects
             Target or list of targets used in proximity filter
-        timestamp : float or string, optional
-            UTC timestamp at which to evaluate target positions, in seconds
-            since Unix epoch or string date/time (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp at which to evaluate target positions, in UTC seconds
+            since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         
@@ -395,9 +393,9 @@ class Catalogue(object):
             True if key should be sorted in ascending order
         flux_freq_MHz : float, optional
             Frequency at which to evaluate the flux density, in MHz
-        timestamp : float or string, optional
-            UTC timestamp at which to evaluate target positions, in seconds
-            since Unix epoch or string date/time (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp at which to evaluate target positions, in UTC seconds
+            since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         
@@ -438,16 +436,21 @@ class Catalogue(object):
         """Print out list of targets in catalogue, sorted by decreasing elevation.
         
         This prints out the name, azimuth and elevation of each target in the
-        catalogue, in order of decreasing elevation. It indicates the horizon
-        itself by a line of dashes. It also displays the target flux density
-        if a frequency is supplied. It is useful to quickly see which sources
-        are visible.
+        catalogue, in order of decreasing elevation. The motion of the target at
+        the given timestamp is indicated by a character code, which is '/' if
+        the target is rising, '\' if it is setting, and '-' if it is stationary
+        (i.e. if the elevation angle changes by less than 1 arcminute during the
+        one-minute interval surrounding the timestamp).
+        
+        The method indicates the horizon itself by a line of dashes. It also
+        displays the target flux density if a frequency is supplied. It is useful
+        to quickly see which targets are visible. 
         
         Parameters
         ----------
-        timestamp : float or string, optional
-            UTC timestamp at which to evaluate target positions, in seconds
-            since Unix epoch or string date/time (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp at which to evaluate target positions, in UTC seconds
+            since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
         flux_freq_MHz : float, optional
@@ -455,24 +458,24 @@ class Catalogue(object):
         
         """
         above_horizon = True
-        if timestamp is None:
-            timestamp = time.time()
+        timestamp = Timestamp(timestamp)
         if antenna is None:
             antenna = self.antenna
         if antenna is None:
             raise ValueError('Antenna object needed to calculate target position')
-        title = "Targets visible from antenna '%s' at %s" % \
-                (antenna.name, time.strftime('%Y/%m/%d %H:%M:%S %Z', time.localtime(timestamp)))
+        title = "Targets visible from antenna '%s' at %s" % (antenna.name, timestamp.local())
         if flux_freq_MHz is None:
             flux_freq_MHz = self.flux_freq_MHz
         if not flux_freq_MHz is None:
             title += ', with flux density evaluated at %g MHz' % (flux_freq_MHz,)
         print title
         print
-        print 'Target                    Azimuth    Elevation    Flux'
-        print '------                    -------    ---------    ----'
+        print 'Target                        Azimuth    Elevation R/S  Flux'
+        print '------                        -------    --------- ---  ----'
         for target in self.sort('el', timestamp=timestamp, antenna=antenna, ascending=False):
             az, el = target.azel(timestamp, antenna)
+            delta_el = rad2deg(target.azel(timestamp + 30.0, antenna)[1] - target.azel(timestamp - 30.0, antenna)[1])
+            el_code = '-' if (np.abs(delta_el) < 1.0 / 60.0) else ('/' if delta_el > 0.0 else '\\')
             # If no flux frequency is given, do not attempt to evaluate the flux, as it will fail
             if not flux_freq_MHz is None:
                 flux = target.flux_density(flux_freq_MHz)
@@ -480,12 +483,12 @@ class Catalogue(object):
                 flux = None
             if above_horizon and el < 0.0:
                 # Draw horizon line
-                print '------------------------------------------------------'
+                print '------------------------------------------------------------'
                 above_horizon = False
             if not flux is None:
-                print '%-20s %12s %12s %7.1f' % (target.name, az, el, flux)
+                print '%-24s %12s %12s %c %7.1f' % (target.name, az, el, el_code, flux)
             else:
-                print '%-20s %12s %12s' % (target.name, az, el)
+                print '%-24s %12s %12s %c' % (target.name, az, el, el_code)
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  _catalogue_completer

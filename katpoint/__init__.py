@@ -18,7 +18,7 @@ from .target import Target, construct_target, construct_azel_target, construct_r
 
 from .catalogue import Catalogue, specials, _catalogue_completer
 
-from .ephem_extra import lightspeed, rad2deg, deg2rad
+from .ephem_extra import Timestamp, lightspeed, rad2deg, deg2rad
 
 from .projection import sphere_to_plane, plane_to_sphere
 
