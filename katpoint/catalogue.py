@@ -228,7 +228,7 @@ class Catalogue(object):
                 self.lookup.pop(_hash(alias))
             self.targets.remove(target)
     
-    def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, el_limit_deg=None,
+    def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, az_limit_deg=None, el_limit_deg=None,
                    dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Iterator which returns targets satisfying various criteria.
         
@@ -244,6 +244,11 @@ class Catalogue(object):
             any flux density is accepted.
         flux_freq_MHz : float, optional
             Frequency at which to evaluate the flux density, in MHz
+        az_limit_deg : sequence of 2 floats, optional
+            Allowed azimuth range, in degrees. It takes the form [left, right],
+            where *left* is the leftmost or starting azimuth, and *right* is the
+            rightmost or ending azimuth. If *right* is less than *left*, the
+            azimuth angles range around +-180. If None, any azimuth is accepted.
         el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
@@ -273,6 +278,7 @@ class Catalogue(object):
         """
         tag_filter = not tags is None
         flux_filter = not flux_limit_Jy is None
+        azimuth_filter = not az_limit_deg is None
         elevation_filter = not el_limit_deg is None
         proximity_filter = not dist_limit_deg is None
         # Copy targets to a new list which will be pruned by filters
@@ -312,10 +318,18 @@ class Catalogue(object):
         while targets:
             latest_timestamp = timestamp
             # Obtain current time if no timestamp is supplied - this will differ for each iteration
-            if (elevation_filter or proximity_filter) and latest_timestamp is None:
+            if (azimuth_filter or elevation_filter or proximity_filter) and latest_timestamp is None:
                 latest_timestamp = Timestamp()
             # Iterate over targets until one is found that satisfies dynamic criteria
             for n, target in enumerate(targets):
+                if azimuth_filter:
+                    az_deg = rad2deg(target.azel(latest_timestamp, antenna)[0])
+                    if az_limit_deg[1] > az_limit_deg[0]:
+                        if (az_deg < az_limit_deg[0]) or (az_deg > az_limit_deg[1]):
+                            continue
+                    else:
+                        if (az_deg > az_limit_deg[1]) and (az_deg < az_limit_deg[0]):
+                            continue
                 if elevation_filter:
                     el_deg = rad2deg(target.azel(latest_timestamp, antenna)[1])
                     if (el_deg < el_limit_deg[0]) or (el_deg > el_limit_deg[1]):
@@ -334,7 +348,7 @@ class Catalogue(object):
             # Return successful target and remove from list to ensure it is not picked again
             yield targets.pop(found_one)
     
-    def filter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, el_limit_deg=None,
+    def filter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, az_limit_deg=None, el_limit_deg=None,
                dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Filter catalogue on various criteria.
         
@@ -350,6 +364,11 @@ class Catalogue(object):
             any flux density is accepted.
         flux_freq_MHz : float, optional
             Frequency at which to evaluate the flux density, in MHz
+        az_limit_deg : sequence of 2 floats, optional
+            Allowed azimuth range, in degrees. It takes the form [left, right],
+            where *left* is the leftmost or starting azimuth, and *right* is the
+            rightmost or ending azimuth. If *right* is less than *left*, the
+            azimuth angles range around +-180. If None, any azimuth is accepted.
         el_limit_deg : float or sequence of 2 floats, optional
             Allowed elevation range, in degrees. If this is a single number, it
             is the lower limit, otherwise it takes the form [lower, upper].
@@ -378,7 +397,7 @@ class Catalogue(object):
         
         """
         return Catalogue([target for target in
-                          self.iterfilter(tags, flux_limit_Jy, flux_freq_MHz, el_limit_deg,
+                          self.iterfilter(tags, flux_limit_Jy, flux_freq_MHz, az_limit_deg, el_limit_deg,
                                           dist_limit_deg, proximity_targets, timestamp, antenna)],
                          add_specials=False, antenna=self.antenna, flux_freq_MHz=self.flux_freq_MHz)
         
