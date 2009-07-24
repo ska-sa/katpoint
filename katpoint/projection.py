@@ -102,16 +102,16 @@ def _sphere_to_plane_common(az0, el0, az, el):
 
 def sphere_to_plane_sin(az0, el0, az, el):
     """Project sphere to plane using orthographic (SIN) projection.
-    
+
     The orthographic projection requires the target point to be within the
     hemisphere centred on the reference point. The angular separation between
     the target and reference points should be less than or equal to pi/2
     radians. The output (x, y) coordinates are constrained to lie within or on
     the unit circle in the plane.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -122,24 +122,24 @@ def sphere_to_plane_sin(az0, el0, az, el):
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Returns
     -------
     x : float or array
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range, or target is too far from reference
-    
+
     Notes
     -----
     This implements the original SIN projection as in AIPS, not the generalised
     'slant orthographic' projection as in WCSLIB.
-    
+
     """
     ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
     if np.any(cos_theta < 0.0):
@@ -149,14 +149,14 @@ def sphere_to_plane_sin(az0, el0, az, el):
 
 def plane_to_sphere_sin(az0, el0, x, y):
     """Deproject plane to sphere using orthographic (SIN) projection.
-    
+
     The orthographic projection requires the (x, y) coordinates to lie within
     or on the unit circle. The target point is constrained to lie within the
     hemisphere centred on the reference point.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -167,24 +167,24 @@ def plane_to_sphere_sin(az0, el0, x, y):
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Returns
     -------
     az : float or array
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range, or the radius of (x, y) > 1.0
-    
+
     Notes
     -----
     This implements the original SIN projection as in AIPS, not the generalised
     'slant orthographic' projection as in WCSLIB.
-    
+
     """
     if np.any(np.abs(el0) > np.pi / 2.0):
         raise ValueError('Elevation angle outside range of +- pi/2 radians')
@@ -206,15 +206,15 @@ def plane_to_sphere_sin(az0, el0, x, y):
 
 def sphere_to_plane_tan(az0, el0, az, el):
     """Project sphere to plane using gnomonic (TAN) projection.
-    
+
     The gnomonic projection requires the target point to be within the
     hemisphere centred on the reference point. The angular separation between
     the target and reference points should be less than pi/2 radians.
     The output (x, y) coordinates are unrestricted.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -225,19 +225,19 @@ def sphere_to_plane_tan(az0, el0, az, el):
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Returns
     -------
     x : float or array
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range, or target is too far from reference
-    
+
     """
     ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
     if np.any(cos_theta <= 0.0):
@@ -247,13 +247,13 @@ def sphere_to_plane_tan(az0, el0, az, el):
 
 def plane_to_sphere_tan(az0, el0, x, y):
     """Deproject plane to sphere using gnomonic (TAN) projection.
-    
+
     The input (x, y) coordinates are unrestricted. The returned target point is
     constrained to lie within the hemisphere centred on the reference point.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -264,19 +264,19 @@ def plane_to_sphere_tan(az0, el0, x, y):
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Returns
     -------
     az : float or array
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range
-    
+
     """
     if np.any(np.abs(el0) > np.pi / 2.0):
         raise ValueError('Elevation angle outside range of +- pi/2 radians')
@@ -293,14 +293,14 @@ def plane_to_sphere_tan(az0, el0, x, y):
 
 def sphere_to_plane_arc(az0, el0, az, el):
     """Project sphere to plane using zenithal equidistant (ARC) projection.
-    
+
     The target point can be anywhere on the sphere. The output (x, y)
     coordinates are constrained to lie within or on a circle of radius pi
     radians centred on the origin in the plane.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -311,19 +311,19 @@ def sphere_to_plane_arc(az0, el0, az, el):
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Returns
     -------
     x : float or array
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range
-    
+
     """
     ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
     # Safeguard the arccos, as over-ranging happens occasionally due to round-off error
@@ -342,14 +342,14 @@ def sphere_to_plane_arc(az0, el0, az, el):
 
 def plane_to_sphere_arc(az0, el0, x, y):
     """Deproject plane to sphere using zenithal equidistant (ARC) projection.
-    
+
     The input (x, y) coordinates should lie within or on a circle of radius pi
     radians centred on the origin in the plane. The target point can be anywhere
     on the sphere.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -360,19 +360,19 @@ def plane_to_sphere_arc(az0, el0, x, y):
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Returns
     -------
     az : float or array
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range, or the radius of (x, y) > pi
-    
+
     """
     if np.any(np.abs(el0) > np.pi / 2.0):
         raise ValueError('Elevation angle outside range of +- pi/2 radians')
@@ -406,14 +406,14 @@ def plane_to_sphere_arc(az0, el0, x, y):
 
 def sphere_to_plane_stg(az0, el0, az, el):
     """Project sphere to plane using stereographic (STG) projection.
-    
+
     The target point can be anywhere on the sphere except in a small region
     diametrically opposite the reference point, which get mapped to infinity.
     The output (x, y) coordinates are unrestricted.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -424,19 +424,19 @@ def sphere_to_plane_stg(az0, el0, az, el):
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Returns
     -------
     x : float or array
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range, or target point opposite to reference
-    
+
     """
     ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
     den = 1.0 + cos_theta
@@ -447,13 +447,13 @@ def sphere_to_plane_stg(az0, el0, az, el):
 
 def plane_to_sphere_stg(az0, el0, x, y):
     """Deproject plane to sphere using stereographic (STG) projection.
-    
+
     The input (x, y) coordinates are unrestricted. The target point can be
     anywhere on the sphere.
-    
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
-    
+
     Parameters
     ----------
     az0 : float or array
@@ -464,19 +464,19 @@ def plane_to_sphere_stg(az0, el0, x, y):
         Azimuth-like coordinate(s) on plane, in radians
     y : float or array
         Elevation-like coordinate(s) on plane, in radians
-    
+
     Returns
     -------
     az : float or array
         Azimuth / right ascension / longitude of target point(s), in radians
     el : float or array
         Elevation / declination / latitude of target point(s), in radians
-    
+
     Raises
     ------
     ValueError
         If input values are out of range
-    
+
     """
     if np.any(np.abs(el0) > np.pi / 2.0):
         raise ValueError('Elevation angle outside range of +- pi/2 radians')

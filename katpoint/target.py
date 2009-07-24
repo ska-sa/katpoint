@@ -12,13 +12,13 @@ from .projection import sphere_to_plane, plane_to_sphere
 
 class Target(object):
     """A target which can be pointed at by an antenna.
-    
+
     This is a wrapper around a PyEphem :class:`ephem.Body` that adds flux
     density, alternate names and descriptive tags. For convenience, a default
     antenna and flux frequency can be set, to simplify the calling of pointing
     and flux density methods. These are not stored as part of the target object,
     however.
-    
+
     Parameters
     ----------
     body : ephem.Body object
@@ -37,12 +37,12 @@ class Target(object):
         Default antenna to use for position calculations
     flux_freq_MHz : float, optional
         Default frequency at which to evaluate flux density, in MHz
-        
+
     Arguments
     ---------
     name : string
         Name of target
-    
+
     """
     def __init__(self, body, tags, aliases=None, min_freq_MHz=None, max_freq_MHz=None, coefs=None,
                  antenna=None, flux_freq_MHz=None):
@@ -58,7 +58,7 @@ class Target(object):
         self.coefs = coefs
         self.antenna = antenna
         self.flux_freq_MHz = flux_freq_MHz
-    
+
     def __str__(self):
         """Verbose human-friendly string representation of target object."""
         descr = str(self.name)
@@ -95,36 +95,36 @@ class Target(object):
                 if not flux is None:
                     descr += ', flux=%.1f Jy @ %g MHz' % (flux, self.flux_freq_MHz)
         return descr
-    
+
     def __repr__(self):
         """Short human-friendly string representation of target object."""
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
-    
+
     def _set_timestamp_antenna_defaults(self, timestamp, antenna):
         """Set defaults for timestamp and antenna, if they are unspecified.
-        
+
         If *timestamp* is None, it is replaced by the current time. If *antenna*
-        is None, it is replaced by the default antenna for the target. 
-        
+        is None, it is replaced by the default antenna for the target.
+
         Parameters
         ----------
         timestamp : :class:`Timestamp` object or equivalent, or sequence, or None
             Timestamp(s) in UTC seconds since Unix epoch (None means now)
         antenna : :class:`Antenna` object, or None
             Antenna which points at target
-        
+
         Returns
         -------
         timestamp : :class:`Timestamp` object or equivalent, or sequence
             Timestamp(s) in UTC seconds since Unix epoch
         antenna : :class:`Antenna` object
             Antenna which points at target
-        
+
         Raises
         ------
         ValueError
             If no antenna is specified, and no default antenna was set either
-        
+
         """
         if timestamp is None:
             timestamp = Timestamp()
@@ -133,7 +133,7 @@ class Target(object):
         if antenna is None:
             raise ValueError('Antenna object needed to calculate target position')
         return timestamp, antenna
-    
+
     # Provide body type tag and description string as read-only properties, which are more compact than methods
     # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
     def body_type():
@@ -143,12 +143,12 @@ class Target(object):
             return self.tags[0].lower()
         return locals()
     body_type = property(**body_type())
-    
+
     # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
     def description():
         """Class method which creates description property."""
         doc = 'Complete string representation of target object, sufficient to reconstruct it.'
-        
+
         def fget(self):
             names = ' | '.join([self.name] + self.aliases)
             tags = ' '.join(self.tags)
@@ -162,7 +162,7 @@ class Target(object):
                 if names.startswith('Az:'):
                     fields = [tags]
                 fields += [str(self.body.az), str(self.body.el)]
-                
+
             elif self.body_type == 'radec':
                 # Check if it's an unnamed target with a default name
                 if names.startswith('Ra:'):
@@ -171,7 +171,7 @@ class Target(object):
                 fields += [str(self.body._ra), str(self.body._dec)]
                 if fluxinfo:
                     fields += [fluxinfo]
-                    
+
             elif self.body_type == 'tle':
                 # Switch body type to xephem, as XEphem only saves bodies in xephem edb format (no TLE output)
                 tags = tags.replace(tags.partition(' ')[0], 'xephem')
@@ -182,7 +182,7 @@ class Target(object):
                     fields = [tags, edb_string]
                 else:
                     fields = [names, tags, edb_string]
-                    
+
             elif self.body_type == 'xephem':
                 # Replace commas in xephem string with tildes, to avoid clashing with main string structure
                 # Also remove extra spaces added into string by writedb
@@ -192,30 +192,30 @@ class Target(object):
                 if edb_name == names:
                     fields = [tags]
                 fields += [edb_string]
-                
+
             return ', '.join(fields)
-        
+
         return locals()
     description = property(**description())
-    
+
     def add_tags(self, tags):
         """Add tags to target object.
-        
+
         This is a convenience function to add extra tags to a target, while
         checking the sanity of the tags. It also prevents duplicate tags without
         resorting to a tag set, which would be problematic since the tag order
         is meaningful (tags[0] is the body type).
-        
+
         Parameters
         ----------
         tags : string, list of strings, or None
             Tag or list of tags to add
-        
+
         Returns
         -------
         target : :class:`Target` object
             Updated target object
-        
+
         """
         if tags is None:
             tags = []
@@ -223,29 +223,29 @@ class Target(object):
             tags = [tags]
         self.tags.extend([tag for tag in tags if not tag in self.tags])
         return self
-    
+
     def azel(self, timestamp=None, antenna=None):
         """Calculate target (az, el) coordinates as seen from antenna at time(s).
-        
+
         Parameters
         ----------
         timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
-        
+
         Returns
         -------
         az : :class:`ephem.Angle` object, or sequence of objects
             Azimuth angle(s), in radians
         el : :class:`ephem.Angle` object, or sequence of objects
             Elevation angle(s), in radians
-        
+
         Raises
         ------
         ValueError
             If no antenna is specified, and no default antenna was set either
-        
+
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_azel(t):
@@ -258,36 +258,36 @@ class Target(object):
             return azel[:, 0], azel[:, 1]
         else:
             return _scalar_azel(timestamp)
-    
+
     def apparent_radec(self, timestamp=None, antenna=None):
         """Calculate target's apparent (ra, dec) coordinates as seen from antenna at time(s).
-        
+
         This calculates the *apparent topocentric position* of the target for
         the epoch-of-date in equatorial coordinates. Take note that this is
         *not* the "star-atlas" position of the target, but the position as is
         actually seen from the antenna at the given times. The difference is on
         the order of a few arcminutes. These are the coordinates that a telescope
         with an equatorial mount would use to track the target.
-        
+
         Parameters
         ----------
         timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
-        
+
         Returns
         -------
         ra : :class:`ephem.Angle` object, or sequence of objects
             Right ascension, in radians
         dec : :class:`ephem.Angle` object, or sequence of objects
             Declination, in radians
-        
+
         Raises
         ------
         ValueError
             If no antenna is specified, and no default antenna was set either
-        
+
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
@@ -300,36 +300,36 @@ class Target(object):
             return radec[:, 0], radec[:, 1]
         else:
             return _scalar_radec(timestamp)
-    
+
     def astrometric_radec(self, timestamp=None, antenna=None):
         """Calculate target's astrometric (ra, dec) coordinates as seen from antenna at time(s).
-        
+
         This calculates the J2000 *astrometric geocentric position* of the
         target, in equatorial coordinates. This is its star atlas position for
         the epoch of J2000. Some targets are unable to provide this (due to a
         limitation of pyephem), notably stationary (*azel*) targets, and provide
         the *apparent topocentric position* instead. The difference is on the
         order of a few arcminutes.
-        
+
         Parameters
         ----------
         timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
-        
+
         Returns
         -------
         ra : :class:`ephem.Angle` object, or sequence of objects
             Right ascension, in radians
         dec : :class:`ephem.Angle` object, or sequence of objects
             Declination, in radians
-        
+
         Raises
         ------
         ValueError
             If no antenna is specified, and no default antenna was set either
-        
+
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
@@ -342,36 +342,36 @@ class Target(object):
             return radec[:, 0], radec[:, 1]
         else:
             return _scalar_radec(timestamp)
-    
+
     # The default (ra, dec) coordinates are the astrometric ones
     radec = astrometric_radec
-    
+
     def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency.
-        
+
         This uses a polynomial flux model of the form::
-            
+
             log10 S[Jy] = a + b*log10(f[MHz]) + c*(log10(f[MHz]))^2
-        
+
         as used in Baars 1977. If the flux frequency is unspecified, the default
         value supplied to the target object during construction is used.
-        
+
         Parameters
         ----------
         flux_freq_MHz : float, optional
             Frequency at which to evaluate flux density, in MHz
-        
+
         Returns
         -------
         flux_density : float
             Flux density in Jy, or None if frequency is out of range or target
             does not have flux info
-        
+
         Raises
         ------
         ValueError
             If no frequency is specified, and no default frequency was set either
-        
+
         """
         if flux_freq_MHz is None:
             flux_freq_MHz = self.flux_freq_MHz
@@ -393,7 +393,7 @@ class Target(object):
 
     def separation(self, other_target, timestamp=None, antenna=None):
         """Angular separation between this target and another one.
-        
+
         Parameters
         ----------
         other_target : :class:`Target` object
@@ -404,12 +404,12 @@ class Target(object):
         antenna : class:`Antenna` object, optional
             Antenna that observes both targets, from where separation is measured
             (defaults to default antenna of this target)
-        
+
         Returns
         -------
         separation : :class:`ephem.Angle` object
             Angular separation between the targets, in radians
-        
+
         """
         # Get a common timestamp and antenna for both targets
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
@@ -419,13 +419,13 @@ class Target(object):
 
     def sphere_to_plane(self, az, el, timestamp=None, antenna=None, projection_type='ARC', coord_system='azel'):
         """Project spherical coordinates to plane with target position as reference.
-    
-        This is a convenience function that projects spherical coordinates to a 
+
+        This is a convenience function that projects spherical coordinates to a
         plane with the target position as the origin of the plane. The function is
         vectorised and can operate on single or multiple timestamps, as well as
         single or multiple coordinate vectors. The spherical coordinates may be
         (az, el) or (ra, dec), and the projection type can also be specified.
-    
+
         Parameters
         ----------
         az : float or array
@@ -440,14 +440,14 @@ class Target(object):
             Type of spherical projection
         coord_system : {'azel', 'radec'}, optional
             Spherical coordinate system
-    
+
         Returns
         -------
         x : float or array
             Azimuth-like coordinate(s) on plane, in radians
         y : float or array
             Elevation-like coordinate(s) on plane, in radians
-    
+
         """
         if coord_system == 'radec':
             # The target (ra, dec) coordinates will serve as reference point on the sphere
@@ -460,13 +460,13 @@ class Target(object):
 
     def plane_to_sphere(self, x, y, timestamp=None, antenna=None, projection_type='ARC', coord_system='azel'):
         """Deproject plane coordinates to sphere with target position as reference.
-    
+
         This is a convenience function that deprojects plane coordinates to a
         sphere with the target position as the origin of the plane. The function is
         vectorised and can operate on single or multiple timestamps, as well as
         single or multiple coordinate vectors. The spherical coordinates may be
         (az, el) or (ra, dec), and the projection type can also be specified.
-    
+
         Parameters
         ----------
         x : float or array
@@ -481,14 +481,14 @@ class Target(object):
             Type of spherical projection
         coord_system : {'azel', 'radec'}, optional
             Spherical coordinate system
-    
+
         Returns
         -------
         az : float or array
             Azimuth or right ascension, in radians
         el : float or array
             Elevation or declination, in radians
-    
+
         """
         if coord_system == 'radec':
             # The target (ra, dec) coordinates will serve as reference point on the sphere
@@ -505,12 +505,12 @@ class Target(object):
 
 def construct_target(description, antenna=None, flux_freq_MHz=None):
     """Construct Target object from string representation.
-    
+
     The description string contains up to five comma-separated fields, with the
     format::
-        
+
         <name list>, <tags>, <longitudinal>, <latitudinal>, <flux info>
-    
+
     The <name list> contains a pipe-separated list of alternate names for the
     target, with the preferred name either indicated by a prepended asterisk or
     assumed to be the first name in the list. The names may contain spaces, and
@@ -520,27 +520,27 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
     *tle*, *special*, *star*, *xephem*). The longidutinal and latitudinal fields
     are only relevant to *azel* and *radec* targets, in which case they contain
     the relevant coordinates.
-    
+
     The <flux info> is a space-separated list of numbers used to represent the
     flux density of the target. The first two numbers specify the frequency
     range for which the flux model is valid (in MHz), and the rest of the numbers
     are Baars polynomial coefficients. The <flux info> may be enclosed in
     parentheses to distinguish it from the other fields. An example string is::
-        
+
         name1 | *name 2, radec cal, 12:34:56.7, -04:34:34.2, (1000.0 2000.0 1.0)
-    
+
     For *special* and *star* body types, only the target name is required. The
     *special* body name is assumed to be a PyEphem class name, and is typically
     one of the major solar system objects. The *star* name is looked up in the
     PyEphem star database, which contains a modest list of bright stars.
-    
+
     For *tle* bodies, the final field in the description string should contain
     the three lines of the TLE. If the name list is empty, the target name is
     taken from the TLE instead. The *xephem* body contains a string in XEphem
     EDB database format as the final field, with commas replaced by tildes. If
     the name list is empty, the target name is taken from the XEphem string
     instead.
-    
+
     Parameters
     ----------
     description : string
@@ -549,17 +549,17 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
         Default antenna to use for position calculations
     flux_freq_MHz : float, optional
         Default frequency at which to evaluate flux density, in MHz
-    
+
     Returns
     -------
     target : :class:`Target` object
         Constructed Target object
-    
+
     Raises
     ------
     ValueError
         If *description* has the wrong format
-    
+
     """
     fields = [s.strip() for s in description.split(',')]
     if len(fields) < 2:
@@ -587,14 +587,14 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
     # Remove empty fields starting from the end (useful when parsing CSV files with fixed number of fields)
     while len(fields[-1]) == 0:
         fields.pop()
-    
+
     # Create appropriate PyEphem body based on body type
     if body_type == 'azel':
         if len(fields) < 4:
             raise ValueError("Target description '%s' contains *azel* body with no (az, el) coordinates"
                              % description)
         body = StationaryBody(fields[2], fields[3], preferred_name)
-    
+
     elif body_type == 'radec':
         if len(fields) < 4:
             raise ValueError("Target description '%s' contains *radec* body with no (ra, dec) coordinates"
@@ -614,7 +614,7 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
             body._epoch = ephem.J2000
         body._ra = ra
         body._dec = dec
-    
+
     elif body_type == 'tle':
         lines = fields[-1].split('\n')
         if len(lines) != 3:
@@ -629,21 +629,21 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
             body = ephem.readtle(preferred_name, lines[1], lines[2])
         except ValueError:
             raise ValueError("Target description '%s' contains malformed *tle* body" % description)
-    
+
     elif body_type == 'special':
         try:
             body = eval('ephem.%s()' % preferred_name.capitalize())
         except AttributeError:
             raise ValueError("Target description '%s' contains unknown *special* body '%s'"
                              % (description, preferred_name))
-    
+
     elif body_type == 'star':
         try:
             body = eval("ephem.star('%s')" % ' '.join([w.capitalize() for w in preferred_name.split()]))
         except KeyError:
             raise ValueError("Target description '%s' contains unknown *star* '%s'"
                              % (description, preferred_name))
-    
+
     elif body_type == 'xephem':
         edb_string = fields[-1].replace('~', ',')
         edb_name_field = edb_string.partition(',')[0]
@@ -661,10 +661,10 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
             body = eval("ephem.readdb('%s')" % edb_string)
         except ValueError:
             raise ValueError("Target description '%s' contains malformed *xephem* body" % description)
-    
+
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
-    
+
     # Extract flux info if it is available
     if (len(fields) > 4) and (len(fields[4].strip(' ()')) > 0):
         flux_info = [float(num) for num in fields[4].strip(' ()').split()]
@@ -673,7 +673,7 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
         min_freq_MHz, max_freq_MHz, coefs = flux_info[0], flux_info[1], tuple(flux_info[2:])
     else:
         min_freq_MHz = max_freq_MHz = coefs = None
-    
+
     return Target(body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs, antenna, flux_freq_MHz)
 
 #--------------------------------------------------------------------------------------------------
@@ -682,22 +682,22 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
 
 def construct_azel_target(az, el):
     """Convenience function to create unnamed stationary target (*azel* body type).
-    
+
     The input parameters will also accept :class:`ephem.Angle` objects, as these
     are floats in radians internally.
-    
+
     Parameters
     ----------
     az : string or float
         Azimuth, either in 'D:M:S' string format, or as a float in radians
     el : string or float
         Elevation, either in 'D:M:S' string format, or as a float in radians
-    
+
     Returns
     -------
     target : :class:`Target` object
         Constructed target object
-    
+
     """
     return Target(StationaryBody(az, el), ['azel'])
 
@@ -707,22 +707,22 @@ def construct_azel_target(az, el):
 
 def construct_radec_target(ra, dec):
     """Convenience function to create unnamed fixed target (*radec* body type).
-    
+
     The input parameters will also accept :class:`ephem.Angle` objects, as these
     are floats in radians internally. The epoch is assumed to be J2000.
-    
+
     Parameters
     ----------
     ra : string or float
         Right ascension, either in 'H:M:S' string format, or as a float in radians
     dec : string or float
         Declination, either in 'D:M:S' string format, or as a float in radians
-    
+
     Returns
     -------
     target : :class:`Target` object
         Constructed target object
-    
+
     """
     body = ephem.FixedBody()
     ra, dec = ephem.hours(ra), ephem.degrees(dec)

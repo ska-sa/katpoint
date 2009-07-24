@@ -12,7 +12,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.tle_lines = ['GPS BIIA-21 (PRN 09)    \n',
                           '1 22700U 93042A   07266.32333151  .00000012  00000-0  10000-3 0  8054\n',
                           '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n']
-    
+
     def test_construct_catalogue(self):
         """Test construction of catalogues."""
         cat = catalogue.Catalogue(add_specials=True, add_stars=True)
@@ -33,7 +33,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
         self.flux_target = target.construct_target('radec, 0.0, 0.0, (1.0 2.0 2.0 0.0 0.0)')
         self.antenna = 'XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0'
         self.timestamp = time.mktime(time.strptime('2009/06/14 12:34:56', '%Y/%m/%d %H:%M:%S'))
-        
+
     def test_filter_catalogue(self):
         """Test filtering of catalogues."""
         cat = catalogue.Catalogue(add_specials=True, add_stars=True)
@@ -49,7 +49,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
         sun = target.construct_target('Sun, special')
         cat4 = cat.filter(dist_limit_deg=[0.0, 1.0], proximity_targets=sun, timestamp=self.timestamp, antenna=ant)
         self.assertEqual(len(cat4.targets), 1, 'Number of targets close to Sun should be 1')
-    
+
     def test_sort_catalogue(self):
         """Test sorting of catalogues."""
         cat = catalogue.Catalogue(add_specials=True, add_stars=True)

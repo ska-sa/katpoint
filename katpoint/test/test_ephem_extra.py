@@ -33,7 +33,7 @@ class TestTimestamp(unittest.TestCase):
                                  ('2019-07-21 02:52:12', '2019-07-21 02:52:12')]
         self.invalid_timestamps = ['gielie', '03 Mar 2003']
         self.overflow_timestamps = ['2049-07-21 02:52:12']
-    
+
     def test_construct_timestamp(self):
         """Test construction of timestamps."""
         for v, s in self.valid_timestamps:
@@ -43,7 +43,7 @@ class TestTimestamp(unittest.TestCase):
             self.assertRaises(ValueError, Timestamp, v)
 #        for v in self.overflow_timestamps:
 #            self.assertRaises(OverflowError, Timestamp, v)
-    
+
     def test_numerical_timestamp(self):
         """Test numerical properties of timestamps."""
         t = Timestamp(self.valid_timestamps[0][0])
@@ -55,4 +55,3 @@ class TestTimestamp(unittest.TestCase):
         self.assertEqual(float(t), self.valid_timestamps[0][0])
         t = Timestamp(self.valid_timestamps[1][0])
         self.assertAlmostEqual(t.to_ephem_date(), self.valid_timestamps[1][0], places=9)
-        

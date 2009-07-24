@@ -12,7 +12,7 @@ class TestTargetConstruction(unittest.TestCase):
                               ', azel, 180, -45:00:00.0',
                               'Zenith, azel, 0, 90',
                               'radec J2000, 0, 0.0, (1000.0 2000.0 1.0 10.0)',
-                              ', radec B1950, 14:23:45.6, -60:34:21.1', 
+                              ', radec B1950, 14:23:45.6, -60:34:21.1',
                               'radec B1900, 14:23:45.6, -60:34:21.1',
                               'Zizou, radec cal, 1.4, 30.0, (1000.0 2000.0 1.0 10.0)',
                               'Fluffy | *Dinky, radec, 12.5, -50.0, (1.0 2.0 1.0 2.0 3.0 4.0)',
@@ -48,14 +48,14 @@ class TestTargetConstruction(unittest.TestCase):
         self.azel_target = 'azel, 10.0, -10.0'
         self.radec_target = 'radec, 10.0, -10.0'
         self.tag_target = 'azel J2000 GPS, 40.0, -30.0'
-    
+
     def test_construct_target(self):
         """Test construction of targets from strings and vice versa."""
         valid_targets = [target.construct_target(descr) for descr in self.valid_targets]
         valid_strings = [t.description for t in valid_targets]
         for descr in valid_strings:
             self.assertEqual(descr, target.construct_target(descr).description,
-                             "Target description ('%s') differs from original string ('%s')" % 
+                             "Target description ('%s') differs from original string ('%s')" %
                              (target.construct_target(descr).description, descr))
         for descr in self.invalid_targets:
             self.assertRaises(ValueError, target.construct_target, descr)
@@ -65,7 +65,7 @@ class TestTargetConstruction(unittest.TestCase):
         radec1 = target.construct_target(self.radec_target)
         radec2 = target.construct_radec_target('10:00:00.0', '-10:00:00.0')
         self.assertEqual(radec1.description, radec2.description, 'Special radec constructor failed')
-        
+
     def test_add_tags(self):
         """Test adding tags."""
         tag_target = target.construct_target(self.tag_target)
@@ -78,7 +78,7 @@ class TestFluxDensity(unittest.TestCase):
     """Test flux density calculation."""
     def setUp(self):
         self.flux_target = target.construct_target('radec, 0.0, 0.0, (1.0 2.0 2.0 0.0 0.0)')
-        
+
     def test_flux_density(self):
         """Test flux density calculation."""
         self.assertEqual(self.flux_target.flux_density(1.5), 100.0, 'Flux calculation wrong')

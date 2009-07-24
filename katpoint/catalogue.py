@@ -34,7 +34,7 @@ def _hash(name):
 
 class Catalogue(object):
     """A searchable and filterable catalogue of targets.
-    
+
     Parameters
     ----------
     targets : :class:`Target` object or string, or sequence of these, optional
@@ -50,7 +50,7 @@ class Catalogue(object):
         Default antenna to use for position calculations for all targets
     flux_freq_MHz : float, optional
         Default frequency at which to evaluate flux density of all targets, in MHz
-    
+
     """
     def __init__(self, targets=None, tags=None, add_specials=True, add_stars=False,
                  antenna=None, flux_freq_MHz=None):
@@ -66,7 +66,7 @@ class Catalogue(object):
         if targets is None:
             targets = []
         self.add(targets, tags)
-    
+
     # Provide properties so that default antenna or flux frequency changes are passed on to targets
     # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
     def antenna():
@@ -80,7 +80,7 @@ class Catalogue(object):
                 target.antenna = self._antenna
         return locals()
     antenna = property(**antenna())
-    
+
     # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
     def flux_freq_MHz():
         """Class method which creates flux_freq_MHz property."""
@@ -97,57 +97,57 @@ class Catalogue(object):
     def __str__(self):
         """Verbose human-friendly string representation of catalogue object."""
         return '\n'.join(['%s' % (target,) for target in self.targets])
-    
+
     def __repr__(self):
         """Short human-friendly string representation of catalogue object."""
         return "<katpoint.Catalogue targets=%d names=%d at 0x%x>" % \
                (len(self.targets), len(self.lookup.keys()), id(self))
-    
+
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object.
-        
+
         Parameters
         ----------
         name : string
             Target name to look up (can be alias as well)
-        
+
         Returns
         -------
         target : :class:`Target` object, or None
             Associated target object, or None if no target was found
-        
+
         """
         try:
             return self.lookup[_hash(name)]
         except KeyError:
             return None
-    
+
     def __iter__(self):
         """Iterate over targets in catalogue."""
         return iter(self.targets)
-    
+
     def iternames(self):
         """Iterator over known target names in catalogue which can be searched for.
-        
+
         There are potentially more names than targets in the catalogue, as the
         same target can have many names.
-        
+
         """
         for target in self.targets:
             yield target.name
             for alias in target.aliases:
                 yield alias
-    
+
     def add(self, targets, tags=None):
         """Add targets to catalogue.
-        
+
         Parameters
         ----------
         targets : :class:`Target` object or string, or sequence of these
             Target or list of targets to add to catalogue (may also be file object)
         tags : string or sequence of strings, optional
             Tag or list of tags to add to *targets*
-        
+
         """
         if isinstance(targets, basestring) or isinstance(targets, Target):
             targets = [targets]
@@ -168,19 +168,19 @@ class Catalogue(object):
                 self.targets.append(target)
                 for name in [target.name] + target.aliases:
                     self.lookup[_hash(name)] = target
-                logger.debug("Added '%s' [%s] (and %d aliases)" % 
+                logger.debug("Added '%s' [%s] (and %d aliases)" %
                              (target.name, target.tags[0], len(target.aliases)))
-    
+
     def add_tle(self, lines, tags=None):
         """Add NORAD Two-Line Element (TLE) targets to catalogue.
-        
+
         Parameters
         ----------
         lines : sequence of strings
             List of lines containing one or more TLEs (may also be file object)
         tags : string or sequence of strings, optional
             Tag or list of tags to add to targets
-        
+
         """
         targets, tle = [], []
         for line in lines:
@@ -193,17 +193,17 @@ class Catalogue(object):
         if len(tle) > 0:
             logger.warning('Did not receive a multiple of three lines when constructing TLEs')
         self.add(targets, tags)
-    
+
     def add_edb(self, lines, tags=None):
         """Add XEphem database format (EDB) targets to catalogue.
-        
+
         Parameters
         ----------
         lines : sequence of strings
             List of lines containing a target per line (may also be file object)
         tags : string or sequence of strings, optional
             Tag or list of tags to add to targets
-        
+
         """
         targets = []
         for line in lines:
@@ -211,15 +211,15 @@ class Catalogue(object):
                 continue
             targets.append('xephem,' + line.replace(',', '~'))
         self.add(targets, tags)
-    
+
     def remove(self, name):
         """Remove target from catalogue.
-        
+
         Parameters
         ----------
         name : string
             Name of target to remove (may also be an alternate name of target)
-        
+
         """
         if self.lookup.has_key(_hash(name)):
             target = self[name]
@@ -227,11 +227,11 @@ class Catalogue(object):
             for alias in target.aliases:
                 self.lookup.pop(_hash(alias))
             self.targets.remove(target)
-    
+
     def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, az_limit_deg=None, el_limit_deg=None,
                    dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Iterator which returns targets satisfying various criteria.
-        
+
         Parameters
         ----------
         tags : string, or sequence of strings, optional
@@ -264,17 +264,17 @@ class Catalogue(object):
             Unix epoch. If None, the current time *at each iteration* is used.
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
-        
+
         Returns
         -------
         iter : iterator object
             The generated iterator object which will return filtered targets
-        
+
         Raises
         ------
         ValueError
             If some required parameters are missing
-        
+
         """
         tag_filter = not tags is None
         flux_filter = not flux_limit_Jy is None
@@ -283,7 +283,7 @@ class Catalogue(object):
         proximity_filter = not dist_limit_deg is None
         # Copy targets to a new list which will be pruned by filters
         targets = list(self.targets)
-        
+
         # First apply static criteria (tags, flux) which do not depend on timestamp
         if tag_filter:
             if isinstance(tags, basestring):
@@ -294,18 +294,18 @@ class Catalogue(object):
                 targets = [target for target in targets if set(target.tags) & desired_tags]
             if undesired_tags:
                 targets = [target for target in targets if not (set(target.tags) & undesired_tags)]
-        
+
         if flux_filter:
             if np.isscalar(flux_limit_Jy):
                 flux_limit_Jy = [flux_limit_Jy, np.inf]
             flux = [target.flux_density(flux_freq_MHz) for target in targets]
             targets = [target for n, target in enumerate(targets)
                        if (flux[n] >= flux_limit_Jy[0]) & (flux[n] <= flux_limit_Jy[1])]
-        
+
         # Now prepare for dynamic criteria (elevation, proximity) which depend on potentially changing timestamp
         if elevation_filter and np.isscalar(el_limit_deg):
             el_limit_deg = [el_limit_deg, 90.0]
-        
+
         if proximity_filter:
             if proximity_targets is None:
                 raise ValueError('Please specify proximity target(s) for proximity filter')
@@ -313,7 +313,7 @@ class Catalogue(object):
                 dist_limit_deg = [dist_limit_deg, 180.0]
             if isinstance(proximity_targets, Target):
                 proximity_targets = [proximity_targets]
-        
+
         # Keep checking targets while there are some in the list
         while targets:
             latest_timestamp = timestamp
@@ -347,11 +347,11 @@ class Catalogue(object):
                 return
             # Return successful target and remove from list to ensure it is not picked again
             yield targets.pop(found_one)
-    
+
     def filter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, az_limit_deg=None, el_limit_deg=None,
                dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Filter catalogue on various criteria.
-        
+
         Parameters
         ----------
         tags : string, or sequence of strings, optional
@@ -384,26 +384,26 @@ class Catalogue(object):
             since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
-        
+
         Returns
         -------
         subset : :class:`Catalogue` object
             Filtered catalogue
-        
+
         Raises
         ------
         ValueError
             If some required parameters are missing
-        
+
         """
         return Catalogue([target for target in
                           self.iterfilter(tags, flux_limit_Jy, flux_freq_MHz, az_limit_deg, el_limit_deg,
                                           dist_limit_deg, proximity_targets, timestamp, antenna)],
                          add_specials=False, antenna=self.antenna, flux_freq_MHz=self.flux_freq_MHz)
-        
+
     def sort(self, key='name', ascending=True, flux_freq_MHz=None, timestamp=None, antenna=None):
         """Sort targets in catalogue.
-        
+
         Parameters
         ----------
         key : {'name', 'ra', 'dec', 'az', 'el', 'flux'}, optional
@@ -417,17 +417,17 @@ class Catalogue(object):
             since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at targets (defaults to default antenna)
-        
+
         Returns
         -------
         sorted : :class:`Catalogue` object
             Sorted catalogue
-        
+
         Raises
         ------
         ValueError
             If some required parameters are missing or key is unknown
-        
+
         """
         # Set up index list that will be sorted
         if key == 'name':
@@ -450,21 +450,21 @@ class Catalogue(object):
         else:
             self.targets = np.array(self.targets)[np.flipud(np.argsort(index))].tolist()
         return self
-    
+
     def visibility_list(self, timestamp=None, antenna=None, flux_freq_MHz=None):
         """Print out list of targets in catalogue, sorted by decreasing elevation.
-        
+
         This prints out the name, azimuth and elevation of each target in the
         catalogue, in order of decreasing elevation. The motion of the target at
         the given timestamp is indicated by a character code, which is '/' if
         the target is rising, '\' if it is setting, and '-' if it is stationary
         (i.e. if the elevation angle changes by less than 1 arcminute during the
         one-minute interval surrounding the timestamp).
-        
+
         The method indicates the horizon itself by a line of dashes. It also
         displays the target flux density if a frequency is supplied. It is useful
-        to quickly see which targets are visible. 
-        
+        to quickly see which targets are visible.
+
         Parameters
         ----------
         timestamp : :class:`Timestamp` object or equivalent, optional
@@ -474,7 +474,7 @@ class Catalogue(object):
             Antenna which points at targets (defaults to default antenna)
         flux_freq_MHz : float, optional
             Frequency at which to evaluate flux density, in MHz
-        
+
         """
         above_horizon = True
         timestamp = Timestamp(timestamp)
@@ -517,29 +517,29 @@ cat_lookup_match = re.compile(r"""(?:.*\=)?(.*)\[(?P<quote>['|"])(?!.*(?P=quote)
 
 def _catalogue_completer(self, event):
     """Custom IPython completer for catalogue name lookups.
-    
+
     This is inspired by Darren Dale's custom dict-like completer for h5py.
-    
+
     """
     # Parse command line as (ignored = )base['start_of_name
     base, start_of_name = cat_lookup_match.split(event.line)[1:4:2]
-    
+
     # Avoid calling any functions during eval()...
     if '(' in base:
         raise IPython.ipapi.TryNext
-    
+
     # Obtain catalogue object from user namespace
     try:
         cat = eval(base, self.shell.user_ns)
     except:
         raise IPython.ipapi.TryNext
-    
+
     # Only continue if this object is actually a Catalogue
     if not isinstance(cat, Catalogue):
         raise IPython.ipapi.TryNext
-    
+
     if readline_found:
         # Remove space from delimiter list, so completion works past spaces in names
         readline.set_completer_delims('\t\n`!@#$^&*()=+[{]}\\|;:\'",<>?')
-    
+
     return [name for name in cat.iternames() if name[:len(start_of_name)] == start_of_name]
