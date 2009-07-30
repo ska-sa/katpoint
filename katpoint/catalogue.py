@@ -505,9 +505,9 @@ class Catalogue(object):
                 print '------------------------------------------------------------'
                 above_horizon = False
             if not flux is None:
-                print '%-24s %12s %12s %c %7.1f' % (target.name, az, el, el_code, flux)
+                print '%-24s %12s %12s %c %7.1f' % (target.name, az.znorm, el, el_code, flux)
             else:
-                print '%-24s %12s %12s %c' % (target.name, az, el, el_code)
+                print '%-24s %12s %12s %c' % (target.name, az.znorm, el, el_code)
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  _catalogue_completer
