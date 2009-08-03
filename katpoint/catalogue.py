@@ -1,4 +1,149 @@
-"""Target catalogue."""
+"""Target catalogue.
+
+Overview
+--------
+
+A :class:`Catalogue` object combines two concepts:
+
+- A list of targets, which can be filtered, sorted and pretty-printed. The list
+  is accessed via the :meth:`Catalogue.targets` method, as in::
+
+    cat = katpoint.Catalogue()
+    t = cat.targets[0]
+
+- Lookup by name, by using the catalogue as if it were a dictionary. This is
+  simpler for the user, who does not have to remember all the target details.
+  The named lookup supports tab completion in IPython, which further simplifies
+  finding a target in the catalogue. An example is::
+
+    cat = katpoint.Catalogue()
+    t = cat['Sun']
+
+Construction
+------------
+
+A catalogue can be constructed in many ways. The simplest way is::
+
+    cat = katpoint.Catalogue()
+
+This adds the standard *special* targets to the catalogue by default, which are
+the Sun, Moon, planets and Zenith. A completely empty catalogue is obtained by::
+
+    cat = katpoint.Catalogue(add_specials=False)
+
+Another built-in set of targets is the small star catalogue included with PyEphem.
+These *star* targets are added as follows::
+
+    cat = katpoint.Catalogue(add_stars=True)
+
+Additional targets may be loaded during initialisation of the catalogue by
+providing a list of :class:`Target` objects (or a single object by itself), as
+in the following example::
+
+    t1 = katpoint.construct_target('Ganymede, special')
+    t2 = katpoint.construct_target('Takreem, azel, 20, 30')
+    cat1 = katpoint.Catalogue(t1)
+    cat2 = katpoint.Catalogue([t1, t2])
+
+Alternatively, the list of targets may be replaced by a list of target description
+strings (or a single description string). The target objects are then constructed
+before being added, as in::
+
+    cat1 = katpoint.Catalogue('Takreem, azel, 20, 30')
+    cat2 = katpoint.Catalogue(['Ganymede, special', 'Takreem, azel, 20, 30'])
+
+Taking this one step further, the list may be replaced by any iterable object
+that returns strings. A very useful example of such an object is the Python
+:class:`file` object, which iterates over the lines of a text file. If the
+catalogue file contains one target description string per line (with comments
+and blank lines allowed too), it may be loaded as::
+
+    cat = katpoint.Catalogue(file('catalogue.csv'))
+
+Once a catalogue is initialised, more targets may be added to it. The
+:meth:`Catalogue.add` method is the most direct way. It accepts a single target
+object, a list of target objects, a single string, a list of strings or a string
+iterable. This is illustrated below::
+
+    t1 = katpoint.construct_target('Ganymede, special')
+    t2 = katpoint.construct_target('Takreem, azel, 20, 30')
+    cat = katpoint.Catalogue(add_specials=False)
+    cat.add(t1)
+    cat.add([t1, t2])
+    cat.add('Ganymede, special')
+    cat.add(['Ganymede, special', 'Takreem, azel, 20, 30'])
+    cat.add(file('catalogue.csv'))
+
+The only functionality that :meth:`Catalogue.add` lacks is the ability to add
+all *special* and *star* targets in one go. They may still be added individually,
+although this is less convenient (and the reason for the existence of
+``add_specials`` and ``add_stars`` in the :class:`Catalogue` initialiser in the
+first place).
+
+Some target types are typically found in files with standard formats. Notably,
+*tle* targets are found in TLE files with three lines per target, and many
+*xephem* targets are stored in EDB database files. Editing these files to make
+each line a valid :class:`Target` description string is cumbersome, especially
+in the case of TLE files which are regularly updated. Two special methods
+simplify the loading of targets from these files::
+
+    cat = katpoint.Catalogue(add_specials=False)
+    cat.add_tle(file('gps-ops.txt'))
+    cat.add_edb(file('hipparcos.edb'))
+
+Whenever targets are added to the catalogue, a tag or list of tags may be
+specified. The tags can also be given as a single string of whitespace-delimited
+tags, since tags may not contain whitespace. These tags are added to the targets
+currently being added. This makes it easy to tag groups of related targets in the
+catalogue, as shown below::
+
+    cat = katpoint.Catalogue(tags='default')
+    cat.add_tle(file('gps-ops.txt'), tags='gps satellite')
+    cat.add_tle(file('glo-ops.txt'), tags=['glonass', 'satellite'])
+    cat.add(file('source_list.csv'), tags='calibrator')
+    cat.add_edb(file('hipparcos.edb'), tags='star')
+
+Finally, targets may be removed from the catalogue. This is useful when a target
+is to be updated, as adding a target which is already in the catalogue will
+silently fail. The reasoning behind this is that a target object is added once
+to the target list, but may have multiple references in the lookup dictionary,
+one per alias. When updating a target, it is not clear what to do with all the
+alternate names. For now, the user has to explicitly remove a target by name
+before loading a new version of the target into the catalogue. The target may
+be removed via any of its names::
+
+    cat = katpoint.Catalogue()
+    cat.remove('Sun')
+
+Filtering and sorting
+---------------------
+
+A :class:`Catalogue` object may be filtered based on various criteria. There are
+two filtering mechanisms that both support the same criteria:
+
+- A direct filter, implemented by the :meth:`Catalogue.filter` method. This
+  returns the filtered catalogue as a new catalogue which contains the subset of
+  targets that satisfy the criteria. All criteria are evaluated at the same
+  time instant. A typical use-case is::
+
+    cat = katpoint.Catalogue(file('source_list.csv'))
+    strong_sources = cat.filter(flux_limit_Jy=10.0, flux_freq_MHz=1500)
+
+- An iterator filter, implemented by the :meth:`Catalogue.iterfilter` method.
+  This is a Python *generator function*, which returns a *generator iterator*,
+  to be more precise. Each time the returned iterator's .next() method is
+  invoked, the next suitable :class:`Target` object is returned. If no timestamp
+  is provided, the criteria are re-evaluated at the time instant of the .next()
+  call, which makes it easy to cycle through a list of targets over an extended
+  period of time (as during observation). The iterator filter is typically used
+  in a for-loop::
+
+    cat = katpoint.Catalogue(file('source_list.csv'))
+    ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+    for t in cat.iterfilter(el_limit_deg=10, antenna=ant):
+        # < observe target t >
+
+"""
 
 import logging
 import re
@@ -34,6 +179,9 @@ def _hash(name):
 
 class Catalogue(object):
     """A searchable and filterable catalogue of targets.
+
+    Examples of catalogue construction can be found in the :mod:`Catalogue`
+    documentation.
 
     Parameters
     ----------
@@ -107,6 +255,9 @@ class Catalogue(object):
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object.
 
+        The name string may be tab-completed in IPython to simplify finding a
+        target.
+
         Parameters
         ----------
         name : string
@@ -142,6 +293,9 @@ class Catalogue(object):
     def add(self, targets, tags=None):
         """Add targets to catalogue.
 
+        Examples of catalogue construction can be found in the :mod:`Catalogue`
+        documentation.
+
         Parameters
         ----------
         targets : :class:`Target` object or string, or sequence of these
@@ -176,6 +330,9 @@ class Catalogue(object):
     def add_tle(self, lines, tags=None):
         """Add NORAD Two-Line Element (TLE) targets to catalogue.
 
+        Examples of catalogue construction can be found in the :mod:`Catalogue`
+        documentation.
+
         Parameters
         ----------
         lines : sequence of strings
@@ -199,6 +356,9 @@ class Catalogue(object):
 
     def add_edb(self, lines, tags=None):
         """Add XEphem database format (EDB) targets to catalogue.
+
+        Examples of catalogue construction can be found in the :mod:`Catalogue`
+        documentation.
 
         Parameters
         ----------
@@ -234,7 +394,15 @@ class Catalogue(object):
 
     def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, az_limit_deg=None, el_limit_deg=None,
                    dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
-        """Iterator which returns targets satisfying various criteria.
+        """Generator function which returns targets satisfying various criteria.
+
+        This returns a (generator-)iterator which returns targets satisfying
+        various criteria, one at a time. The standard use of this method is in a
+        for-loop (i.e. ``for target in cat.iterfilter(...):``). This differs from
+        the :meth:`filter` method in that all time-dependent criteria (such as
+        elevation) may be evaluated at the time of the specific iteration, and
+        not in advance as with :meth:`filter`. This simplifies finding the next
+        suitable target during an observation of several targets.
 
         Parameters
         ----------
@@ -359,6 +527,11 @@ class Catalogue(object):
                dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Filter catalogue on various criteria.
 
+        This returns a new catalogue containing the subset of targets that
+        satisfy the given criteria. All criteria are evaluated at the same time
+        instant. For real-time continuous filtering, consider using
+        :meth:`iterfilter` instead.
+
         Parameters
         ----------
         tags : string, or sequence of strings, optional
@@ -411,6 +584,9 @@ class Catalogue(object):
 
     def sort(self, key='name', ascending=True, flux_freq_MHz=None, timestamp=None, antenna=None):
         """Sort targets in catalogue.
+
+        This returns a new catalogue with the target list sorted according to the
+        given criterium.
 
         Parameters
         ----------
@@ -547,7 +723,7 @@ def _catalogue_completer(self, event):
         raise IPython.ipapi.TryNext
 
     if readline_found:
-        # Remove space from delimiter list, so completion works past spaces in names
-        readline.set_completer_delims('\t\n`!@#$^&*()=+[{]}\\|;:\'",<>?')
+        # Remove space and plus from delimiter list, so completion works past spaces and pluses in names
+        readline.set_completer_delims('\t\n`!@#$^&*()=[{]}\\|;:\'",<>?')
 
     return [name for name in cat.iternames() if name[:len(start_of_name)] == start_of_name]
