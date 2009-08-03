@@ -40,7 +40,8 @@ class Catalogue(object):
     targets : :class:`Target` object or string, or sequence of these, optional
         Target or list of targets to add to catalogue (may also be file object)
     tags : string or sequence of strings, optional
-        Tag or list of tags to add to *targets*
+        Tag or list of tags to add to *targets* (strings will be split on
+        whitespace)
     add_specials: {True, False}, optional
         True if *special* bodies specified in :data:`specials` (and 'Zenith')
         should be added
@@ -146,7 +147,8 @@ class Catalogue(object):
         targets : :class:`Target` object or string, or sequence of these
             Target or list of targets to add to catalogue (may also be file object)
         tags : string or sequence of strings, optional
-            Tag or list of tags to add to *targets*
+            Tag or list of tags to add to *targets* (strings will be split on
+            whitespace)
 
         """
         if isinstance(targets, basestring) or isinstance(targets, Target):
@@ -179,7 +181,8 @@ class Catalogue(object):
         lines : sequence of strings
             List of lines containing one or more TLEs (may also be file object)
         tags : string or sequence of strings, optional
-            Tag or list of tags to add to targets
+            Tag or list of tags to add to targets (strings will be split on
+            whitespace)
 
         """
         targets, tle = [], []
@@ -202,7 +205,8 @@ class Catalogue(object):
         lines : sequence of strings
             List of lines containing a target per line (may also be file object)
         tags : string or sequence of strings, optional
-            Tag or list of tags to add to targets
+            Tag or list of tags to add to targets (strings will be split on
+            whitespace)
 
         """
         targets = []
@@ -236,8 +240,9 @@ class Catalogue(object):
         ----------
         tags : string, or sequence of strings, optional
             Tag or list of tags which targets should have. Tags prepended with
-            a tilde (~) indicate tags which targets should *not* have. If None
-            or an empty list, all tags are accepted.
+            a tilde (~) indicate tags which targets should *not* have. The string
+            may contain multiple tags separated by whitespace. If None or an
+            empty list, all tags are accepted.
         flux_limit_Jy : float or sequence of 2 floats, optional
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,
@@ -287,7 +292,7 @@ class Catalogue(object):
         # First apply static criteria (tags, flux) which do not depend on timestamp
         if tag_filter:
             if isinstance(tags, basestring):
-                tags = [tags]
+                tags = tags.split()
             desired_tags = set([tag for tag in tags if tag[0] != '~'])
             undesired_tags = set([tag[1:] for tag in tags if tag[0] == '~'])
             if desired_tags:
@@ -358,8 +363,9 @@ class Catalogue(object):
         ----------
         tags : string, or sequence of strings, optional
             Tag or list of tags which targets should have. Tags prepended with
-            a tilde (~) indicate tags which targets should *not* have. If None
-            or an empty list, all tags are accepted.
+            a tilde (~) indicate tags which targets should *not* have. The string
+            may contain multiple tags separated by whitespace. If None or an
+            empty list, all tags are accepted.
         flux_limit_Jy : float or sequence of 2 floats, optional
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,

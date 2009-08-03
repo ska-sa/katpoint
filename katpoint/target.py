@@ -23,7 +23,7 @@ class Target(object):
     ----------
     body : ephem.Body object
         Pre-constructed :class:`ephem.Body` object to embed in target object
-    tags : list of strings
+    tags : list of strings, or whitespace-delimited string
         Descriptive tags associated with target, starting with its body type
     aliases : list of strings, optional
         Alternate names of target
@@ -48,7 +48,8 @@ class Target(object):
                  antenna=None, flux_freq_MHz=None):
         self.body = body
         self.name = self.body.name
-        self.tags = tags
+        self.tags = []
+        self.add_tags(tags)
         if aliases is None:
             self.aliases = []
         else:
@@ -62,29 +63,13 @@ class Target(object):
     def __str__(self):
         """Verbose human-friendly string representation of target object."""
         descr = str(self.name)
-        radec = False
         if self.aliases:
             descr += ' (%s)' % (', '.join(self.aliases),)
-        if self.tags[0] == 'xephem':
-            edb_string = self.body.writedb()
-            edb_type = edb_string[edb_string.find(',') + 1]
-            if edb_type == 'f':
-                descr += ': [xephem: radec]'
-                radec = True
-            elif edb_type in ['e', 'h', 'p']:
-                descr += ': [xephem: solar system]'
-            elif edb_type == 'E':
-                descr += ': [xephem: earth satellite]'
-            elif edb_type == 'P':
-                descr += ': [xephem: special]'
-        else:
-            descr += ': [%s]' % (self.tags[0],)
-        if self.tags[1:]:
-            descr += ', tags=%s' % (','.join(self.tags[1:]),)
-        if radec or self.tags[0] == 'radec':
+        descr += ', tags=%s' % (' '.join(self.tags),)
+        if 'radec' in self.tags:
             # pylint: disable-msg=W0212
             descr += ', %s %s' % (self.body._ra, self.body._dec)
-        if self.tags[0] == 'azel':
+        if self.body_type == 'azel':
             descr += ', %s %s' % (self.body.az, self.body.el)
         if None in [self.min_freq_MHz, self.max_freq_MHz, self.coefs]:
             descr += ', no flux info'
@@ -98,7 +83,10 @@ class Target(object):
 
     def __repr__(self):
         """Short human-friendly string representation of target object."""
-        return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.tags[0], id(self))
+        sub_type = ''
+        if (self.body_type == 'xephem') and (len(self.tags) > 1):
+            sub_type = ' (%s)' % self.tags[1]
+        return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.body_type + sub_type, id(self))
 
     def _set_timestamp_antenna_defaults(self, timestamp, antenna):
         """Set defaults for timestamp and antenna, if they are unspecified.
@@ -174,7 +162,7 @@ class Target(object):
 
             elif self.body_type == 'tle':
                 # Switch body type to xephem, as XEphem only saves bodies in xephem edb format (no TLE output)
-                tags = tags.replace(tags.partition(' ')[0], 'xephem')
+                tags = tags.replace(tags.partition(' ')[0], 'xephem tle')
                 edb_string = self.body.writedb().replace(',', '~')
                 # Suppress name if it's the same as in the xephem db string
                 edb_name = edb_string[:edb_string.index('~')]
@@ -201,15 +189,16 @@ class Target(object):
     def add_tags(self, tags):
         """Add tags to target object.
 
-        This is a convenience function to add extra tags to a target, while
-        checking the sanity of the tags. It also prevents duplicate tags without
-        resorting to a tag set, which would be problematic since the tag order
-        is meaningful (tags[0] is the body type).
+        This adds tags to a target, while checking the sanity of the tags. It
+        also prevents duplicate tags without resorting to a tag set, which would
+        be problematic since the tag order is meaningful (tags[0] is the body
+        type). Since tags should not contain whitespace, any string consisting of
+        whitespace-delimited words will be split into separate tags.
 
         Parameters
         ----------
         tags : string, list of strings, or None
-            Tag or list of tags to add
+            Tag or list of tags to add (strings will be split on whitespace)
 
         Returns
         -------
@@ -221,7 +210,10 @@ class Target(object):
             tags = []
         if isinstance(tags, basestring):
             tags = [tags]
-        self.tags.extend([tag for tag in tags if not tag in self.tags])
+        for tag_str in tags:
+            for tag in tag_str.split():
+                if not tag in self.tags:
+                    self.tags.append(tag)
         return self
 
     def azel(self, timestamp=None, antenna=None):
@@ -661,6 +653,16 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
             body = eval("ephem.readdb('%s')" % edb_string)
         except ValueError:
             raise ValueError("Target description '%s' contains malformed *xephem* body" % description)
+        # Add xephem body type as an extra tag, right after the main 'xephem' tag
+        edb_type = edb_string[edb_string.find(',') + 1]
+        if edb_type == 'f':
+            tags.insert(1, 'radec')
+        elif edb_type in ['e', 'h', 'p']:
+            tags.insert(1, 'solar_system')
+        elif edb_type == 'E':
+            tags.insert(1, 'tle')
+        elif edb_type == 'P':
+            tags.insert(1, 'special')
 
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
@@ -699,7 +701,7 @@ def construct_azel_target(az, el):
         Constructed target object
 
     """
-    return Target(StationaryBody(az, el), ['azel'])
+    return Target(StationaryBody(az, el), 'azel')
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_radec_target
@@ -730,4 +732,4 @@ def construct_radec_target(ra, dec):
     body._epoch = ephem.J2000
     body._ra = ra
     body._dec = dec
-    return Target(body, ['radec'])
+    return Target(body, 'radec')
