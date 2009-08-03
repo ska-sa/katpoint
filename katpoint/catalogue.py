@@ -305,7 +305,9 @@ class Catalogue(object):
         # Now prepare for dynamic criteria (elevation, proximity) which depend on potentially changing timestamp
         if elevation_filter and np.isscalar(el_limit_deg):
             el_limit_deg = [el_limit_deg, 90.0]
-
+        # Quick fix to accommodate negative azimuth values (assumes target az is in range 0 to 360 degrees)
+        if azimuth_filter:
+            az_limit_deg = [az_limit_deg[0] % 360., az_limit_deg[1] % 360.]
         if proximity_filter:
             if proximity_targets is None:
                 raise ValueError('Please specify proximity target(s) for proximity filter')
