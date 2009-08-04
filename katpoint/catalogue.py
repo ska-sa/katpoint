@@ -1,149 +1,4 @@
-"""Target catalogue.
-
-Overview
---------
-
-A :class:`Catalogue` object combines two concepts:
-
-- A list of targets, which can be filtered, sorted and pretty-printed. The list
-  is accessed via the :meth:`Catalogue.targets` method, as in::
-
-    cat = katpoint.Catalogue()
-    t = cat.targets[0]
-
-- Lookup by name, by using the catalogue as if it were a dictionary. This is
-  simpler for the user, who does not have to remember all the target details.
-  The named lookup supports tab completion in IPython, which further simplifies
-  finding a target in the catalogue. An example is::
-
-    cat = katpoint.Catalogue()
-    t = cat['Sun']
-
-Construction
-------------
-
-A catalogue can be constructed in many ways. The simplest way is::
-
-    cat = katpoint.Catalogue()
-
-This adds the standard *special* targets to the catalogue by default, which are
-the Sun, Moon, planets and Zenith. A completely empty catalogue is obtained by::
-
-    cat = katpoint.Catalogue(add_specials=False)
-
-Another built-in set of targets is the small star catalogue included with PyEphem.
-These *star* targets are added as follows::
-
-    cat = katpoint.Catalogue(add_stars=True)
-
-Additional targets may be loaded during initialisation of the catalogue by
-providing a list of :class:`Target` objects (or a single object by itself), as
-in the following example::
-
-    t1 = katpoint.construct_target('Ganymede, special')
-    t2 = katpoint.construct_target('Takreem, azel, 20, 30')
-    cat1 = katpoint.Catalogue(t1)
-    cat2 = katpoint.Catalogue([t1, t2])
-
-Alternatively, the list of targets may be replaced by a list of target description
-strings (or a single description string). The target objects are then constructed
-before being added, as in::
-
-    cat1 = katpoint.Catalogue('Takreem, azel, 20, 30')
-    cat2 = katpoint.Catalogue(['Ganymede, special', 'Takreem, azel, 20, 30'])
-
-Taking this one step further, the list may be replaced by any iterable object
-that returns strings. A very useful example of such an object is the Python
-:class:`file` object, which iterates over the lines of a text file. If the
-catalogue file contains one target description string per line (with comments
-and blank lines allowed too), it may be loaded as::
-
-    cat = katpoint.Catalogue(file('catalogue.csv'))
-
-Once a catalogue is initialised, more targets may be added to it. The
-:meth:`Catalogue.add` method is the most direct way. It accepts a single target
-object, a list of target objects, a single string, a list of strings or a string
-iterable. This is illustrated below::
-
-    t1 = katpoint.construct_target('Ganymede, special')
-    t2 = katpoint.construct_target('Takreem, azel, 20, 30')
-    cat = katpoint.Catalogue(add_specials=False)
-    cat.add(t1)
-    cat.add([t1, t2])
-    cat.add('Ganymede, special')
-    cat.add(['Ganymede, special', 'Takreem, azel, 20, 30'])
-    cat.add(file('catalogue.csv'))
-
-The only functionality that :meth:`Catalogue.add` lacks is the ability to add
-all *special* and *star* targets in one go. They may still be added individually,
-although this is less convenient (and the reason for the existence of
-``add_specials`` and ``add_stars`` in the :class:`Catalogue` initialiser in the
-first place).
-
-Some target types are typically found in files with standard formats. Notably,
-*tle* targets are found in TLE files with three lines per target, and many
-*xephem* targets are stored in EDB database files. Editing these files to make
-each line a valid :class:`Target` description string is cumbersome, especially
-in the case of TLE files which are regularly updated. Two special methods
-simplify the loading of targets from these files::
-
-    cat = katpoint.Catalogue(add_specials=False)
-    cat.add_tle(file('gps-ops.txt'))
-    cat.add_edb(file('hipparcos.edb'))
-
-Whenever targets are added to the catalogue, a tag or list of tags may be
-specified. The tags can also be given as a single string of whitespace-delimited
-tags, since tags may not contain whitespace. These tags are added to the targets
-currently being added. This makes it easy to tag groups of related targets in the
-catalogue, as shown below::
-
-    cat = katpoint.Catalogue(tags='default')
-    cat.add_tle(file('gps-ops.txt'), tags='gps satellite')
-    cat.add_tle(file('glo-ops.txt'), tags=['glonass', 'satellite'])
-    cat.add(file('source_list.csv'), tags='calibrator')
-    cat.add_edb(file('hipparcos.edb'), tags='star')
-
-Finally, targets may be removed from the catalogue. This is useful when a target
-is to be updated, as adding a target which is already in the catalogue will
-silently fail. The reasoning behind this is that a target object is added once
-to the target list, but may have multiple references in the lookup dictionary,
-one per alias. When updating a target, it is not clear what to do with all the
-alternate names. For now, the user has to explicitly remove a target by name
-before loading a new version of the target into the catalogue. The target may
-be removed via any of its names::
-
-    cat = katpoint.Catalogue()
-    cat.remove('Sun')
-
-Filtering and sorting
----------------------
-
-A :class:`Catalogue` object may be filtered based on various criteria. There are
-two filtering mechanisms that both support the same criteria:
-
-- A direct filter, implemented by the :meth:`Catalogue.filter` method. This
-  returns the filtered catalogue as a new catalogue which contains the subset of
-  targets that satisfy the criteria. All criteria are evaluated at the same
-  time instant. A typical use-case is::
-
-    cat = katpoint.Catalogue(file('source_list.csv'))
-    strong_sources = cat.filter(flux_limit_Jy=10.0, flux_freq_MHz=1500)
-
-- An iterator filter, implemented by the :meth:`Catalogue.iterfilter` method.
-  This is a Python *generator function*, which returns a *generator iterator*,
-  to be more precise. Each time the returned iterator's .next() method is
-  invoked, the next suitable :class:`Target` object is returned. If no timestamp
-  is provided, the criteria are re-evaluated at the time instant of the .next()
-  call, which makes it easy to cycle through a list of targets over an extended
-  period of time (as during observation). The iterator filter is typically used
-  in a for-loop::
-
-    cat = katpoint.Catalogue(file('source_list.csv'))
-    ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
-    for t in cat.iterfilter(el_limit_deg=10, antenna=ant):
-        # < observe target t >
-
-"""
+"""Target catalogue."""
 
 import logging
 import re
@@ -180,8 +35,232 @@ def _hash(name):
 class Catalogue(object):
     """A searchable and filterable catalogue of targets.
 
-    Examples of catalogue construction can be found in the :mod:`Catalogue`
-    documentation.
+    Overview
+    --------
+
+    A :class:`Catalogue` object combines two concepts:
+
+    - A list of targets, which can be filtered, sorted, pretty-printed and
+      iterated over. The list is accessible as :meth:`Catalogue.targets`, and
+      the catalogue itself is iterable, returning the next target on each
+      iteration. An example is::
+
+        cat = katpoint.Catalogue()
+        t = cat.targets[0]
+        for t in cat:
+            # Do something with target t
+
+    - Lookup by name, by using the catalogue as if it were a dictionary. This is
+      simpler for the user, who does not have to remember all the target details.
+      The named lookup supports tab completion in IPython, which further
+      simplifies finding a target in the catalogue. An example is::
+
+        cat = katpoint.Catalogue()
+        t = cat['Sun']
+
+    Construction
+    ------------
+
+    A catalogue can be constructed in many ways. The simplest way is::
+
+        cat = katpoint.Catalogue()
+
+    This adds the standard *special* targets to the catalogue by default, which
+    are the Sun, Moon, planets and Zenith. A completely empty catalogue is
+    obtained by::
+
+        cat = katpoint.Catalogue(add_specials=False)
+
+    Another built-in set of targets is the small star catalogue included with
+    PyEphem. These *star* targets are added as follows::
+
+        cat = katpoint.Catalogue(add_stars=True)
+
+    Additional targets may be loaded during initialisation of the catalogue by
+    providing a list of :class:`Target` objects (or a single object by itself),
+    as in the following example::
+
+        t1 = katpoint.construct_target('Ganymede, special')
+        t2 = katpoint.construct_target('Takreem, azel, 20, 30')
+        cat1 = katpoint.Catalogue(t1)
+        cat2 = katpoint.Catalogue([t1, t2])
+
+    Alternatively, the list of targets may be replaced by a list of target
+    description strings (or a single description string). The target objects are
+    then constructed before being added, as in::
+
+        cat1 = katpoint.Catalogue('Takreem, azel, 20, 30')
+        cat2 = katpoint.Catalogue(['Ganymede, special', 'Takreem, azel, 20, 30'])
+
+    Taking this one step further, the list may be replaced by any iterable object
+    that returns strings. A very useful example of such an object is the Python
+    :class:`file` object, which iterates over the lines of a text file. If the
+    catalogue file contains one target description string per line (with comments
+    and blank lines allowed too), it may be loaded as::
+
+        cat = katpoint.Catalogue(file('catalogue.csv'))
+
+    Once a catalogue is initialised, more targets may be added to it. The
+    :meth:`Catalogue.add` method is the most direct way. It accepts a single
+    target object, a list of target objects, a single string, a list of strings
+    or a string iterable. This is illustrated below::
+
+        t1 = katpoint.construct_target('Ganymede, special')
+        t2 = katpoint.construct_target('Takreem, azel, 20, 30')
+        cat = katpoint.Catalogue(add_specials=False)
+        cat.add(t1)
+        cat.add([t1, t2])
+        cat.add('Ganymede, special')
+        cat.add(['Ganymede, special', 'Takreem, azel, 20, 30'])
+        cat.add(file('catalogue.csv'))
+
+    The only functionality that :meth:`Catalogue.add` lacks is the ability to
+    add all *special* and *star* targets in one go. They may still be added
+    individually, although this is less convenient (and the reason for the
+    existence of ``add_specials`` and ``add_stars`` in the :class:`Catalogue`
+    initialiser in the first place).
+
+    Some target types are typically found in files with standard formats.
+    Notably, *tle* targets are found in TLE files with three lines per target,
+    and many *xephem* targets are stored in EDB database files. Editing these
+    files to make each line a valid :class:`Target` description string is
+    cumbersome, especially in the case of TLE files which are regularly updated.
+    Two special methods simplify the loading of targets from these files::
+
+        cat = katpoint.Catalogue(add_specials=False)
+        cat.add_tle(file('gps-ops.txt'))
+        cat.add_edb(file('hipparcos.edb'))
+
+    Whenever targets are added to the catalogue, a tag or list of tags may be
+    specified. The tags can also be given as a single string of
+    whitespace-delimited tags, since tags may not contain whitespace. These tags
+    are added to the targets currently being added. This makes it easy to tag
+    groups of related targets in the catalogue, as shown below::
+
+        cat = katpoint.Catalogue(tags='default')
+        cat.add_tle(file('gps-ops.txt'), tags='gps satellite')
+        cat.add_tle(file('glo-ops.txt'), tags=['glonass', 'satellite'])
+        cat.add(file('source_list.csv'), tags='calibrator')
+        cat.add_edb(file('hipparcos.edb'), tags='star')
+
+    Finally, targets may be removed from the catalogue. This is useful when a
+    target is to be updated, as adding a target which is already in the catalogue
+    will silently fail. The reasoning behind this is that a target object is
+    added once to the target list, but may have multiple references in the lookup
+    dictionary, one per alias. When updating a target, it is not clear what to do
+    with all the alternate names. For now, the user has to explicitly remove a
+    target by name before loading a new version of the target into the catalogue.
+    The target may be removed via any of its names::
+
+        cat = katpoint.Catalogue()
+        cat.remove('Sun')
+
+    Filtering and sorting
+    ---------------------
+
+    A :class:`Catalogue` object may be filtered based on various criteria. The
+    following filters are available:
+
+    - *Tag filter*. Returns all targets that have a specified set of tags, and
+      *not* another set of tags. Tags prepended with a tilde (~) indicate tags
+      which targets should not have. All tags have to be present (or absent) for
+      a target to be selected. An example is::
+
+        cat = katpoint.Catalogue(tags='default')
+        cat1 = cat.filter(tags=['special', '~radec'])
+        cat1 = cat.filter(tags='special ~radec')
+
+    - *Flux filter*. Returns all targets with a flux density between the
+      specified limits, at a given frequency. If only one limit is given, it is
+      a lower limit. To simplify filtering, a default flux frequency may be
+      supplied to the catalogue during initialisation. This is stored in each
+      target in the catalogue. An example is::
+
+        cat = katpoint.Catalogue(file('source_list.csv'))
+        cat1 = cat.filter(flux_limit_Jy=[1, 100], flux_freq_MHz=1500)
+        cat = katpoint.Catalogue(file('source_list.csv'), flux_freq_MHz=1500)
+        cat1 = cat.filter(flux_limit_Jy=1)
+
+    - *Azimuth filter*. Returns all targets with an azimuth angle in the given
+      range. The range is specified in degrees as [left, right], where *left* is
+      the leftmost or starting azimuth, and *right* is the rightmost or ending
+      azimuth. The azimuth angle increases clockwise from *left* to *right* to
+      form the range. If *right* is less than *left*, the azimuth angles range
+      around +-180 degrees. Since the target azimuth is dependent on time and
+      observer position, a timestamp and :class:`katpoint.Antenna` object has to
+      be provided. The timestamp defaults to now, and the antenna object may be
+      associated with the catalogue during initialisation, from where it is
+      stored in each target. An example is::
+
+        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        cat = katpoint.Catalogue()
+        cat1 = cat.filter(az_limit_deg=[0, 90], timestamp='2009-10-10', antenna=ant)
+        cat = katpoint.Catalogue(antenna=ant)
+        cat1 = cat.filter(az_limit_deg=[90, 0])
+
+    - *Elevation filter*. Returns all targets with an elevation angle within the
+      given limits, in degrees. If only one limit is given, it is assumed to be
+      a lower limit. As with the azimuth filter, a timestamp and antenna object
+      is required (or defaults will be used). An example is::
+
+        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        cat = katpoint.Catalogue()
+        cat1 = cat.filter(el_limit_deg=[10, 30], timestamp='2009-10-10', antenna=ant)
+        cat = katpoint.Catalogue(antenna=ant)
+        cat1 = cat.filter(el_limit_deg=10)
+
+    - *Proximity filter*. Returns all targets with angular separation from a
+      given set of targets within a specified range. The range is given as a
+      lower and upper limit, in degrees, and a single number is taken as the
+      lower limit. The typical use of this filter is to return all targets more
+      than a specified number of degrees away from a known set of interfering
+      targets. As with the azimuth filter, a timestamp and antenna object is
+      required (or defaults will be used). An example is::
+
+        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        cat = katpoint.Catalogue()
+        cat.add_tle(file('geo.txt'))
+        sun = cat['Sun']
+        afristar = cat['AFRISTAR']
+        cat1 = cat.filter(dist_limit_deg=5, proximity_targets=[sun, afristar],
+                          timestamp='2009-10-10', antenna=ant)
+        cat = katpoint.Catalogue(antenna=ant)
+        cat1 = cat.filter(dist_limit_deg=[0, 5], proximity_targets=sun)
+
+    The criteria may be divided into *static* criteria which are independent of
+    time (tags and flux) and *dynamic* criteria which do depend on time
+    (azimuth, elevation and proximity). There are two filtering mechanisms that
+    both support the same criteria, but differ on their handling of dynamic
+    criteria:
+
+    - A direct filter, implemented by the :meth:`Catalogue.filter` method. This
+      returns the filtered catalogue as a new catalogue which contains the
+      subset of targets that satisfy the criteria. All criteria are evaluated at
+      the same time instant. A typical use-case is::
+
+        cat = katpoint.Catalogue(file('source_list.csv'))
+        strong_sources = cat.filter(flux_limit_Jy=10.0, flux_freq_MHz=1500)
+
+    - An iterator filter, implemented by the :meth:`Catalogue.iterfilter` method.
+      This is a Python *generator function*, which returns a *generator iterator*,
+      to be more precise. Each time the returned iterator's .next() method is
+      invoked, the next suitable :class:`Target` object is returned. If no
+      timestamp is provided, the criteria are re-evaluated at the time instant
+      of the .next() call, which makes it easy to cycle through a list of
+      targets over an extended period of time (as during observation). The
+      iterator filter is typically used in a for-loop::
+
+        cat = katpoint.Catalogue(file('source_list.csv'))
+        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        for t in cat.iterfilter(el_limit_deg=10, antenna=ant):
+            # < observe target t >
+
+    When a catalogue is sorted, the order of the target list is changed. The
+    catalogue may be sorted according to name (the default), right ascension,
+    declination, azimuth, elevation and flux. Any position-based key requires a
+    timestamp and :class:`katpoint.Antenna` object to evaluate the position of
+    each target, and the flux key requires a frequency at which to evaluate the
+    flux.
 
     Parameters
     ----------
@@ -293,7 +372,7 @@ class Catalogue(object):
     def add(self, targets, tags=None):
         """Add targets to catalogue.
 
-        Examples of catalogue construction can be found in the :mod:`Catalogue`
+        Examples of catalogue construction can be found in the :class:`Catalogue`
         documentation.
 
         Parameters
@@ -330,7 +409,7 @@ class Catalogue(object):
     def add_tle(self, lines, tags=None):
         """Add NORAD Two-Line Element (TLE) targets to catalogue.
 
-        Examples of catalogue construction can be found in the :mod:`Catalogue`
+        Examples of catalogue construction can be found in the :class:`Catalogue`
         documentation.
 
         Parameters
@@ -357,7 +436,7 @@ class Catalogue(object):
     def add_edb(self, lines, tags=None):
         """Add XEphem database format (EDB) targets to catalogue.
 
-        Examples of catalogue construction can be found in the :mod:`Catalogue`
+        Examples of catalogue construction can be found in the :class:`Catalogue`
         documentation.
 
         Parameters
@@ -402,7 +481,7 @@ class Catalogue(object):
         the :meth:`filter` method in that all time-dependent criteria (such as
         elevation) may be evaluated at the time of the specific iteration, and
         not in advance as with :meth:`filter`. This simplifies finding the next
-        suitable target during an observation of several targets.
+        suitable target during an extended observation of several targets.
 
         Parameters
         ----------
@@ -441,7 +520,7 @@ class Catalogue(object):
         Returns
         -------
         iter : iterator object
-            The generated iterator object which will return filtered targets
+            The generator-iterator object which will return filtered targets
 
         Raises
         ------
@@ -585,8 +664,8 @@ class Catalogue(object):
     def sort(self, key='name', ascending=True, flux_freq_MHz=None, timestamp=None, antenna=None):
         """Sort targets in catalogue.
 
-        This returns a new catalogue with the target list sorted according to the
-        given criterium.
+        This returns a new catalogue with the target list sorted according to
+        the given key.
 
         Parameters
         ----------
@@ -647,7 +726,7 @@ class Catalogue(object):
 
         The method indicates the horizon itself by a line of dashes. It also
         displays the target flux density if a frequency is supplied. It is useful
-        to quickly see which targets are visible.
+        to quickly see which targets are visible (or will be soon).
 
         Parameters
         ----------
