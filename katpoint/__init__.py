@@ -23,6 +23,7 @@ from .ephem_extra import Timestamp, lightspeed, rad2deg, deg2rad
 from .projection import sphere_to_plane, plane_to_sphere
 
 # Hide submodules in module namespace, to avoid confusion with corresponding class names
+# pylint: disable-msg=E0601
 _antenna, _target, _catalogue, _ephem_extra, _projection = antenna, target, catalogue, ephem_extra, projection
 del antenna, target, catalogue, ephem_extra, projection
 

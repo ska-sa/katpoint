@@ -4,7 +4,7 @@
 import unittest
 import time
 
-from katpoint import antenna
+import katpoint
 
 class TestAntennaConstruction(unittest.TestCase):
     """Test construction of antennas from strings and vice versa."""
@@ -17,17 +17,17 @@ class TestAntennaConstruction(unittest.TestCase):
 
     def test_construct_antenna(self):
         """Test construction of antennas from strings and vice versa."""
-        valid_antennas = [antenna.construct_antenna(descr) for descr in self.valid_antennas]
+        valid_antennas = [katpoint.construct_antenna(descr) for descr in self.valid_antennas]
         valid_strings = [a.description for a in valid_antennas]
         for descr in valid_strings:
-            self.assertEqual(descr, antenna.construct_antenna(descr).description,
+            self.assertEqual(descr, katpoint.construct_antenna(descr).description,
                              'Antenna description differs from original string')
         for descr in self.invalid_antennas:
-            self.assertRaises(ValueError, antenna.construct_antenna, descr)
+            self.assertRaises(ValueError, katpoint.construct_antenna, descr)
 
     def test_sidereal_time(self):
         """Test sidereal time and the use of date/time strings vs floats as timestamps."""
-        ant = antenna.construct_antenna(self.valid_antennas[0])
+        ant = katpoint.construct_antenna(self.valid_antennas[0])
         utc_secs = time.mktime(time.strptime(self.timestamp, '%Y/%m/%d %H:%M:%S')) - time.timezone
         sid1 = ant.sidereal_time(self.timestamp)
         sid2 = ant.sidereal_time(utc_secs)

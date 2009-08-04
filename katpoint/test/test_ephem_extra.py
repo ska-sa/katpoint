@@ -5,7 +5,7 @@ import unittest
 
 import ephem
 
-from katpoint.ephem_extra import Timestamp
+from katpoint import Timestamp
 
 class TestTimestamp(unittest.TestCase):
     """Test timestamp creation and conversion."""

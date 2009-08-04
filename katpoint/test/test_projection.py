@@ -2,8 +2,10 @@
 # pylint: disable-msg=C0103,W0212
 
 import unittest
+
 import numpy as np
-from katpoint import projection
+
+from katpoint import _projection as projection
 try:
     from .aips_projection import newpos, dircos
     found_aips = True
