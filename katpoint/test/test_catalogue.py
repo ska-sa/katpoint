@@ -44,11 +44,15 @@ class TestCatalogueFilterSort(unittest.TestCase):
         self.assertEqual(len(cat2.targets), 1, 'Number of targets with sufficient flux should be 1')
         cat.add(katpoint.construct_target('Zenith, azel, 0, 90'))
         ant = katpoint.construct_antenna(self.antenna)
-        cat3 = cat.filter(el_limit_deg=85, timestamp=self.timestamp, antenna=ant)
-        self.assertEqual(len(cat3.targets), 1, 'Number of targets close to zenith should be 1')
+        cat3 = cat.filter(az_limit_deg=[0, 180], timestamp=self.timestamp, antenna=ant)
+        self.assertEqual(len(cat3.targets), 2, 'Number of targets rising should be 2')
+        cat4 = cat.filter(az_limit_deg=[180, 0], timestamp=self.timestamp, antenna=ant)
+        self.assertEqual(len(cat4.targets), 10, 'Number of targets setting should be 10')
+        cat5 = cat.filter(el_limit_deg=85, timestamp=self.timestamp, antenna=ant)
+        self.assertEqual(len(cat5.targets), 1, 'Number of targets close to zenith should be 1')
         sun = katpoint.construct_target('Sun, special')
-        cat4 = cat.filter(dist_limit_deg=[0.0, 1.0], proximity_targets=sun, timestamp=self.timestamp, antenna=ant)
-        self.assertEqual(len(cat4.targets), 1, 'Number of targets close to Sun should be 1')
+        cat6 = cat.filter(dist_limit_deg=[0.0, 1.0], proximity_targets=sun, timestamp=self.timestamp, antenna=ant)
+        self.assertEqual(len(cat6.targets), 1, 'Number of targets close to Sun should be 1')
 
     def test_sort_catalogue(self):
         """Test sorting of catalogues."""
