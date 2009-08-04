@@ -383,6 +383,17 @@ class Catalogue(object):
             Tag or list of tags to add to *targets* (strings will be split on
             whitespace)
 
+        Examples
+        --------
+        Here are some ways to add targets to a catalogue:
+
+        >>> from katpoint import Catalogue
+        >>> cat = Catalogue()
+        >>> cat.add(file('source_list.csv'), tags='cal')
+        >>> cat.add('Sun, special')
+        >>> cat2 = Catalogue(add_specials=False)
+        >>> cat2.add(cat.targets)
+
         """
         if isinstance(targets, basestring) or isinstance(targets, Target):
             targets = [targets]
@@ -420,6 +431,18 @@ class Catalogue(object):
             Tag or list of tags to add to targets (strings will be split on
             whitespace)
 
+        Examples
+        --------
+        Here are some ways to add TLE targets to a catalogue:
+
+        >>> from katpoint import Catalogue
+        >>> cat = Catalogue()
+        >>> cat.add_tle(file('gps-ops.txt'), tags='gps')
+        >>> lines = ['ISS DEB [TOOL BAG]\n',
+                     '1 33442U 98067BL  09195.86837279  .00241454  37518-4  34022-3 0  3424\n',
+                     '2 33442  51.6315 144.2681 0003376 120.1747 240.0135 16.05240536 37575\n']
+        >>> cat2.add_tle(lines)
+
         """
         targets, tle = [], []
         for line in lines:
@@ -446,6 +469,17 @@ class Catalogue(object):
         tags : string or sequence of strings, optional
             Tag or list of tags to add to targets (strings will be split on
             whitespace)
+
+        Examples
+        --------
+        Here are some ways to add EDB targets to a catalogue:
+
+        >>> from katpoint import Catalogue
+        >>> cat = Catalogue()
+        >>> cat.add_edb(file('hipparcos.edb'), tags='star')
+        >>> lines = ['HYP71683,f|S|G2,14:39:35.88 ,-60:50:7.4 ,-0.010,2000,\n',
+                     'HYP113368,f|S|A3,22:57:39.055,-29:37:20.10,1.166,2000,\n']
+        >>> cat2.add_edb(lines)
 
         """
         targets = []
@@ -526,6 +560,17 @@ class Catalogue(object):
         ------
         ValueError
             If some required parameters are missing
+
+        Examples
+        --------
+        Here are some ways to filter a catalogue iteratively:
+
+        >>> from katpoint import Catalogue, construct_antenna
+        >>> ant = construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        >>> cat = Catalogue(antenna=ant)
+        >>> for t in cat.iterfilter(el_limit_deg=10):
+                # Observe target t
+                pass
 
         """
         tag_filter = not tags is None
@@ -654,6 +699,19 @@ class Catalogue(object):
         ------
         ValueError
             If some required parameters are missing
+
+        Examples
+        --------
+        Here are some ways to filter a catalogue:
+
+        >>> from katpoint import Catalogue, construct_antenna
+        >>> ant = construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        >>> cat = Catalogue(antenna=ant, flux_freq_MHz=1500)
+        >>> cat1 = cat.filter(el_limit_deg=10)
+        >>> cat2 = cat.filter(az_limit_deg=[150, -150])
+        >>> cat3 = cat.filter(flux_limit_Jy=10)
+        >>> cat4 = cat.filter(tags='special ~radec')
+        >>> cat5 = cat.filter(dist_limit_deg=5, proximity_targets=cat['Sun'])
 
         """
         return Catalogue([target for target in
