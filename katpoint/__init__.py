@@ -10,7 +10,7 @@ and CASA.
 
 """
 
-import logging
+import logging as _logging
 
 from .antenna import Antenna, construct_antenna
 
@@ -22,18 +22,22 @@ from .ephem_extra import Timestamp, lightspeed, rad2deg, deg2rad
 
 from .projection import sphere_to_plane, plane_to_sphere
 
+# Hide submodules in module namespace, to avoid confusion with corresponding class names
+_antenna, _target, _catalogue, _ephem_extra, _projection = antenna, target, catalogue, ephem_extra, projection
+del antenna, target, catalogue, ephem_extra, projection
+
 # Attempt to register custom IPython tab completer for catalogue name lookups
 try:
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
+    import IPython.ipapi as _ipapi
+    _ip = _ipapi.get()
 except ImportError:
-    ip = None
-if not ip is None:
-    ip.set_hook('complete_command', _catalogue_completer, re_key = r"(?:.*\=)?(.+?)\[")
+    _ip = None
+if not _ip is None:
+    _ip.set_hook('complete_command', _catalogue_completer, re_key = r"(?:.*\=)?(.+?)\[")
 
 # Setup library logger, and suppress spurious logger messages via a null handler
-class _NullHandler(logging.Handler):
+class _NullHandler(_logging.Handler):
     def emit(self, record):
         pass
-logger = logging.getLogger("katpoint")
+logger = _logging.getLogger("katpoint")
 logger.addHandler(_NullHandler())
