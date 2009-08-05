@@ -82,6 +82,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
 
     def test_completer(self):
         """Test IPython tab completer."""
+        # pylint: disable-msg=W0201,W0612,R0903
         cat = katpoint.Catalogue(add_stars=True)
         # Set up dummy object containing user namespace and line to be completed
         class Dummy(object):
