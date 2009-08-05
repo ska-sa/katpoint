@@ -338,6 +338,41 @@ class Target(object):
     # The default (ra, dec) coordinates are the astrometric ones
     radec = astrometric_radec
 
+    def parallactic_angle(self, timestamp=None, antenna=None):
+        """Calculate parallactic angle on target as seen from antenna at time(s).
+
+        This calculates the *parallactic angle*, which is the position angle of
+        the observer's vertical on the sky, measured from north toward east.
+        This is the angle between the great-circle arc connecting the celestial
+        North pole to the target position, and the great-circle arc connecting
+        the zenith above the antenna to the target, or the angle between the
+        *hour circle* and *vertical circle* through the target, at the given
+        timestamp(s).
+
+        Parameters
+        ----------
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at target (defaults to default antenna)
+
+        Returns
+        -------
+        parangle : float or sequence
+            Parallactic angle, in radians
+
+        Raises
+        ------
+        ValueError
+            If no antenna is specified, and no default antenna was set either
+
+        """
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+        # Get apparent hour angle and declination
+        ra, dec = self.apparent_radec(timestamp, antenna)
+        ha = antenna.local_sidereal_time(timestamp) - ra
+        return np.arctan2(np.sin(ha), np.tan(antenna.observer.lat) * np.cos(dec) - np.sin(dec) * np.cos(ha))
+
     def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency.
 
