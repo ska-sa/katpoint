@@ -100,33 +100,32 @@ class Antenna(object):
         return locals()
     description = property(**description())
 
-    def sidereal_time(self, timestamp=None):
-        """Calculate sidereal time for local timestamp(s).
+    def local_sidereal_time(self, timestamp=None):
+        """Calculate local sidereal time at antenna for timestamp(s).
 
         This is a vectorised function that returns the local sidereal time at
-        the antenna for a given timestamp in seconds-since-Unix-epoch.
+        the antenna for a given UTC timestamp.
 
         Parameters
         ----------
-        timestamp : float or string or sequence, optional
-            UTC timestamp(s) in seconds since Unix epoch, or string date/time
-            (defaults to now)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
 
         Returns
         -------
         lst : :class:`ephem.Angle` object, or sequence of objects
-            Local sidereal time(s)
+            Local sidereal time(s), in radians
 
         """
-        def _scalar_sidereal_time(t):
-            """Calculate sidereal time at a single time instant."""
+        def _scalar_local_sidereal_time(t):
+            """Calculate local sidereal time at a single time instant."""
             self.observer.date = Timestamp(t).to_ephem_date()
             # pylint: disable-msg=E1101
             return self.observer.sidereal_time()
         if is_iterable(timestamp):
-            return np.array([_scalar_sidereal_time(t) for t in timestamp])
+            return np.array([_scalar_local_sidereal_time(t) for t in timestamp])
         else:
-            return _scalar_sidereal_time(timestamp)
+            return _scalar_local_sidereal_time(timestamp)
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_antenna
