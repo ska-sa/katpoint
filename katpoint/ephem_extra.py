@@ -118,6 +118,10 @@ class Timestamp(object):
         """Divide timestamp by numerical factor (useful for processing timestamps)."""
         return Timestamp(self.secs / other)
 
+    def __radd__(self, other):
+        """Add timestamp to seconds (as floating-point number) and return result."""
+        return Timestamp(other + self.secs)
+
     def __iadd__(self, other):
         """Add seconds (as floating-point number) to timestamp in-place."""
         self.secs += other
