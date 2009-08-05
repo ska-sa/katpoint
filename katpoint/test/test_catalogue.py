@@ -79,3 +79,16 @@ class TestCatalogueFilterSort(unittest.TestCase):
         cat.add(self.flux_target)
         ant = katpoint.construct_antenna(self.antenna)
         cat.visibility_list(timestamp=self.timestamp, antenna=ant, flux_freq_MHz=1.5)
+
+    def test_completer(self):
+        """Test IPython tab completer."""
+        cat = katpoint.Catalogue(add_stars=True)
+        # Set up dummy object containing user namespace and line to be completed
+        class Dummy(object):
+            pass
+        event = Dummy()
+        event.shell = Dummy()
+        event.shell.user_ns = locals()
+        event.line = "t = cat['Rasal"
+        names = katpoint._catalogue_completer(event, event)
+        self.assertEqual(names, ['Rasalgethi', 'Rasalhague'], 'Tab completer failed')
