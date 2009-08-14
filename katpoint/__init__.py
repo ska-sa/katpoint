@@ -22,10 +22,17 @@ from .ephem_extra import Timestamp, lightspeed, rad2deg, deg2rad
 
 from .projection import sphere_to_plane, plane_to_sphere
 
+from .correction import RefractionCorrection, PointingModel
+
 # Hide submodules in module namespace, to avoid confusion with corresponding class names
+# If the module is reloaded, this will fail - ignore the resulting NameError
 # pylint: disable-msg=E0601
-_antenna, _target, _catalogue, _ephem_extra, _projection = antenna, target, catalogue, ephem_extra, projection
-del antenna, target, catalogue, ephem_extra, projection
+try:
+    _antenna, _target, _catalogue, _ephem_extra, _projection, _correction = \
+        antenna, target, catalogue, ephem_extra, projection, correction
+    del antenna, target, catalogue, ephem_extra, projection, correction
+except NameError:
+    pass
 
 # Attempt to register custom IPython tab completer for catalogue name lookups
 try:
