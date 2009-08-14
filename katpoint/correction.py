@@ -241,7 +241,7 @@ class PointingModel(object):
 
     def __repr__(self):
         """Short human-friendly string representation of pointing model object."""
-        return "<katpoint.PointingModel params=%d/%d at 0x%x>" % \
+        return "<katpoint.PointingModel active_params=%d/%d at 0x%x>" % \
                (len(self.params.nonzero()[0]), self.num_params, id(self))
 
     def __str__(self):
