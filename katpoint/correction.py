@@ -223,20 +223,38 @@ class PointingModel(object):
     ----------
     params : sequence of %d floats, optional
         Parameters of full model, in radians (defaults to sequence of zeroes)
+    strict : {True, False}, optional
+        If true, only accept exactly %d parameters in *params*; otherwise, select
+        the first %d parameters of *params* or the entire *params*, whichever is
+        smallest, and set the unused parameters to zero (useful to load old
+        versions of the model).
 
     Raises
     ------
     ValueError
-        If the *params* vector has the wrong length
+        If the *params* vector has the wrong length and *strict* is True
 
-    """ % (num_params, num_params)
-    def __init__(self, params=None):
+    """ % (num_params, num_params, num_params, num_params)
+    def __init__(self, params=None, strict=True):
         if params is None:
             params = np.zeros(self.num_params)
         params = np.asarray(params)
         if len(params) != self.num_params:
-            raise ValueError('Pointing model expects %d parameters, but received %d' %
-                             (self.num_params, len(params)))
+            if strict:
+                raise ValueError('Pointing model expects exactly %d parameters, but received %d' %
+                                 (self.num_params, len(params)))
+            else:
+                if len(params) < self.num_params:
+                    padded = np.zeros(self.num_params)
+                    padded[:len(params)] = params
+                    params = padded
+                else:
+                    discarded_actives = len(params[self.num_params:].nonzero()[0])
+                    if discarded_actives > 0:
+                        logger.warning('Pointing model received too many parameters ' +
+                                       '(%d instead of %d), and %d non-zero parameters will be discarded' %
+                                       (len(params), self.num_params, discarded_actives))
+                    params = params[:self.num_params]
         self.params = params
 
     def __repr__(self):
