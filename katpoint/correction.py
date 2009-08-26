@@ -509,6 +509,22 @@ class PointingModel(object):
            Squares", available at `<http://www.nrbook.com/a/bookcpdf/c15-4.pdf>`_
 
         """
+        # Set default inputs
+        if sigma_daz is None:
+            sigma_daz = np.ones(np.shape(az))
+        if sigma_del is None:
+            sigma_del = np.ones(np.shape(el))
+        # Ensure all inputs are numpy arrays of the same shape
+        az, el, delta_az, delta_el = np.asarray(az), np.asarray(el), np.asarray(delta_az), np.asarray(delta_el)
+        sigma_daz, sigma_del = np.asarray(sigma_daz), np.asarray(sigma_del)
+        assert az.shape == el.shape == delta_az.shape == delta_el.shape == sigma_daz.shape == sigma_del.shape, \
+               'Input parameters should all have the same shape'
+
+        # Blank out the existing model
+        self.params[:] = 0.0
+        sigma_params = np.zeros(len(self.params))
+
+        # Handle parameter enabling
         if enabled_params is None:
             enabled_params = [1, 3, 4, 5, 6, 7]
         enabled_params = np.asarray(enabled_params)
@@ -524,16 +540,9 @@ class PointingModel(object):
             logger.warning('Pointing model parameter P10 is redundant for alt-az mount (same as P8) - disabled P10')
             enabled_params.remove(10)
         enabled_params = np.array(list(enabled_params))
-
-        if sigma_daz is None:
-            sigma_daz = np.ones(np.shape(az))
-        if sigma_del is None:
-            sigma_del = np.ones(np.shape(el))
-        # Ensure all inputs are numpy arrays of the same shape
-        az, el, delta_az, delta_el = np.asarray(az), np.asarray(el), np.asarray(delta_az), np.asarray(delta_el)
-        sigma_daz, sigma_del = np.asarray(sigma_daz), np.asarray(sigma_del)
-        assert az.shape == el.shape == delta_az.shape == delta_el.shape == sigma_daz.shape == sigma_del.shape, \
-               'Input parameters should all have the same shape'
+        # If no parameters are enabled, a zero model is returned
+        if len(enabled_params) == 0:
+            return self.params, sigma_params
 
         # Number of active parameters
         M = len(enabled_params)
@@ -551,10 +560,8 @@ class PointingModel(object):
         b = np.hstack((delta_az / sigma_daz, delta_el / sigma_del))
         # Solve linear least-squares problem using SVD (see NRinC, 2nd ed, Eq. 15.4.17)
         U, s, Vt = np.linalg.svd(A, full_matrices=False)
-        self.params[:] = 0.0
         self.params[enabled_params - 1] = np.dot(Vt.T, np.dot(U.T, b) / s)
         # Also obtain standard errors of parameters (see NRinC, 2nd ed, Eq. 15.4.19)
-        sigma_params = np.zeros(len(self.params))
         sigma_params[enabled_params - 1] = np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1)
 
         return self.params, sigma_params
