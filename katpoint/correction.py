@@ -257,6 +257,25 @@ class PointingModel(object):
                     params = params[:self.num_params]
         self.params = params
 
+    def param_str(self, param):
+        """Human-friendly string representation of a specific parameter value.
+
+        Parameters
+        ----------
+        param : integer
+            Index of parameter (starts at **1** and corresponds to P-number)
+
+        Returns
+        -------
+        param_str : string
+            String representation of parameter
+
+        """
+        if param in [9, 12]:
+            return '%.7f' % self.params[param - 1]
+        else:
+            return str(ephem.degrees(self.params[param - 1]).znorm)
+
     def __repr__(self):
         """Short human-friendly string representation of pointing model object."""
         return "<katpoint.PointingModel active_params=%d/%d at 0x%x>" % \
@@ -290,10 +309,7 @@ class PointingModel(object):
                  'P20 = %s deg (ad hoc sin(8el) term in delta_el)',
                  'P21 = %s deg (ad hoc cos(az) term in delta_el)',
                  'P22 = %s deg (ad hoc sin(az) term in delta_el)']
-        value = [ephem.degrees(p).znorm for p in self.params]
-        value[8] = self.params[8]
-        value[11] = self.params[11]
-        param_strs = [descr[p] % (value[p],) for p in xrange(self.num_params) if self.params[p] != 0.0]
+        param_strs = [descr[p] % self.param_str(p + 1) for p in xrange(self.num_params) if self.params[p] != 0.0]
         return summary + ':\n' + '\n'.join(param_strs)
 
     # pylint: disable-msg=R0914,C0103,W0612
