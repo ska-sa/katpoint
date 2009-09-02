@@ -289,7 +289,7 @@ class PointingModel(object):
             return summary
         descr = ['P1 = %s deg (az offset = encoder bias - tilt around)',
                  'P2 = %s deg (az gravitational sag, should be 0.0)',
-                 'P3 = %s deg (axis skew to right = non-perpendicularity of az/el axes)',
+                 'P3 = %s deg (left-right axis skew = non-perpendicularity of az/el axes)',
                  'P4 = %s deg (az box offset = RF-axis misalignment)',
                  'P5 = %s deg (tilt out = az ring tilted towards north)',
                  'P6 = %s deg (tilt over = az ring tilted towards east)',
