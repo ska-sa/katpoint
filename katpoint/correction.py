@@ -299,16 +299,16 @@ class PointingModel(object):
                  'P10 = %s deg (ad hoc cos(el) term in delta_el, redundant with P8)',
                  'P11 = %s deg [ECES] (asymmetric sag / el centering error)',
                  'P12 = %s [-PAA1] (az excess scale factor)',
-                 'P13 = %s deg [-ACEC] (az centering error)',
-                 'P14 = %s deg [ACES] (az centering error)',
+                 'P13 = %s deg [ACEC] (az centering error)',
+                 'P14 = %s deg [-ACES] (az centering error)',
                  'P15 = %s deg [HECA2] (elevation nod twice per az revolution)',
                  'P16 = %s deg [-HESA2] (elevation nod twice per az revolution)',
                  'P17 = %s deg [-HACA2] (az encoder tilt)',
                  'P18 = %s deg [HASA2] (az encoder tilt)',
                  'P19 = %s deg [HECE8] (high-order distortions in el encoder scale)',
                  'P20 = %s deg [HESE8] (high-order distortions in el encoder scale)',
-                 'P21 = %s deg [HECA] (elevation nod once per az revolution)',
-                 'P22 = %s deg [-HESA] (elevation nod once per az revolution)']
+                 'P21 = %s deg [-HECA] (elevation nod once per az revolution)',
+                 'P22 = %s deg [HESA] (elevation nod once per az revolution)']
         param_strs = [descr[p] % self.param_str(p + 1) for p in xrange(self.num_params) if self.params[p] != 0.0]
         return summary + ':\n' + '\n'.join(param_strs)
 
