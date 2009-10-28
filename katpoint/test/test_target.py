@@ -54,9 +54,10 @@ class TestTargetConstruction(unittest.TestCase):
         valid_targets = [katpoint.construct_target(descr) for descr in self.valid_targets]
         valid_strings = [t.description for t in valid_targets]
         for descr in valid_strings:
-            self.assertEqual(descr, katpoint.construct_target(descr).description,
-                             "Target description ('%s') differs from original string ('%s')" %
-                             (katpoint.construct_target(descr).description, descr))
+            t = katpoint.construct_target(descr)
+            self.assertEqual(descr, t.description, "Target description ('%s') differs from original string ('%s')" %
+                             (t.description, descr))
+            print repr(t), t
         for descr in self.invalid_targets:
             self.assertRaises(ValueError, katpoint.construct_target, descr)
         azel1 = katpoint.construct_target(self.azel_target)
@@ -82,3 +83,6 @@ class TestFluxDensity(unittest.TestCase):
     def test_flux_density(self):
         """Test flux density calculation."""
         self.assertEqual(self.flux_target.flux_density(1.5), 100.0, 'Flux calculation wrong')
+        self.flux_target.flux_freq_MHz = 1.5
+        self.assertEqual(self.flux_target.flux_density(), 100.0, 'Flux calculation wrong')
+        print self.flux_target

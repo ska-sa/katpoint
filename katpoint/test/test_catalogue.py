@@ -12,6 +12,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.tle_lines = ['GPS BIIA-21 (PRN 09)    \n',
                           '1 22700U 93042A   07266.32333151  .00000012  00000-0  10000-3 0  8054\n',
                           '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n']
+        self.edb_lines = ['HIC 13847,f|S|A4,2:58:16.03,-40:18:17.1,2.906,2000,\n']
 
     def test_construct_catalogue(self):
         """Test construction of catalogues."""
@@ -23,9 +24,10 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.assertEqual(test_target.description, cat[test_target.name].description, 'Lookup failed')
         self.assertEqual(cat['Non-existent'], None, 'Lookup of non-existent target failed')
         cat.add_tle(self.tle_lines, 'tle')
-        self.assertEqual(len(cat.targets), num_targets + 1, 'Number of targets incorrect')
+        cat.add_edb(self.edb_lines, 'edb')
+        self.assertEqual(len(cat.targets), num_targets + 2, 'Number of targets incorrect')
         cat.remove(cat.targets[-1].name)
-        self.assertEqual(len(cat.targets), num_targets, 'Number of targets incorrect')
+        self.assertEqual(len(cat.targets), num_targets + 1, 'Number of targets incorrect')
 
 class TestCatalogueFilterSort(unittest.TestCase):
     """Test filtering and sorting of catalogues."""
@@ -79,6 +81,9 @@ class TestCatalogueFilterSort(unittest.TestCase):
         cat.add(self.flux_target)
         ant = katpoint.construct_antenna(self.antenna)
         cat.visibility_list(timestamp=self.timestamp, antenna=ant, flux_freq_MHz=1.5)
+        cat.antenna = ant
+        cat.flux_freq_MHz = 1.5
+        cat.visibility_list(timestamp=self.timestamp)
 
     def test_completer(self):
         """Test IPython tab completer."""
