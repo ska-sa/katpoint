@@ -18,11 +18,11 @@ def is_iterable(x):
 
 def rad2deg(x):
     """Converts radians to degrees (also works for arrays)."""
-    return x * 180.0 / np.pi
+    return x * (180.0 / np.pi)
 
 def deg2rad(x):
     """Converts degrees to radians (also works for arrays)."""
-    return x * np.pi / 180.0
+    return x * (np.pi / 180.0)
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Timestamp
