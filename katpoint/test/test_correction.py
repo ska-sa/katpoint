@@ -45,14 +45,17 @@ class TestPointingModel(unittest.TestCase):
 
     def test_pointing_model_load_save(self):
         """Test construction / load / save of pointing model."""
-        params = np.ones(katpoint.PointingModel.num_params + 1)
+        params = katpoint.deg2rad(np.random.randn(katpoint.PointingModel.num_params + 1))
         self.assertRaises(ValueError, katpoint.PointingModel, params)
         pm = katpoint.PointingModel(params[:-1])
         print repr(pm), pm
         pm2 = katpoint.PointingModel(params[:-2], strict=False)
         self.assertEqual(pm2.params[-1], 0.0, 'Unspecified pointing model params not zeroed')
         pm3 = katpoint.PointingModel(params, strict=False)
-        self.assertEqual(pm3.params[-1], 1.0, 'Superfluous pointing model params not handled correctly')
+        self.assertEqual(pm3.params[-1], params[-2], 'Superfluous pointing model params not handled correctly')
+        pm4 = katpoint.PointingModel(pm.description)
+        self.assertEqual(pm4.description, pm.description, 'Saving pointing model to string and loading it again failed')
+        np.testing.assert_almost_equal(pm4.params, pm.params, decimal=6)
 
     def test_pointing_closure(self):
         """Test closure between pointing correction and its reverse operation."""

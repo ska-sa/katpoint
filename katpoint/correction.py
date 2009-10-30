@@ -221,13 +221,18 @@ class PointingModel(object):
 
     Parameters
     ----------
-    params : sequence of %d floats, optional
-        Parameters of full model, in radians (defaults to sequence of zeroes)
+    params : sequence of %d floats, or string, optional
+        Parameters of full model, in radians (defaults to sequence of zeroes).
+        If it is a string, it is interpreted as a comma-separated (or whitespace-
+        separated) sequence of parameters, in *degrees*, as produced by the
+        :attr:`description` property. The string form is in degrees, as this
+        will be stored in configuration files and is therefore considered to be
+        user-facing.
     strict : {True, False}, optional
-        If true, only accept exactly %d parameters in *params*; otherwise, select
-        the first %d parameters of *params* or the entire *params*, whichever is
-        smallest, and set the unused parameters to zero (useful to load old
-        versions of the model).
+        If True, only accept exactly %d parameters in *params*. If False, do a
+        Procrustean assignment: select the first %d parameters of *params* or
+        the entire *params*, whichever is smallest, and set the unused parameters
+        to zero (useful to load old versions of the model).
 
     Raises
     ------
@@ -238,11 +243,18 @@ class PointingModel(object):
     def __init__(self, params=None, strict=True):
         if params is None:
             params = np.zeros(self.num_params)
+        elif isinstance(params, basestring):
+            params = np.array([ephem.degrees(p.strip(', ')) for p in params.split()])
+            # Fix P9 and P12, which are scale factors (not angles) and therefore should not be converted to rads
+            if len(params) >= 9:
+                params[8] = rad2deg(params[8])
+            if len(params) >= 12:
+                params[11] = rad2deg(params[11])
         params = np.asarray(params)
         if len(params) != self.num_params:
             if strict:
-                raise ValueError('Pointing model expects exactly %d parameters, but received %d' %
-                                 (self.num_params, len(params)))
+                raise ValueError(("Pointing model expects exactly %d parameters, but received %d" +
+                                  " (use 'strict=False' to override)") % (self.num_params, len(params)))
             else:
                 if len(params) < self.num_params:
                     padded = np.zeros(self.num_params)
@@ -271,8 +283,10 @@ class PointingModel(object):
             String representation of parameter
 
         """
-        if param in [9, 12]:
-            return '%.7f' % self.params[param - 1]
+        if self.params[param - 1] == 0.0:
+            return '0'
+        elif param in [9, 12]:
+            return '%.9g' % self.params[param - 1]
         else:
             return str(ephem.degrees(self.params[param - 1]).znorm)
 
@@ -287,30 +301,39 @@ class PointingModel(object):
         summary = "Pointing model has %d parameters with %d active (non-zero)" % (self.num_params, num_active)
         if num_active == 0:
             return summary
-        descr = ['P1 = %s deg [-IA] (az offset = encoder bias - tilt around)',
-                 'P2 = %s deg (az gravitational sag, should be 0.0)',
-                 'P3 = %s deg [-NPAE] (left-right axis skew = non-perpendicularity of az/el axes)',
-                 'P4 = %s deg [CA] (az box offset / collimation error = RF-axis misalignment)',
-                 'P5 = %s deg [AN] (tilt out = az ring tilted towards north)',
-                 'P6 = %s deg [-AW] (tilt over = az ring tilted towards east)',
-                 'P7 = %s deg [IE] (el offset = encoder bias - forward axis skew - el box offset)',
-                 'P8 = %s deg [ECEC/-TF] (gravity sag / Hooke law flexure / el centering error)',
-                 'P9 = %s [PEE1] (el excess scale factor)',
-                 'P10 = %s deg (ad hoc cos(el) term in delta_el, redundant with P8)',
-                 'P11 = %s deg [ECES] (asymmetric sag / el centering error)',
-                 'P12 = %s [-PAA1] (az excess scale factor)',
-                 'P13 = %s deg [ACEC] (az centering error)',
-                 'P14 = %s deg [-ACES] (az centering error)',
-                 'P15 = %s deg [HECA2] (elevation nod twice per az revolution)',
-                 'P16 = %s deg [-HESA2] (elevation nod twice per az revolution)',
-                 'P17 = %s deg [-HACA2] (az encoder tilt)',
-                 'P18 = %s deg [HASA2] (az encoder tilt)',
-                 'P19 = %s deg [HECE8] (high-order distortions in el encoder scale)',
-                 'P20 = %s deg [HESE8] (high-order distortions in el encoder scale)',
-                 'P21 = %s deg [-HECA] (elevation nod once per az revolution)',
-                 'P22 = %s deg [HESA] (elevation nod once per az revolution)']
+        descr = ['P1  = %12s deg [-IA] (az offset = encoder bias - tilt around)',
+                 'P2  = %12s deg (az gravitational sag, should be 0.0)',
+                 'P3  = %12s deg [-NPAE] (left-right axis skew = non-perpendicularity of az/el axes)',
+                 'P4  = %12s deg [CA] (az box offset / collimation error = RF-axis misalignment)',
+                 'P5  = %12s deg [AN] (tilt out = az ring tilted towards north)',
+                 'P6  = %12s deg [-AW] (tilt over = az ring tilted towards east)',
+                 'P7  = %12s deg [IE] (el offset = encoder bias - forward axis skew - el box offset)',
+                 'P8  = %12s deg [ECEC/-TF] (gravity sag / Hooke law flexure / el centering error)',
+                 'P9  = %12s     [PEE1] (el excess scale factor)',
+                 'P10 = %12s deg (ad hoc cos(el) term in delta_el, redundant with P8)',
+                 'P11 = %12s deg [ECES] (asymmetric sag / el centering error)',
+                 'P12 = %12s     [-PAA1] (az excess scale factor)',
+                 'P13 = %12s deg [ACEC] (az centering error)',
+                 'P14 = %12s deg [-ACES] (az centering error)',
+                 'P15 = %12s deg [HECA2] (elevation nod twice per az revolution)',
+                 'P16 = %12s deg [-HESA2] (elevation nod twice per az revolution)',
+                 'P17 = %12s deg [-HACA2] (az encoder tilt)',
+                 'P18 = %12s deg [HASA2] (az encoder tilt)',
+                 'P19 = %12s deg [HECE8] (high-order distortions in el encoder scale)',
+                 'P20 = %12s deg [HESE8] (high-order distortions in el encoder scale)',
+                 'P21 = %12s deg [-HECA] (elevation nod once per az revolution)',
+                 'P22 = %12s deg [HESA] (elevation nod once per az revolution)']
         param_strs = [descr[p] % self.param_str(p + 1) for p in xrange(self.num_params) if self.params[p] != 0.0]
         return summary + ':\n' + '\n'.join(param_strs)
+
+    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
+    def description():
+        """Class method which creates description property."""
+        doc = 'String representation of pointing model, sufficient to reconstruct it.'
+        def fget(self):
+            return ', '.join([self.param_str(p + 1) for p in xrange(self.num_params)])
+        return locals()
+    description = property(**description())
 
     # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
