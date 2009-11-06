@@ -64,6 +64,9 @@ timestamp = katpoint.Timestamp()
 ra, dec = np.array([t.radec(timestamp) for t in cat]).transpose()
 constellation = [t.aliases[0].partition(' ')[2][:3] if t.aliases else 'SOL' for t in cat]
 ra, dec = katpoint.rad2deg(ra), katpoint.rad2deg(dec)
+az, el = np.hstack([targ.azel([katpoint.Timestamp(timestamp + t)
+                               for t in range(0, 24*3600, 30*60)]) for targ in cat])
+az, el = katpoint.rad2deg(az), katpoint.rad2deg(el)
 
 plt.figure(1)
 plt.clf()
@@ -73,4 +76,13 @@ plt.axis([0, 360, -90, 90])
 plt.xlabel('Right Ascension (degrees)')
 plt.ylabel('Declination (degrees)')
 plt.title("Catalogue seen from '%s' on %s UTC" % (ant.name, timestamp))
+
+plt.figure(2)
+plt.clf()
+plt.plot(az, el, '*')
+plt.axis([0, 360, 0, 90])
+plt.xlabel('Azimuth (degrees)')
+plt.ylabel('Elevation (degrees)')
+plt.title("Catalogue seen from '%s'\nfor 24-hour period starting %s UT" % (ant.name, timestamp))
+
 plt.show()
