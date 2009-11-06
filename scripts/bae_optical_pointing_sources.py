@@ -1,8 +1,17 @@
 #! /usr/bin/python
 #
-# Tool to help create BAE optical pointing source catalogue from following files:
-# - hipparcos.edb [Hipparcos catalogue]
+# Tool that creates BAE optical pointing star catalogue from following files:
+#
+# - hipparcos.edb [Hipparcos Input Catalogue in xephem EDB format]
 # - bae_stars.txt [Mapping of star names in BAE list to Hipparcos HIC numbers]
+# - bae_stars2.txt [Similar mapping for second BAE list]
+#
+# The names in the BAE list are a mixture of traditional (proper) names, Hubble
+# Space Telescope Guide Star Catalogue (GSC) numbers (which uses the Tycho
+# Catalogue numbering) and Smithsonian Astrophysical Observatory Star Catalogue
+# (SAO) numbers. Additionally, each star is provided with its Greek-letter name
+# to avoid ambiguity and improve user experience. Each HIC number was checked
+# against the SIMBAD entry for the star.
 #
 # Ludwig Schwardt
 # 11 July 2009
@@ -10,7 +19,8 @@
 
 import numpy as np
 
-names = file('bae_stars.txt').readlines()
+# Create lookup that returns names for a given HIC number
+names = file('bae_stars2.txt').readlines()
 names = [[part.strip() for part in name.split(',')] for name in names]
 lookup = {}
 for name, num in names:
@@ -18,7 +28,8 @@ for name, num in names:
 
 inlines = file('hipparcos.edb').readlines()
 
-outlines = []
+# Start with Solar System bodies, and add stars found in list as xephem bodies
+outlines = ['Jupiter, special\n', 'Mars, special\n', 'Moon, special\n']
 for line in inlines:
     line = '~'.join([edb_field.strip() for edb_field in line.split(',')])
     try:
@@ -26,6 +37,40 @@ for line in inlines:
     except KeyError:
         continue
 
-f = file('hic.txt','w')
+# Save results
+f = file('bae_optical_pointing_sources.csv','w')
+f.writelines(
+"""# These are the sources to be used by BAE for optical pointing tests of the
+# KAT-7 dishes, in response to Mantis ticket 460 (second BAE list).
+# Compiled by Ludwig Schwardt from various sources on 6 November 2009.
+#
+# Stars from Hipparcos Input Catalogue, Version 2, originally from
+# ftp://cdsarc.u-strasbg.fr/cats/I/196, downloaded from
+# http://www.yvonnet.org/xephem/hipparcos.edb.gz in XEphem edb format.
+# Created by bae_optical_pointing_sources.py, based on bae_stars2.txt.
+#
+""")
 f.writelines(np.sort(outlines))
 f.close()
+
+# Test the catalogue
+import katpoint
+import matplotlib.pyplot as plt
+
+ant = katpoint.construct_antenna('KAT7, -30:43:16.71, 21:24:35.86, 1055, 12.0')
+cat = katpoint.Catalogue(file('bae_optical_pointing_sources.csv'),
+                         add_specials=False, antenna=ant)
+timestamp = katpoint.Timestamp()
+ra, dec = np.array([t.radec(timestamp) for t in cat]).transpose()
+constellation = [t.aliases[0].partition(' ')[2][:3] if t.aliases else 'SOL' for t in cat]
+ra, dec = katpoint.rad2deg(ra), katpoint.rad2deg(dec)
+
+plt.figure(1)
+plt.clf()
+for n, c in enumerate(constellation):
+    plt.text(ra[n], dec[n], c, ha='left', va='center', size='xx-small')
+plt.axis([0, 360, -90, 90])
+plt.xlabel('Right Ascension (degrees)')
+plt.ylabel('Declination (degrees)')
+plt.title("Catalogue seen from '%s' on %s UTC" % (ant.name, timestamp))
+plt.show()
