@@ -181,10 +181,8 @@ class StationaryBody(object):
 
     Parameters
     ----------
-    az : string or float
-        Azimuth, either in 'D:M:S' string format, or as a float in radians
-    el : string or float
-        Elevation, either in 'D:M:S' string format, or as a float in radians
+    az, el : string or float
+        Azimuth and elevation, either in 'D:M:S' string format, or float in rads
     name : string, optional
         Name of body
 
@@ -221,9 +219,9 @@ class StationaryBody(object):
 def lla_to_ecef(lat_rad, long_rad, alt_m):
     """Convert WGS84 spherical coordinates to ECEF cartesian coordinates.
 
-    This converts a position on the Earth specified in latitude, longitude and
-    altitude to earth-centered, earth-fixed (ECEF) cartesian coordinates. This
-    code assumes the WGS84 earth model, described in [1]_.
+    This converts a position on the Earth specified in geodetic latitude,
+    longitude and altitude to earth-centered, earth-fixed (ECEF) cartesian
+    coordinates. This code assumes the WGS84 earth model, described in [1]_.
 
     Parameters
     ----------
@@ -236,12 +234,8 @@ def lla_to_ecef(lat_rad, long_rad, alt_m):
 
     Returns
     -------
-    x_m : float or array
-        X coordinate, in metres
-    y_m : float or array
-        Y coordinate, in metres
-    z_m : float or array
-        Z coordinate, in metres
+    x_m, y_m, z_m : float or array
+        X, Y, Z coordinates, in metres
 
     .. [1] National Imagery and Mapping Agency, "Department of Defense World
        Geodetic System 1984," NIMA TR8350.2, Page 4-4, last updated June, 2004.
@@ -265,17 +259,13 @@ def ecef_to_lla(x_m, y_m, z_m):
     """Convert ECEF cartesian coordinates to WGS84 spherical coordinates.
 
     This converts an earth-centered, earth-fixed (ECEF) cartesian position to a
-    position on the Earth specified in latitude, longitude and altitude. This
-    code assumes the WGS84 earth model.
+    position on the Earth specified in geodetic latitude, longitude and altitude.
+    This code assumes the WGS84 earth model.
 
     Parameters
     ----------
-    x_m : float or array
-        X coordinate, in metres
-    y_m : float or array
-        Y coordinate, in metres
-    z_m : float or array
-        Z coordinate, in metres
+    x_m, y_m, z_m : float or array
+        X, Y, Z coordinates, in metres
 
     Returns
     -------
@@ -320,45 +310,66 @@ def enu_to_ecef(ref_lat_rad, ref_long_rad, ref_alt_m, e_m, n_m, u_m):
 
     This converts local east-north-up (ENU) coordinates relative to a given
     reference position to earth-centered, earth-fixed (ECEF) cartesian
-    coordinates. The reference position is specified by its latitude, longitude
-    and altitude.
+    coordinates. The reference position is specified by its geodetic latitude,
+    longitude and altitude.
 
     Parameters
     ----------
-    ref_lat_rad : float or array
-        Latitude of reference position, in radians
-    ref_long_rad : float or array
-        Longitude of reference position, in radians
+    ref_lat_rad, ref_long_rad : float or array
+        Geodetic latitude and longitude of reference position, in radians
     ref_alt_m : float or array
-        Altitude of reference position, in metres above WGS84 ellipsoid
-    e_m : float or array
-        East coordinate, in metres
-    n_m : float or array
-        North coordinate, in metres
-    u_m : float or array
-        Up coordinate, in metres
+        Geodetic altitude of reference position, in metres above WGS84 ellipsoid
+    e_m, n_m, u_m : float or array
+        East, North, Up coordinates, in metres
 
     Returns
     -------
-    x_m : float or array
-        X coordinate, in metres
-    y_m : float or array
-        Y coordinate, in metres
-    z_m : float or array
-        Z coordinate, in metres
+    x_m, y_m, z_m : float or array
+        X, Y, Z coordinates, in metres
 
     """
     # ECEF coordinates of reference point
     ref_x_m, ref_y_m, ref_z_m = lla_to_ecef(ref_lat_rad, ref_long_rad, ref_alt_m)
-    # Geocentric latitude
-    gc_lat_rad = np.arctan2(ref_z_m, np.sqrt(ref_x_m**2 + ref_y_m**2))
+    sin_lat, cos_lat = np.sin(ref_lat_rad), np.cos(ref_lat_rad)
+    sin_long, cos_long = np.sin(ref_long_rad), np.cos(ref_long_rad)
 
-    x_m = ref_x_m - np.sin(ref_long_rad) * e_m - \
-                    np.cos(ref_long_rad) * np.sin(gc_lat_rad) * n_m + \
-                    np.cos(ref_long_rad) * np.cos(gc_lat_rad) * u_m
-    y_m = ref_y_m + np.cos(ref_long_rad) * e_m - \
-                    np.sin(ref_long_rad) * np.sin(gc_lat_rad) * n_m + \
-                    np.cos(gc_lat_rad) * np.sin(ref_long_rad) * u_m
-    z_m = ref_z_m + np.cos(gc_lat_rad) * n_m + np.sin(gc_lat_rad) * u_m
+    x_m = ref_x_m - sin_long*e_m - sin_lat*cos_long*n_m + cos_lat*cos_long*u_m
+    y_m = ref_y_m + cos_long*e_m - sin_lat*sin_long*n_m + cos_lat*sin_long*u_m
+    z_m = ref_z_m +                         cos_lat*n_m +          sin_lat*u_m
 
     return x_m, y_m, z_m
+
+def ecef_to_enu(ref_lat_rad, ref_long_rad, ref_alt_m, x_m, y_m, z_m):
+    """Convert ECEF coordinates to ENU coordinates relative to reference location.
+
+    This converts earth-centered, earth-fixed (ECEF) cartesian coordinates to
+    local east-north-up (ENU) coordinates relative to a given reference position.
+    The reference position is specified by its geodetic latitude, longitude and
+    altitude.
+
+    Parameters
+    ----------
+    ref_lat_rad, ref_long_rad : float or array
+        Geodetic latitude and longitude of reference position, in radians
+    ref_alt_m : float or array
+        Geodetic altitude of reference position, in metres above WGS84 ellipsoid
+    x_m, y_m, z_m : float or array
+        X, Y, Z coordinates, in metres
+
+    Returns
+    -------
+    e_m, n_m, u_m : float or array
+        East, North, Up coordinates, in metres
+
+    """
+    # ECEF coordinates of reference point
+    ref_x_m, ref_y_m, ref_z_m = lla_to_ecef(ref_lat_rad, ref_long_rad, ref_alt_m)
+    delta_x_m, delta_y_m, delta_z_m = x_m - ref_x_m, y_m - ref_y_m, z_m - ref_z_m
+    sin_lat, cos_lat = np.sin(ref_lat_rad), np.cos(ref_lat_rad)
+    sin_long, cos_long = np.sin(ref_long_rad), np.cos(ref_long_rad)
+
+    e_m =         -sin_long*delta_x_m +         cos_long*delta_y_m
+    n_m = -sin_lat*cos_long*delta_x_m - sin_lat*sin_long*delta_y_m + cos_lat*delta_z_m
+    u_m =  cos_lat*cos_long*delta_x_m + cos_lat*sin_long*delta_y_m + sin_lat*delta_z_m
+
+    return e_m, n_m, u_m
