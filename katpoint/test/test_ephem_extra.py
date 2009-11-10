@@ -6,7 +6,7 @@ import numpy as np
 
 import ephem
 
-from katpoint import _ephem_extra, Timestamp
+import katpoint
 
 def assert_angles_almost_equal(x, y, decimal):
     primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
@@ -42,23 +42,23 @@ class TestTimestamp(unittest.TestCase):
     def test_construct_timestamp(self):
         """Test construction of timestamps."""
         for v, s in self.valid_timestamps:
-            t = Timestamp(v)
+            t = katpoint.Timestamp(v)
             self.assertEqual(str(t), s, "Timestamp string ('%s') differs from expected one ('%s')" % (str(t), s))
         for v in self.invalid_timestamps:
-            self.assertRaises(ValueError, Timestamp, v)
+            self.assertRaises(ValueError, katpoint.Timestamp, v)
 #        for v in self.overflow_timestamps:
-#            self.assertRaises(OverflowError, Timestamp, v)
+#            self.assertRaises(OverflowError, katpoint.Timestamp, v)
 
     def test_numerical_timestamp(self):
         """Test numerical properties of timestamps."""
-        t = Timestamp(self.valid_timestamps[0][0])
+        t = katpoint.Timestamp(self.valid_timestamps[0][0])
         self.assertEqual(t, t + 0.0)
         self.assertNotEqual(t, t + 1.0)
         self.assertTrue(t > t - 1.0)
         self.assertTrue(t < t + 1.0)
-        self.assertEqual(t, eval(repr(t)))
+        self.assertEqual(t, eval('katpoint.' + repr(t)))
         self.assertEqual(float(t), self.valid_timestamps[0][0])
-        t = Timestamp(self.valid_timestamps[1][0])
+        t = katpoint.Timestamp(self.valid_timestamps[1][0])
         self.assertAlmostEqual(t.to_ephem_date(), self.valid_timestamps[1][0], places=9)
 
 class TestGeodetic(unittest.TestCase):
@@ -71,9 +71,9 @@ class TestGeodetic(unittest.TestCase):
 
     def test_lla_to_ecef(self):
         """Closure tests for LLA to ECEF conversion and vice versa."""
-        x, y, z = _ephem_extra.lla_to_ecef(self.lat, self.long, self.alt)
-        new_lat, new_long, new_alt = _ephem_extra.ecef_to_lla(x, y, z)
-        new_x, new_y, new_z = _ephem_extra.lla_to_ecef(new_lat, new_long, new_alt)
+        x, y, z = katpoint.lla_to_ecef(self.lat, self.long, self.alt)
+        new_lat, new_long, new_alt = katpoint.ecef_to_lla(x, y, z)
+        new_x, new_y, new_z = katpoint.lla_to_ecef(new_lat, new_long, new_alt)
         assert_angles_almost_equal(new_lat, self.lat, decimal=12)
         assert_angles_almost_equal(new_long, self.long, decimal=12)
         assert_angles_almost_equal(new_alt, self.alt, decimal=6)
@@ -83,9 +83,9 @@ class TestGeodetic(unittest.TestCase):
 
     def test_ecef_to_enu(self):
         """Closure tests for ECEF to ENU conversion and vice versa."""
-        x, y, z = _ephem_extra.lla_to_ecef(self.lat, self.long, self.alt)
-        e, n, u = _ephem_extra.ecef_to_enu(self.lat[0], self.long[0], self.alt[0], x, y, z)
-        new_x, new_y, new_z = _ephem_extra.enu_to_ecef(self.lat[0], self.long[0], self.alt[0], e, n, u)
+        x, y, z = katpoint.lla_to_ecef(self.lat, self.long, self.alt)
+        e, n, u = katpoint.ecef_to_enu(self.lat[0], self.long[0], self.alt[0], x, y, z)
+        new_x, new_y, new_z = katpoint.enu_to_ecef(self.lat[0], self.long[0], self.alt[0], e, n, u)
         np.testing.assert_almost_equal(new_x, x, decimal=8)
         np.testing.assert_almost_equal(new_y, y, decimal=8)
         np.testing.assert_almost_equal(new_z, z, decimal=8)
