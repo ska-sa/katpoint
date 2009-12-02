@@ -54,8 +54,8 @@ class Antenna(object):
         self.ref_observer.epoch = ephem.J2000
         # Disable ephem's built-in refraction model, since it's for optical wavelengths
         self.ref_observer.pressure = 0.0
-        if offset:
-            self.offset = [float(off) for off in offset]
+        if not offset is None:
+            self.offset = np.array([float(off) for off in offset])
             self.observer = ephem.Observer()
             # Convert ENU offset to lat-long-alt position required by Observer
             lat, lon, alt = ecef_to_lla(*enu_to_ecef(self.ref_observer.lat, self.ref_observer.long,
@@ -71,7 +71,7 @@ class Antenna(object):
 
     def __str__(self):
         """Verbose human-friendly string representation of antenna object."""
-        if self.offset:
+        if not self.offset is None:
             return "%s: %d-m dish at ENU offset %s m from lat %s, long %s, alt %s m" % \
                    (self.name, self.diameter, self.offset,
                     self.ref_observer.lat, self.ref_observer.long, self.ref_observer.elevation)
@@ -89,7 +89,7 @@ class Antenna(object):
         """Class method which creates description property."""
         doc = 'Complete string representation of antenna object, sufficient to reconstruct it.'
         def fget(self):
-            if self.offset:
+            if not self.offset is None:
                 return "%s, %s, %s, %s, %s, %s, %s, %s" % (self.name, self.ref_observer.lat,
                        self.ref_observer.long, self.ref_observer.elevation, self.diameter,
                        self.offset[0], self.offset[1], self.offset[2])
@@ -99,6 +99,12 @@ class Antenna(object):
 
         return locals()
     description = property(**description())
+
+    def has_same_reference(self, other):
+        """Check if two antennas have the same reference position."""
+        return (self.ref_observer.lat == other.ref_observer.lat) and \
+               (self.ref_observer.long == other.ref_observer.long) and \
+               (self.ref_observer.elevation == other.ref_observer.elevation)
 
     def local_sidereal_time(self, timestamp=None):
         """Calculate local sidereal time at antenna for timestamp(s).

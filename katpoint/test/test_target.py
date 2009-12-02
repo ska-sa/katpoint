@@ -3,6 +3,8 @@
 
 import unittest
 
+import numpy as np
+
 import katpoint
 
 class TestTargetConstruction(unittest.TestCase):
@@ -86,3 +88,17 @@ class TestFluxDensity(unittest.TestCase):
         self.flux_target.flux_freq_MHz = 1.5
         self.assertEqual(self.flux_target.flux_density(), 100.0, 'Flux calculation wrong')
         print self.flux_target
+
+class TestGeomDelay(unittest.TestCase):
+    """Test geometric delay."""
+    def setUp(self):
+        self.target = katpoint.construct_azel_target('45:00:00.0', '75:00:00.0')
+        self.ant1 = katpoint.construct_antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0, 0.0, 0.0')
+        self.ant2 = katpoint.construct_antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0, -10.0, 0.0')
+
+    def test_delay(self):
+        """Test geometric delay."""
+        now = katpoint.Timestamp()
+        delay, delay_rate = self.target.geometric_delay(self.ant2, now, self.ant1)
+        np.testing.assert_almost_equal(delay, 0.0, decimal=12)
+        np.testing.assert_almost_equal(delay_rate, 0.0, decimal=12)

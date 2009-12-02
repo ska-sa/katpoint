@@ -3,7 +3,7 @@
 import numpy as np
 import ephem
 
-from .ephem_extra import Timestamp, StationaryBody, is_iterable
+from .ephem_extra import Timestamp, StationaryBody, is_iterable, azel_to_enu, lightspeed
 from .projection import sphere_to_plane, plane_to_sphere
 
 #--------------------------------------------------------------------------------------------------
@@ -383,6 +383,68 @@ class Target(object):
         ra, dec = self.apparent_radec(timestamp, antenna)
         ha = antenna.local_sidereal_time(timestamp) - ra
         return np.arctan2(np.sin(ha), np.tan(antenna.observer.lat) * np.cos(dec) - np.sin(dec) * np.cos(ha))
+
+    def geometric_delay(self, antenna2, timestamp=None, antenna=None):
+        """Calculate geometric delay between two antennas pointing at target.
+
+        An incoming plane wavefront travelling along the direction from the
+        target to the reference antenna *antenna* arrives at this antenna at the
+        given timestamp(s), and *delay* seconds later (or earlier, if *delay* is
+        negative) at the second antenna, *antenna2*. This delay is known as the
+        *geometric delay*, also represented by the symbol :math:`\tau_g`, and is
+        associated with the *baseline* vector from the reference antenna to the
+        second antenna. Additionally, the rate of change of the delay at the
+        given timestamp(s) is estimated from the change in delay during a short
+        interval spanning the timestamp(s).
+
+        Parameters
+        ----------
+        antenna2 : :class:`Antenna` object
+            Second antenna of baseline pair (baseline vector points toward it)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            First (reference) antenna of baseline pair, which also serves as
+            pointing reference (defaults to default antenna)
+
+        Returns
+        -------
+        delay : float or sequence
+            Geometric delay, in seconds
+        delay_rate : float or sequence
+            Rate of change of geometric delay, in seconds per second
+
+        Raises
+        ------
+        ValueError
+            If no reference antenna is specified and no default antenna was set,
+            or antennas have different reference positions
+
+        Notes
+        -----
+        This is a straightforward dot product between the unit vector pointing
+        from the reference antenna to the target, and the baseline vector
+        pointing from the reference antenna to the second antenna, all in local
+        ENU coordinates. It assumes that the two antennas are close together
+        and share the same reference position (i.e. they only differ in their
+        ENU offsets).
+
+        """
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+        if not antenna2.has_same_reference(antenna):
+            raise ValueError('Antenna reference positions differ - cannot calculate geometric delay')
+        # Obtain baseline vector from reference antenna to antenna2
+        baseline_m = antenna2.offset - antenna.offset
+        # Obtain direction vector(s) from reference antenna to target
+        az, el = self.azel(timestamp, antenna)
+        targetdir = azel_to_enu(az, el)
+        # Dot product of vectors is w coordinate, and delay is time taken by EM wave to traverse this
+        delay = - np.dot(baseline_m, targetdir) / lightspeed
+        # Numerically estimate delay rate from difference across 1-second interval spanning timestamp(s)
+        targetdir_before = azel_to_enu(*self.azel(np.array(timestamp) - 0.5, antenna))
+        targetdir_after = azel_to_enu(*self.azel(np.array(timestamp) + 0.5, antenna))
+        delay_rate = - (np.dot(baseline_m, targetdir_after) - np.dot(baseline_m, targetdir_before)) / lightspeed
+        return delay, delay_rate
 
     def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency.
