@@ -241,17 +241,21 @@ def lla_to_ecef(lat_rad, long_rad, alt_m):
        Geodetic System 1984," NIMA TR8350.2, Page 4-4, last updated June, 2004.
 
     """
-    # WGS84 ellipsoid constants
-    a = 6378137.0                # semi-major axis of Earth in m
-    e = 8.1819190842622e-2       # eccentricity of Earth
+    # pylint: disable-msg=C0103
+    # WGS84 Defining Parameters
+    a = 6378137.0                           # semi-major axis of Earth in m
+    f = 1.0 / 298.257223563                 # flattening of Earth
+
+    # WGS84 derived geometric constants
+    e2 = 2 * f - f ** 2                     # first eccentricity squared
 
     # intermediate calculation
     # (normal, or prime vertical radius of curvature)
-    R = a / np.sqrt(1.0 - e**2 * np.sin(lat_rad)**2)
+    R = a / np.sqrt(1.0 - e2 * np.sin(lat_rad) ** 2)
 
     x_m = (R + alt_m) * np.cos(lat_rad) * np.cos(long_rad)
     y_m = (R + alt_m) * np.cos(lat_rad) * np.sin(long_rad)
-    z_m = ((1.0 - e**2) * R + alt_m) * np.sin(lat_rad)
+    z_m = ((1.0 - e2) * R + alt_m) * np.sin(lat_rad)
 
     return x_m, y_m, z_m
 
@@ -275,6 +279,79 @@ def ecef_to_lla(x_m, y_m, z_m):
         Longitude, in radians
     alt_m : float or array
         Altitude, in metres above WGS84 ellipsoid
+
+    Notes
+    -----
+    Based on the most accurate algorithm according to Zhu [zhu]_, which is
+    summarised by Kaplan [kaplan]_ and described in the Wikipedia entry [geo]_.
+
+    .. [zhu] J. Zhu, "Conversion of Earth-centered Earth-fixed coordinates to
+       geodetic coordinates," Aerospace and Electronic Systems, IEEE Transactions
+       on, vol. 30, pp. 957-961, 1994.
+    .. [kaplan] Kaplan, "Understanding GPS: principles and applications," 1 ed.,
+       Norwood, MA 02062, USA: Artech House, Inc, 1996.
+    .. [geo] Wikipedia entry, "Geodetic system", 2009.
+
+    """
+    # pylint: disable-msg=C0103
+    # WGS84 Defining Parameters
+    a = 6378137.0                           # semi-major axis of Earth in m
+    f = 1.0 / 298.257223563                 # flattening of Earth
+
+    # WGS84 derived geometric constants
+    b = a * (1.0 - f)                       # semi-minor axis in m
+    e2 = 2 * f - f ** 2                     # first eccentricity squared
+    ep2 = f * (2.0 - f) / (1.0 - f) ** 2    # second eccentricity squared
+
+    # Define squared terms for convenience
+    a2, b2 = a ** 2, b ** 2
+    x2, y2, z2 = x_m ** 2, y_m ** 2, z_m ** 2
+
+    r = np.sqrt(x2 + y2)
+    E2 = a2 - b2
+    F = 54.0 * b2 * z2
+    G = r ** 2 + (1 - e2) * z2 - e2 * E2
+    C = (e2 ** 2 * F * r ** 2) / (G ** 3)
+    S = (1.0 + C + np.sqrt(C ** 2 + 2 * C)) ** (1. / 3.)
+    P = F / (3.0 * (S + 1.0 / S + 1.0) ** 2 * G ** 2)
+    Q = np.sqrt(1.0 + 2.0 * e2 ** 2 * P)
+    r0 = - P * e2 * r / (1.0 + Q) + \
+         np.sqrt(0.5 * a2 * (1.0 + 1.0 / Q) - P * (1 - e2) * z2 / (Q * (1.0 + Q)) - 0.5 * P * r ** 2)
+    U = np.sqrt((r - e2 * r0) ** 2 + z2)
+    V = np.sqrt((r - e2 * r0) ** 2 + (1.0 - e2) * z2)
+    z0 = (b2 * z_m) / (a * V)
+    alt_m = U * (1.0 - b2 / (a * V))
+    lat_rad = np.arctan2(z_m + ep2 * z0, r)
+    long_rad = np.arctan2(y_m, x_m)
+
+    return lat_rad, long_rad, alt_m
+
+def ecef_to_lla2(x_m, y_m, z_m):
+    """Convert ECEF cartesian coordinates to WGS84 spherical coordinates.
+
+    This converts an earth-centered, earth-fixed (ECEF) cartesian position to a
+    position on the Earth specified in geodetic latitude, longitude and altitude.
+    This code assumes the WGS84 earth model.
+
+    Parameters
+    ----------
+    x_m, y_m, z_m : float or array
+        X, Y, Z coordinates, in metres
+
+    Returns
+    -------
+    lat_rad : float or array
+        Latitude (customary geodetic, not geocentric), in radians
+    long_rad : float or array
+        Longitude, in radians
+    alt_m : float or array
+        Altitude, in metres above WGS84 ellipsoid
+
+    Notes
+    -----
+    This is a copy of the algorithm in the CONRAD codebase (from conradmisclib).
+    It's nearly identical to :func:`ecef_to_lla`, but returns long/lat in
+    different ranges.
 
     """
     # WGS84 ellipsoid constants

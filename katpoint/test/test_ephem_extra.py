@@ -80,6 +80,10 @@ class TestGeodetic(unittest.TestCase):
         np.testing.assert_almost_equal(new_x, x, decimal=8)
         np.testing.assert_almost_equal(new_y, y, decimal=8)
         np.testing.assert_almost_equal(new_z, z, decimal=6)
+        new_lat2, new_long2, new_alt2 = katpoint._ephem_extra.ecef_to_lla2(x, y, z)
+        assert_angles_almost_equal(new_lat2, self.lat, decimal=12)
+        assert_angles_almost_equal(new_long2, self.long, decimal=12)
+        assert_angles_almost_equal(new_alt2, self.alt, decimal=6)
 
     def test_ecef_to_enu(self):
         """Closure tests for ECEF to ENU conversion and vice versa."""

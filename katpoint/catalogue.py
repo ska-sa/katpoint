@@ -309,7 +309,7 @@ class Catalogue(object):
         return locals()
     antenna = property(**antenna())
 
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
+    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212,C0103
     def flux_freq_MHz():
         """Class method which creates flux_freq_MHz property."""
         doc = 'Default frequency at which to evaluate flux density, in MHz.'
