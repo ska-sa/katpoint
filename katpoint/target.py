@@ -417,24 +417,19 @@ class Target(object):
         Raises
         ------
         ValueError
-            If no reference antenna is specified and no default antenna was set,
-            or antennas have different reference positions
+            If no reference antenna is specified and no default antenna was set
 
         Notes
         -----
         This is a straightforward dot product between the unit vector pointing
         from the reference antenna to the target, and the baseline vector
         pointing from the reference antenna to the second antenna, all in local
-        ENU coordinates. It assumes that the two antennas are close together
-        and share the same reference position (i.e. they only differ in their
-        ENU offsets).
+        ENU coordinates relative to the reference antenna.
 
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        if not antenna2.has_same_reference(antenna):
-            raise ValueError('Antenna reference positions differ - cannot calculate geometric delay')
-        # Obtain baseline vector from reference antenna to antenna2
-        baseline_m = antenna2.offset - antenna.offset
+        # Obtain baseline vector from reference antenna to second antenna
+        baseline_m = antenna.baseline_toward(antenna2)
         # Obtain direction vector(s) from reference antenna to target
         az, el = self.azel(timestamp, antenna)
         targetdir = azel_to_enu(az, el)

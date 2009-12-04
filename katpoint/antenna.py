@@ -3,7 +3,7 @@
 import numpy as np
 import ephem
 
-from .ephem_extra import Timestamp, is_iterable, enu_to_ecef, ecef_to_lla
+from .ephem_extra import Timestamp, is_iterable, enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Antenna
@@ -41,6 +41,13 @@ class Antenna(object):
     ref_observer : :class:`ephem.Observer` object
         Array reference location for antenna in an array (same as *observer* for
         a stand-alone antenna)
+
+    Notes
+    -----
+    The :class:`ephem.Observer` objects are abused for their ability to convert
+    latitude and longitude to and from string representations via
+    :class:`ephem.Angle`. The only reason for the existence of *ref_observer* is
+    that it is a nice container for the reference latitude, longitude and altitude.
 
     """
     def __init__(self, name, latitude, longitude, altitude, diameter, offset=None):
@@ -96,15 +103,52 @@ class Antenna(object):
             else:
                 return "%s, %s, %s, %s, %s" % (self.name, self.observer.lat,
                        self.observer.long, self.observer.elevation, self.diameter)
-
         return locals()
     description = property(**description())
 
-    def has_same_reference(self, other):
-        """Check if two antennas have the same reference position."""
-        return (self.ref_observer.lat == other.ref_observer.lat) and \
-               (self.ref_observer.long == other.ref_observer.long) and \
-               (self.ref_observer.elevation == other.ref_observer.elevation)
+    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
+    def position():
+        """Class method which creates position property."""
+        doc = 'Antenna position as latitude (rad), longitude (rad) and altitude (m).'
+        def fget(self):
+            return self.observer.lat, self.observer.long, self.observer.elevation
+        return locals()
+    position = property(**position())
+
+    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
+    def ref_position():
+        """Class method which creates ref_position property."""
+        doc = 'Antenna reference position as latitude (rad), longitude (rad) and altitude (m).'
+        def fget(self):
+            return self.ref_observer.lat, self.ref_observer.long, self.ref_observer.elevation
+        return locals()
+    ref_position = property(**ref_position())
+
+    def baseline_toward(self, antenna2):
+        """Baseline vector pointing toward second antenna, in ENU coordinates.
+
+        This calculates the baseline vector pointing from this antenna toward a
+        second antenna, *antenna2*, in local East-North-Up (ENU) coordinates
+        relative to this antenna's geodetic location.
+
+        Parameters
+        ----------
+        antenna2 : :class:`Antenna` object
+            Second antenna of baseline pair (baseline vector points toward it)
+
+        Returns
+        -------
+        e_m, n_m, u_m : float or array
+            East, North, Up coordinates of baseline vector, in metres
+
+        """
+        # If this antenna is at the reference position of the second antenna,
+        # simply return its offset vector
+        if self.position == antenna2.ref_position:
+            return tuple(antenna2.offset)
+        else:
+            return ecef_to_enu(self.position[0], self.position[1], self.position[2],
+                               *lla_to_ecef(*antenna2.position))
 
     def local_sidereal_time(self, timestamp=None):
         """Calculate local sidereal time at antenna for timestamp(s).
