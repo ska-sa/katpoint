@@ -476,3 +476,28 @@ def azel_to_enu(az_rad, el_rad):
     sin_az, cos_az = np.sin(az_rad), np.cos(az_rad)
     sin_el, cos_el = np.sin(el_rad), np.cos(el_rad)
     return sin_az * cos_el, cos_az * cos_el, sin_el
+
+def hadec_to_enu(ha_rad, dec_rad, lat_rad):
+    """Convert (ha, dec) spherical coordinates to unit vector in ENU coordinates.
+
+    This converts equatorial spherical coordinates (hour angle and declination)
+    to a unit vector in the corresponding local east-north-up (ENU) coordinate
+    system. The geodetic latitude of the observer is also required.
+
+    Parameters
+    ----------
+    ha_rad, dec_rad, lat_rad : float or array
+        Hour angle, declination and geodetic latitude, in radians
+
+    Returns
+    -------
+    e, n, u : float or array
+        East, North, Up coordinates of unit vector
+
+    """
+    sin_ha, cos_ha = np.sin(ha_rad), np.cos(ha_rad)
+    sin_dec, cos_dec = np.sin(dec_rad), np.cos(dec_rad)
+    sin_lat, cos_lat = np.sin(lat_rad), np.cos(lat_rad)
+    return -cos_dec * sin_ha, \
+            cos_lat * sin_dec - sin_lat * cos_dec * cos_ha, \
+            sin_lat * sin_dec + cos_lat * cos_dec * cos_ha
