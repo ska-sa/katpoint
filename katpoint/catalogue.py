@@ -772,7 +772,7 @@ class Catalogue(object):
             self.targets = np.array(self.targets)[np.flipud(np.argsort(index))].tolist()
         return self
 
-    def visibility_list(self, timestamp=None, antenna=None, flux_freq_MHz=None):
+    def visibility_list(self, timestamp=None, antenna=None, flux_freq_MHz=None, antenna2=None):
         """Print out list of targets in catalogue, sorted by decreasing elevation.
 
         This prints out the name, azimuth and elevation of each target in the
@@ -783,7 +783,8 @@ class Catalogue(object):
         one-minute interval surrounding the timestamp).
 
         The method indicates the horizon itself by a line of dashes. It also
-        displays the target flux density if a frequency is supplied. It is useful
+        displays the target flux density if a frequency is supplied, and the
+        delay and fringe period if a second antenna is supplied. It is useful
         to quickly see which targets are visible (or will be soon).
 
         Parameters
@@ -795,6 +796,10 @@ class Catalogue(object):
             Antenna which points at targets (defaults to default antenna)
         flux_freq_MHz : float, optional
             Frequency at which to evaluate flux density, in MHz
+        antenna2 : :class:`Antenna` object, optional
+            Second antenna of baseline pair (baseline vector points from
+            *antenna* to *antenna2*), used to calculate delays and fringe rates
+            per target
 
         """
         above_horizon = True
@@ -806,29 +811,34 @@ class Catalogue(object):
         title = "Targets visible from antenna '%s' at %s" % (antenna.name, timestamp.local())
         if flux_freq_MHz is None:
             flux_freq_MHz = self.flux_freq_MHz
-        if not flux_freq_MHz is None:
-            title += ', with flux density evaluated at %g MHz' % (flux_freq_MHz,)
+        if flux_freq_MHz is not None:
+            title += ', with flux density (Jy) evaluated at %g MHz' % (flux_freq_MHz,)
+        if antenna2 is not None:
+            title += " and fringe period (s) toward antenna '%s' at same frequency" % (antenna2.name)
         print title
         print
-        print 'Target                        Azimuth    Elevation R/S  Flux'
-        print '------                        -------    --------- ---  ----'
+        print 'Target                        Azimuth    Elevation R/S  Flux Fringe period'
+        print '------                        -------    --------- ---  ---- -------------'
         for target in self.sort('el', timestamp=timestamp, antenna=antenna, ascending=False):
             az, el = target.azel(timestamp, antenna)
             delta_el = rad2deg(target.azel(timestamp + 30.0, antenna)[1] - target.azel(timestamp - 30.0, antenna)[1])
             el_code = '-' if (np.abs(delta_el) < 1.0 / 60.0) else ('/' if delta_el > 0.0 else '\\')
             # If no flux frequency is given, do not attempt to evaluate the flux, as it will fail
-            if not flux_freq_MHz is None:
-                flux = target.flux_density(flux_freq_MHz)
+            flux = target.flux_density(flux_freq_MHz) if flux_freq_MHz is not None else None
+            if antenna2 is not None and flux_freq_MHz is not None:
+                delay, delay_rate = target.geometric_delay(antenna2, timestamp, antenna)
+                fringe_period = 1. / (delay_rate * flux_freq_MHz * 1e6)
             else:
-                flux = None
+                fringe_period = None
             if above_horizon and el < 0.0:
                 # Draw horizon line
-                print '------------------------------------------------------------'
+                print '--------------------------------------------------------------------------'
                 above_horizon = False
-            if not flux is None:
-                print '%-24s %12s %12s %c %7.1f' % (target.name, az.znorm, el, el_code, flux)
-            else:
-                print '%-24s %12s %12s %c' % (target.name, az.znorm, el, el_code)
+            line = '%-24s %12s %12s %c' % (target.name, az.znorm, el, el_code)
+            line = line + ' %7.1f' % (flux, ) if flux is not None else line +  '        '
+            if fringe_period is not None:
+                line += '    %10.2f' % (fringe_period,)
+            print line
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  _catalogue_completer
