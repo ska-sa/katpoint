@@ -501,3 +501,36 @@ def hadec_to_enu(ha_rad, dec_rad, lat_rad):
     return -cos_dec * sin_ha, \
             cos_lat * sin_dec - sin_lat * cos_dec * cos_ha, \
             sin_lat * sin_dec + cos_lat * cos_dec * cos_ha
+
+def enu_to_xyz(e, n, u, lat_rad):
+    """Convert ENU to XYZ coordinates.
+
+    This converts a vector in the local east-north-up (ENU) coordinate system to
+    the XYZ coordinate system used in radio astronomy (see e.g. [TMS]_). The X
+    axis is the intersection of the equatorial plane and the meridian plane
+    through the reference point of the ENU system (and therefore is similar to
+    'up'). The Y axis also lies in the equatorial plane to the east of X, and
+    coincides with 'east'. The Z axis points toward the north pole, and therefore
+    is similar to 'north'. The XYZ system is therefore a local version of the
+    Earth-centred Earth-fixed (ECEF) system.
+
+    Parameters
+    ----------
+    e, n, u : float or array
+        East, North, Up coordinates of input vector
+    lat_rad : float or array
+        Geodetic latitude of ENU / XYZ reference point, in radians
+
+    Returns
+    -------
+    x, y, z : float or array
+        X, Y, Z coordinates of output vector
+
+    References
+    ----------
+    .. [TMS] Thompson, Moran, Swenson, "Interferometry and Synthesis in Radio
+       Astronomy," 2nd ed., Wiley-VCH, 2004, pp. 86-89.
+
+    """
+    sin_lat, cos_lat = np.sin(lat_rad), np.cos(lat_rad)
+    return -sin_lat * n + cos_lat * u, e, cos_lat * n + sin_lat * u

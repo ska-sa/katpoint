@@ -20,7 +20,7 @@ from .catalogue import Catalogue, specials, _catalogue_completer
 
 from .ephem_extra import Timestamp, lightspeed, rad2deg, deg2rad, \
                          lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu, \
-                         azel_to_enu, hadec_to_enu
+                         azel_to_enu, hadec_to_enu, enu_to_xyz
 
 from .projection import sphere_to_plane, plane_to_sphere
 
