@@ -441,6 +441,60 @@ class Target(object):
         delay_rate = - (np.dot(baseline_m, targetdir_after) - np.dot(baseline_m, targetdir_before)) / lightspeed
         return delay, delay_rate
 
+    def uvw(self, antenna2, timestamp=None, antenna=None):
+        """Calculate (u,v,w) coordinates of baseline while pointing at target.
+
+        Calculate the (u,v,w) coordinates of the baseline vector from *antenna*
+        toward *antenna2*. The w axis points from the first antenna toward the
+        target. The v axis is perpendicular to it and lies in the plane passing
+        through the w axis and the poles of the earth, on the northern side of w.
+        The u axis is perpendicular to the v and w axes, and points to the east
+        of w.
+
+        Parameters
+        ----------
+        antenna2 : :class:`Antenna` object
+            Second antenna of baseline pair (baseline vector points toward it)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            First (reference) antenna of baseline pair, which also serves as
+            pointing reference (defaults to default antenna)
+
+        Returns
+        -------
+        u, v, w : float or array
+            (u, v, w) coordinates of baseline, in metres
+
+        Notes
+        -----
+        All calculations are done in the local ENU coordinate system centered on
+        the first antenna, as opposed to the traditional XYZ coordinate system.
+        This avoids having to convert (az, el) angles to (ha, dec) angles and
+        uses linear algebra throughout instead.
+
+        """
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+        # Obtain baseline vector from reference antenna to second antenna
+        baseline_m = antenna.baseline_toward(antenna2)
+        # Obtain direction vector(s) from reference antenna to target
+        az, el = self.azel(timestamp, antenna)
+        # w axis points toward target
+        w = np.array(azel_to_enu(az, el))
+        # Vector pointing from reference antenna to north celestial pole
+        z = np.array([0.0, np.cos(antenna.observer.lat), np.sin(antenna.observer.lat)])
+        # u axis is orthogonal to z and w, and row_stack ensures it's 2-D array of column vectors
+        u = np.row_stack(np.cross(z, w, axis=0))
+        u_norm = np.sqrt(np.sum(u ** 2, axis=0))
+        # If the target is a celestial pole (so that w equals z or -z), u and v become degenerate
+        poles = u_norm < 1e-12
+        # Arbitrarily pick east vector of ENU system as u in this case
+        u[:, poles] = [[1.0], [0.0], [0.0]]
+        u_norm[poles] = 1.0
+        u = u.squeeze() / u_norm
+        v = np.cross(w, u, axis=0)
+        return np.dot(baseline_m, u), np.dot(baseline_m, v), np.dot(baseline_m, w)
+
     def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency.
 
