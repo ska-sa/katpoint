@@ -64,9 +64,10 @@ class Antenna(object):
         if not offset is None:
             self.offset = np.array([float(off) for off in offset])
             self.observer = ephem.Observer()
-            # Convert ENU offset to lat-long-alt position required by Observer
-            lat, lon, alt = ecef_to_lla(*enu_to_ecef(self.ref_observer.lat, self.ref_observer.long,
-                                                     self.ref_observer.elevation, *self.offset))
+            # Convert ENU offset to ECEF coordinates of antenna, and then to WGS84 coordinates
+            self.position_ecef = enu_to_ecef(self.ref_observer.lat, self.ref_observer.long,
+                                             self.ref_observer.elevation, *self.offset)
+            lat, lon, alt = ecef_to_lla(*self.position_ecef)
             self.observer.lat = lat
             self.observer.long = lon
             self.observer.elevation = alt
@@ -74,6 +75,8 @@ class Antenna(object):
             self.observer.pressure = 0.0
         else:
             self.offset = None
+            self.position_ecef = enu_to_ecef(self.ref_observer.lat, self.ref_observer.long,
+                                             self.ref_observer.elevation, 0.0, 0.0, 0.0)
             self.observer = self.ref_observer
 
     def __str__(self):
