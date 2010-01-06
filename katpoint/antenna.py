@@ -15,27 +15,39 @@ class Antenna(object):
     This is a wrapper around a PyEphem :class:`ephem.Observer` that adds a dish
     diameter. It has two variants: a stand-alone single dish, or an antenna
     that is part of an array. The first variant is initialised with the antenna
-    location in lat-long-alt form, while the second variant is initialised with
-    the array reference location in lat-long-alt form and an ENU (east-north-up)
-    offset for the specific antenna.
+    location in WGS84 (lat-long-alt) form, while the second variant is
+    initialised with the array reference location in WGS84 form and an ENU
+    (east-north-up) offset for the specific antenna.
 
     Parameters
     ----------
     name : string
         Name of antenna
     latitude : string or float
-        Latitude, either in 'D:M:S' string format, or as a float in radians
+        Geodetic latitude, either in 'D:M:S' string format or a float in radians
     longitude : string or float
-        Longitude, either in 'D:M:S' string format, or as a float in radians
+        Longitude, either in 'D:M:S' string format or a float in radians
     altitude : string or float
-        Altitude, in meters
+        Altitude above WGS84 geoid, in meters
     diameter : string or float
         Dish diameter, in meters
     offset : sequence of 3 strings or floats, optional
-        East-North-Up offset from lat-long-alt reference position, in meters
+        East-North-Up offset from WGS84 reference position, in meters
 
     Arguments
     ---------
+    description : string
+        Description string of antenna, used to reconstruct the object
+    position_enu : tuple of 3 floats
+        East-North-Up offset from WGS84 reference position, in meters
+    position_wgs84 : tuple of 3 floats
+        WGS84 position of antenna (latitude and longitude in radians, and altitude
+        in meters)
+    position_ecef : tuple of 3 floats
+        ECEF (Earth-centred Earth-fixed) position of antenna (in meters)
+    ref_position_wgs84 : tuple of 3 floats
+        WGS84 reference position (latitude and longitude in radians, and altitude
+        in meters)
     observer : :class:`ephem.Observer` object
         Underlying object used for pointing calculations
     ref_observer : :class:`ephem.Observer` object
@@ -49,6 +61,10 @@ class Antenna(object):
     :class:`ephem.Angle`. The only reason for the existence of *ref_observer* is
     that it is a nice container for the reference latitude, longitude and altitude.
 
+    It is a bad idea to edit the coordinates of the antenna in-place, as the
+    various position tuples and the description string will not be updated -
+    reconstruct a new antenna object instead.
+
     """
     def __init__(self, name, latitude, longitude, altitude, diameter, offset=None):
         self.name = name
@@ -61,71 +77,38 @@ class Antenna(object):
         self.ref_observer.epoch = ephem.J2000
         # Disable ephem's built-in refraction model, since it's for optical wavelengths
         self.ref_observer.pressure = 0.0
-        if not offset is None:
-            self.offset = np.array([float(off) for off in offset])
-            self.observer = ephem.Observer()
+        self.ref_position_wgs84 = self.ref_observer.lat, self.ref_observer.long, self.ref_observer.elevation
+        if offset is not None:
+            self.position_enu = tuple([float(off) for off in offset])
             # Convert ENU offset to ECEF coordinates of antenna, and then to WGS84 coordinates
             self.position_ecef = enu_to_ecef(self.ref_observer.lat, self.ref_observer.long,
-                                             self.ref_observer.elevation, *self.offset)
-            lat, lon, alt = ecef_to_lla(*self.position_ecef)
-            self.observer.lat = lat
-            self.observer.long = lon
-            self.observer.elevation = alt
+                                             self.ref_observer.elevation, *self.position_enu)
+            self.observer = ephem.Observer()
+            self.observer.lat, self.observer.long, self.observer.elevation = ecef_to_lla(*self.position_ecef)
             self.observer.epoch = ephem.J2000
             self.observer.pressure = 0.0
+            self.position_wgs84 = self.observer.lat, self.observer.long, self.observer.elevation
+            self.description = "%s, %s, %s, %s, %s, %s, %s, %s" % tuple([self.name] + list(self.ref_position_wgs84) +
+                                                                        [self.diameter] + list(self.position_enu))
         else:
-            self.offset = None
-            self.position_ecef = enu_to_ecef(self.ref_observer.lat, self.ref_observer.long,
-                                             self.ref_observer.elevation, 0.0, 0.0, 0.0)
             self.observer = self.ref_observer
+            self.position_enu = (0.0, 0.0, 0.0)
+            self.position_wgs84 = lat, lon, alt = self.observer.lat, self.observer.long, self.observer.elevation
+            self.position_ecef = enu_to_ecef(lat, lon, alt, *self.position_enu)
+            self.description = "%s, %s, %s, %s, %s" % tuple([self.name] + list(self.position_wgs84) + [self.diameter])
 
     def __str__(self):
         """Verbose human-friendly string representation of antenna object."""
-        if not self.offset is None:
+        if np.any(self.position_enu):
             return "%s: %d-m dish at ENU offset %s m from lat %s, long %s, alt %s m" % \
-                   (self.name, self.diameter, self.offset,
-                    self.ref_observer.lat, self.ref_observer.long, self.ref_observer.elevation)
+                   tuple([self.name, self.diameter, np.array(self.position_enu)] + list(self.ref_position_wgs84))
         else:
-            return "%s: %d-m dish at lat %s, long %s, alt %s m" % (self.name, self.diameter,
-                   self.observer.lat, self.observer.long, self.observer.elevation)
+            return "%s: %d-m dish at lat %s, long %s, alt %s m" % \
+                   tuple([self.name, self.diameter] + list(self.position_wgs84))
 
     def __repr__(self):
         """Short human-friendly string representation of antenna object."""
         return "<katpoint.Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
-
-    # Provide description string as a read-only property, which is more compact than a method
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
-    def description():
-        """Class method which creates description property."""
-        doc = 'Complete string representation of antenna object, sufficient to reconstruct it.'
-        def fget(self):
-            if not self.offset is None:
-                return "%s, %s, %s, %s, %s, %s, %s, %s" % (self.name, self.ref_observer.lat,
-                       self.ref_observer.long, self.ref_observer.elevation, self.diameter,
-                       self.offset[0], self.offset[1], self.offset[2])
-            else:
-                return "%s, %s, %s, %s, %s" % (self.name, self.observer.lat,
-                       self.observer.long, self.observer.elevation, self.diameter)
-        return locals()
-    description = property(**description())
-
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
-    def position():
-        """Class method which creates position property."""
-        doc = 'Antenna position as latitude (rad), longitude (rad) and altitude (m).'
-        def fget(self):
-            return self.observer.lat, self.observer.long, self.observer.elevation
-        return locals()
-    position = property(**position())
-
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
-    def ref_position():
-        """Class method which creates ref_position property."""
-        doc = 'Antenna reference position as latitude (rad), longitude (rad) and altitude (m).'
-        def fget(self):
-            return self.ref_observer.lat, self.ref_observer.long, self.ref_observer.elevation
-        return locals()
-    ref_position = property(**ref_position())
 
     def baseline_toward(self, antenna2):
         """Baseline vector pointing toward second antenna, in ENU coordinates.
@@ -145,13 +128,12 @@ class Antenna(object):
             East, North, Up coordinates of baseline vector, in metres
 
         """
-        # If this antenna is at the reference position of the second antenna,
-        # simply return its offset vector
-        if self.position == antenna2.ref_position:
-            return tuple(antenna2.offset)
+        # If this antenna is at reference position of second antenna, simply return its ENU offset
+        if self.position_wgs84 == antenna2.ref_position_wgs84:
+            return antenna2.position_enu
         else:
-            return ecef_to_enu(self.position[0], self.position[1], self.position[2],
-                               *lla_to_ecef(*antenna2.position))
+            lat, lon, alt = self.position_wgs84
+            return ecef_to_enu(lat, lon, alt, *lla_to_ecef(*antenna2.position_wgs84))
 
     def local_sidereal_time(self, timestamp=None):
         """Calculate local sidereal time at antenna for timestamp(s).
