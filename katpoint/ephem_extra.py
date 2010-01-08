@@ -169,6 +169,12 @@ class Timestamp(object):
         timetuple[5] += self.secs - np.floor(self.secs)
         return ephem.Date(tuple(timetuple))
 
+    def to_mjd(self):
+        """Convert timestamp to Modified Julian Day (MJD)."""
+        # Ephem dates are in Dublin Julian Days
+        djd = self.to_ephem_date()
+        return djd + 2415020 - 2400000.5
+
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  StationaryBody
 #--------------------------------------------------------------------------------------------------
