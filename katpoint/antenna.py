@@ -3,7 +3,8 @@
 import numpy as np
 import ephem
 
-from .ephem_extra import Timestamp, is_iterable, enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
+from .ephem_extra import Timestamp, is_iterable
+from .conversion import enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Antenna

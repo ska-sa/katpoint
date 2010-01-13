@@ -18,9 +18,10 @@ from .target import Target, construct_target, construct_azel_target, construct_r
 
 from .catalogue import Catalogue, specials, _catalogue_completer
 
-from .ephem_extra import Timestamp, lightspeed, rad2deg, deg2rad, \
-                         lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu, \
-                         azel_to_enu, hadec_to_enu, enu_to_xyz
+from .ephem_extra import Timestamp, lightspeed, rad2deg, deg2rad, is_iterable
+
+from .conversion import lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu, \
+                        azel_to_enu, hadec_to_enu, enu_to_xyz
 
 from .projection import sphere_to_plane, plane_to_sphere
 
@@ -30,9 +31,9 @@ from .correction import RefractionCorrection, PointingModel
 # If the module is reloaded, this will fail - ignore the resulting NameError
 # pylint: disable-msg=E0601
 try:
-    _antenna, _target, _catalogue, _ephem_extra, _projection, _correction = \
-        antenna, target, catalogue, ephem_extra, projection, correction
-    del antenna, target, catalogue, ephem_extra, projection, correction
+    _antenna, _target, _catalogue, _ephem_extra, _conversion, _projection, _correction = \
+        antenna, target, catalogue, ephem_extra, conversion, projection, correction
+    del antenna, target, catalogue, ephem_extra, conversion, projection, correction
 except NameError:
     pass
 

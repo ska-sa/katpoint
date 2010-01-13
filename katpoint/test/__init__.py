@@ -7,6 +7,7 @@ import test_antenna
 import test_catalogue
 import test_projection
 import test_ephem_extra
+import test_conversion
 
 def suite():
     loader = unittest.TestLoader()
@@ -16,6 +17,7 @@ def suite():
     testsuite.addTests(loader.loadTestsFromModule(test_catalogue))
     testsuite.addTests(loader.loadTestsFromModule(test_projection))
     testsuite.addTests(loader.loadTestsFromModule(test_ephem_extra))
+    testsuite.addTests(loader.loadTestsFromModule(test_conversion))
     return testsuite
 
 if __name__ == '__main__':
