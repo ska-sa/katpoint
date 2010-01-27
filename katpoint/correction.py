@@ -601,6 +601,6 @@ class PointingModel(object):
         U, s, Vt = np.linalg.svd(A, full_matrices=False)
         self.params[enabled_params - 1] = np.dot(Vt.T, np.dot(U.T, b) / s)
         # Also obtain standard errors of parameters (see NRinC, 2nd ed, Eq. 15.4.19)
-        sigma_params[enabled_params - 1] = np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1)
+        sigma_params[enabled_params - 1] = np.sqrt(np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1))
 
         return self.params, sigma_params
