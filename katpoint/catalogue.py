@@ -164,7 +164,8 @@ class Catalogue(object):
     - *Tag filter*. Returns all targets that have a specified set of tags, and
       *not* another set of tags. Tags prepended with a tilde (~) indicate tags
       which targets should not have. All tags have to be present (or absent) for
-      a target to be selected. An example is::
+      a target to be selected. Remember that the body type is also a tag. An
+      example is::
 
         cat = katpoint.Catalogue(tags='default')
         cat1 = cat.filter(tags=['special', '~radec'])
@@ -523,7 +524,8 @@ class Catalogue(object):
             Tag or list of tags which targets should have. Tags prepended with
             a tilde (~) indicate tags which targets should *not* have. The string
             may contain multiple tags separated by whitespace. If None or an
-            empty list, all tags are accepted.
+            empty list, all tags are accepted. Remember that the body type is
+            also a tag.
         flux_limit_Jy : float or sequence of 2 floats, optional
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,
@@ -662,7 +664,8 @@ class Catalogue(object):
             Tag or list of tags which targets should have. Tags prepended with
             a tilde (~) indicate tags which targets should *not* have. The string
             may contain multiple tags separated by whitespace. If None or an
-            empty list, all tags are accepted.
+            empty list, all tags are accepted. Remember that the body type is
+            also a tag.
         flux_limit_Jy : float or sequence of 2 floats, optional
             Allowed flux density range, in Jy. If this is a single number, it is
             the lower limit, otherwise it takes the form [lower, upper]. If None,
