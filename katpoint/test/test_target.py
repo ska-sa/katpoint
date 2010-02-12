@@ -25,6 +25,7 @@ class TestTargetConstruction(unittest.TestCase):
                               '1 22779U 93054A   07266.92814765  .00000062  00000-0  10000-3 0  2895\n' +
                               '2 22779  53.8943 118.4708 0081407  68.2645 292.7207  2.00558015103055\n',
                               'Sun, special',
+                              'Nothing, special',
                               'Moon | Luna, special solarbody',
                               'Aldebaran, star',
                               'Betelgeuse | Maitland, star orion',

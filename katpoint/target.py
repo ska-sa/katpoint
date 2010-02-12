@@ -3,7 +3,7 @@
 import numpy as np
 import ephem
 
-from .ephem_extra import Timestamp, StationaryBody, is_iterable, lightspeed
+from .ephem_extra import Timestamp, StationaryBody, NullBody, is_iterable, lightspeed
 from .conversion import azel_to_enu
 from .projection import sphere_to_plane, plane_to_sphere
 
@@ -681,8 +681,10 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
 
     For *special* and *star* body types, only the target name is required. The
     *special* body name is assumed to be a PyEphem class name, and is typically
-    one of the major solar system objects. The *star* name is looked up in the
-    PyEphem star database, which contains a modest list of bright stars.
+    one of the major solar system objects. Alternatively, it could be "Nothing",
+    which indicates a dummy target with no position (useful as a placeholder but
+    not much else). The *star* name is looked up in the PyEphem star database,
+    which contains a modest list of bright stars.
 
     For *tle* bodies, the final field in the description string should contain
     the three lines of the TLE. If the name list is empty, the target name is
@@ -781,18 +783,20 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
             raise ValueError("Target description '%s' contains malformed *tle* body" % description)
 
     elif body_type == 'special':
+        special_name = preferred_name.capitalize()
         try:
-            body = eval('ephem.%s()' % preferred_name.capitalize())
+            body = getattr(ephem, special_name)() if special_name != 'Nothing' else NullBody()
         except AttributeError:
             raise ValueError("Target description '%s' contains unknown *special* body '%s'"
-                             % (description, preferred_name))
+                             % (description, special_name))
 
     elif body_type == 'star':
+        star_name = ' '.join([w.capitalize() for w in preferred_name.split()])
         try:
-            body = eval("ephem.star('%s')" % ' '.join([w.capitalize() for w in preferred_name.split()]))
+            body = ephem.star(star_name)
         except KeyError:
             raise ValueError("Target description '%s' contains unknown *star* '%s'"
-                             % (description, preferred_name))
+                             % (description, star_name))
 
     elif body_type == 'xephem':
         edb_string = fields[-1].replace('~', ',')
@@ -808,7 +812,7 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
             if not (extra_name in aliases) and not (extra_name == preferred_name):
                 aliases.append(extra_name)
         try:
-            body = eval("ephem.readdb('%s')" % edb_string)
+            body = ephem.readdb(edb_string)
         except ValueError:
             raise ValueError("Target description '%s' contains malformed *xephem* body" % description)
         # Add xephem body type as an extra tag, right after the main 'xephem' tag

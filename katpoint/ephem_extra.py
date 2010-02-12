@@ -217,3 +217,23 @@ class StationaryBody(object):
             # (ra, dec) back to astrometric (ra, dec)
             self.a_ra = ra
             self.a_dec = dec
+
+#--------------------------------------------------------------------------------------------------
+#--- CLASS :  NullBody
+#--------------------------------------------------------------------------------------------------
+
+class NullBody(object):
+    """Body with no position, used as a placeholder.
+
+    This body has the expected methods of :class:`Body`, but always returns NaNs
+    for all coordinates. It is intended for use as a placeholder when no proper
+    target object is available, i.e. as a dummy target.
+
+    """
+    def __init__(self):
+        self.name = 'Nothing'
+        self.az = self.alt = self.el = np.nan
+        self.ra = self.dec = self.a_ra = self.a_dec = np.nan
+
+    def compute(self, observer):
+        pass
