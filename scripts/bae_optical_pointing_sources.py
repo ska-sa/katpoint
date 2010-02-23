@@ -57,7 +57,7 @@ f.close()
 import katpoint
 import matplotlib.pyplot as plt
 
-ant = katpoint.construct_antenna('KAT7, -30:43:16.71, 21:24:35.86, 1055, 12.0')
+ant = katpoint.Antenna('KAT7, -30:43:16.71, 21:24:35.86, 1055, 12.0')
 cat = katpoint.Catalogue(file('bae_optical_pointing_sources.csv'),
                          add_specials=False, antenna=ant)
 timestamp = katpoint.Timestamp()

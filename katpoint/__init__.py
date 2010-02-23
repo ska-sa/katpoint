@@ -12,7 +12,7 @@ and CASA.
 
 import logging as _logging
 
-from .antenna import Antenna, construct_antenna
+from .antenna import Antenna
 
 from .target import Target, construct_target, construct_azel_target, construct_radec_target
 

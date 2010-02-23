@@ -94,8 +94,8 @@ class TestGeomDelay(unittest.TestCase):
     """Test geometric delay."""
     def setUp(self):
         self.target = katpoint.construct_azel_target('45:00:00.0', '75:00:00.0')
-        self.ant1 = katpoint.construct_antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0, 0.0, 0.0')
-        self.ant2 = katpoint.construct_antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0, -10.0, 0.0')
+        self.ant1 = katpoint.Antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0 0.0 0.0')
+        self.ant2 = katpoint.Antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0 -10.0 0.0')
 
     def test_delay(self):
         """Test geometric delay."""

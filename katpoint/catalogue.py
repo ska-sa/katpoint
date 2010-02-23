@@ -193,7 +193,7 @@ class Catalogue(object):
       associated with the catalogue during initialisation, from where it is
       stored in each target. An example is::
 
-        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
         cat = katpoint.Catalogue()
         cat1 = cat.filter(az_limit_deg=[0, 90], timestamp='2009-10-10', antenna=ant)
         cat = katpoint.Catalogue(antenna=ant)
@@ -204,7 +204,7 @@ class Catalogue(object):
       a lower limit. As with the azimuth filter, a timestamp and antenna object
       is required (or defaults will be used). An example is::
 
-        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
         cat = katpoint.Catalogue()
         cat1 = cat.filter(el_limit_deg=[10, 30], timestamp='2009-10-10', antenna=ant)
         cat = katpoint.Catalogue(antenna=ant)
@@ -218,7 +218,7 @@ class Catalogue(object):
       targets. As with the azimuth filter, a timestamp and antenna object is
       required (or defaults will be used). An example is::
 
-        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
         cat = katpoint.Catalogue()
         cat.add_tle(file('geo.txt'))
         sun = cat['Sun']
@@ -252,7 +252,7 @@ class Catalogue(object):
       iterator filter is typically used in a for-loop::
 
         cat = katpoint.Catalogue(file('source_list.csv'))
-        ant = katpoint.construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
         for t in cat.iterfilter(el_limit_deg=10, antenna=ant):
             # < observe target t >
 
@@ -567,8 +567,8 @@ class Catalogue(object):
         --------
         Here are some ways to filter a catalogue iteratively:
 
-        >>> from katpoint import Catalogue, construct_antenna
-        >>> ant = construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        >>> from katpoint import Catalogue, Antenna
+        >>> ant = Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
         >>> cat = Catalogue(antenna=ant)
         >>> for t in cat.iterfilter(el_limit_deg=10):
                 # Observe target t
@@ -707,8 +707,8 @@ class Catalogue(object):
         --------
         Here are some ways to filter a catalogue:
 
-        >>> from katpoint import Catalogue, construct_antenna
-        >>> ant = construct_antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+        >>> from katpoint import Catalogue, Antenna
+        >>> ant = Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
         >>> cat = Catalogue(antenna=ant, flux_freq_MHz=1500)
         >>> cat1 = cat.filter(el_limit_deg=10)
         >>> cat2 = cat.filter(az_limit_deg=[150, -150])
