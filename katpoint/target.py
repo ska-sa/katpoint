@@ -20,11 +20,54 @@ class Target(object):
     and flux density methods. These are not stored as part of the target object,
     however.
 
+    The object can be constructed from its constituent components or from a
+    description string. The description string contains up to five
+    comma-separated fields, with the format::
+
+        <name list>, <tags>, <longitudinal>, <latitudinal>, <flux info>
+
+    The <name list> contains a pipe-separated list of alternate names for the
+    target, with the preferred name either indicated by a prepended asterisk or
+    assumed to be the first name in the list. The names may contain spaces, and
+    the list may be empty. The <tags> field contains a space-separated list of
+    descriptive tags for the target. The first tag is mandatory and indicates
+    the body type of the target, which should be one of (*azel*, *radec*,
+    *tle*, *special*, *star*, *xephem*). The longidutinal and latitudinal fields
+    are only relevant to *azel* and *radec* targets, in which case they contain
+    the relevant coordinates.
+
+    The <flux info> is a space-separated list of numbers used to represent the
+    flux density of the target. The first two numbers specify the frequency
+    range for which the flux model is valid (in MHz), and the rest of the numbers
+    are Baars polynomial coefficients. The <flux info> may be enclosed in
+    parentheses to distinguish it from the other fields. An example string is::
+
+        name1 | *name 2, radec cal, 12:34:56.7, -04:34:34.2, (1000.0 2000.0 1.0)
+
+    For *special* and *star* body types, only the target name is required. The
+    *special* body name is assumed to be a PyEphem class name, and is typically
+    one of the major solar system objects. Alternatively, it could be "Nothing",
+    which indicates a dummy target with no position (useful as a placeholder but
+    not much else). The *star* name is looked up in the PyEphem star database,
+    which contains a modest list of bright stars.
+
+    For *tle* bodies, the final field in the description string should contain
+    the three lines of the TLE. If the name list is empty, the target name is
+    taken from the TLE instead. The *xephem* body contains a string in XEphem
+    EDB database format as the final field, with commas replaced by tildes. If
+    the name list is empty, the target name is taken from the XEphem string
+    instead.
+
+    When specifying a description string, the rest of the target parameters are
+    ignored, except for the default antenna and flux frequency (which do not
+    form part of the description string).
+
     Parameters
     ----------
-    body : ephem.Body object
-        Pre-constructed :class:`ephem.Body` object to embed in target object
-    tags : list of strings, or whitespace-delimited string
+    body : :class:`ephem.Body` object or string
+        Pre-constructed PyEphem Body object to embed in target object, or
+        description string
+    tags : list of strings, or whitespace-delimited string, optional
         Descriptive tags associated with target, starting with its body type
     aliases : list of strings, optional
         Alternate names of target
@@ -44,9 +87,17 @@ class Target(object):
     name : string
         Name of target
 
+    Raises
+    ------
+    ValueError
+        If description string has the wrong format
+
     """
-    def __init__(self, body, tags, aliases=None, min_freq_MHz=None, max_freq_MHz=None, coefs=None,
+    def __init__(self, body, tags=None, aliases=None, min_freq_MHz=None, max_freq_MHz=None, coefs=None,
                  antenna=None, flux_freq_MHz=None):
+        # If the first parameter is a description string, extract the relevant target parameters from it
+        if isinstance(body, basestring):
+            body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs = construct_target_params(body)
         self.body = body
         self.name = self.body.name
         self.tags = []
@@ -88,6 +139,10 @@ class Target(object):
         if (self.body_type == 'xephem') and (len(self.tags) > 1):
             sub_type = ' (%s)' % self.tags[1]
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.body_type + sub_type, id(self))
+
+    def format_katcp(self):
+        """String representation if object is passed as parameter to KATCP command."""
+        return self.description
 
     def _set_timestamp_antenna_defaults(self, timestamp, antenna):
         """Set defaults for timestamp and antenna, if they are unspecified.
@@ -650,62 +705,34 @@ class Target(object):
             return plane_to_sphere[projection_type](ref_az, ref_el, x, y)
 
 #--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  construct_target
+#--- FUNCTION :  construct_target_params
 #--------------------------------------------------------------------------------------------------
 
-def construct_target(description, antenna=None, flux_freq_MHz=None):
-    """Construct Target object from string representation.
+def construct_target_params(description):
+    """Construct parameters of Target object from description string.
 
-    The description string contains up to five comma-separated fields, with the
-    format::
-
-        <name list>, <tags>, <longitudinal>, <latitudinal>, <flux info>
-
-    The <name list> contains a pipe-separated list of alternate names for the
-    target, with the preferred name either indicated by a prepended asterisk or
-    assumed to be the first name in the list. The names may contain spaces, and
-    the list may be empty. The <tags> field contains a space-separated list of
-    descriptive tags for the target. The first tag is mandatory and indicates
-    the body type of the target, which should be one of (*azel*, *radec*,
-    *tle*, *special*, *star*, *xephem*). The longidutinal and latitudinal fields
-    are only relevant to *azel* and *radec* targets, in which case they contain
-    the relevant coordinates.
-
-    The <flux info> is a space-separated list of numbers used to represent the
-    flux density of the target. The first two numbers specify the frequency
-    range for which the flux model is valid (in MHz), and the rest of the numbers
-    are Baars polynomial coefficients. The <flux info> may be enclosed in
-    parentheses to distinguish it from the other fields. An example string is::
-
-        name1 | *name 2, radec cal, 12:34:56.7, -04:34:34.2, (1000.0 2000.0 1.0)
-
-    For *special* and *star* body types, only the target name is required. The
-    *special* body name is assumed to be a PyEphem class name, and is typically
-    one of the major solar system objects. Alternatively, it could be "Nothing",
-    which indicates a dummy target with no position (useful as a placeholder but
-    not much else). The *star* name is looked up in the PyEphem star database,
-    which contains a modest list of bright stars.
-
-    For *tle* bodies, the final field in the description string should contain
-    the three lines of the TLE. If the name list is empty, the target name is
-    taken from the TLE instead. The *xephem* body contains a string in XEphem
-    EDB database format as the final field, with commas replaced by tildes. If
-    the name list is empty, the target name is taken from the XEphem string
-    instead.
+    For more information on the description string format, see the help string
+    for :class:`Target`.
 
     Parameters
     ----------
     description : string
         String containing target name(s), tags, location and flux info
-    antenna : :class:`Antenna` object, optional
-        Default antenna to use for position calculations
-    flux_freq_MHz : float, optional
-        Default frequency at which to evaluate flux density, in MHz
 
     Returns
     -------
-    target : :class:`Target` object
-        Constructed Target object
+    body : :class:`ephem.Body` object
+        PyEphem Body object that will be used for position calculations
+    tags : list of strings, or whitespace-delimited string
+        Descriptive tags associated with target, starting with its body type
+    aliases : list of strings, optional
+        Alternate names of target
+    min_freq_MHz : float, optional
+        Minimum frequency for which flux density estimate is valid, in MHz
+    max_freq_MHz : float, optional
+        Maximum frequency for which flux density estimate is valid, in MHz
+    coefs : sequence of floats, optional
+        Coefficients of Baars polynomial used to estimate flux density
 
     Raises
     ------
@@ -838,7 +865,7 @@ def construct_target(description, antenna=None, flux_freq_MHz=None):
     else:
         min_freq_MHz = max_freq_MHz = coefs = None
 
-    return Target(body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs, antenna, flux_freq_MHz)
+    return body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_azel_target

@@ -17,7 +17,7 @@ class TestCatalogueConstruction(unittest.TestCase):
     def test_construct_catalogue(self):
         """Test construction of catalogues."""
         cat = katpoint.Catalogue(add_specials=True, add_stars=True)
-        cat.add(katpoint.construct_target('Sun, special'))
+        cat.add(katpoint.Target('Sun, special'))
         num_targets = len(cat.targets)
         self.assertEqual(num_targets, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
         test_target = cat.targets[0]
@@ -32,7 +32,7 @@ class TestCatalogueConstruction(unittest.TestCase):
 class TestCatalogueFilterSort(unittest.TestCase):
     """Test filtering and sorting of catalogues."""
     def setUp(self):
-        self.flux_target = katpoint.construct_target('radec, 0.0, 0.0, (1.0 2.0 2.0 0.0 0.0)')
+        self.flux_target = katpoint.Target('radec, 0.0, 0.0, (1.0 2.0 2.0 0.0 0.0)')
         self.antenna = katpoint.Antenna('XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0')
         self.timestamp = time.mktime(time.strptime('2009/06/14 12:34:56', '%Y/%m/%d %H:%M:%S'))
 
@@ -44,14 +44,14 @@ class TestCatalogueFilterSort(unittest.TestCase):
         cat.add(self.flux_target)
         cat2 = cat.filter(flux_limit_Jy=50.0, flux_freq_MHz=1.5)
         self.assertEqual(len(cat2.targets), 1, 'Number of targets with sufficient flux should be 1')
-        cat.add(katpoint.construct_target('Zenith, azel, 0, 90'))
+        cat.add(katpoint.Target('Zenith, azel, 0, 90'))
         cat3 = cat.filter(az_limit_deg=[0, 180], timestamp=self.timestamp, antenna=self.antenna)
         self.assertEqual(len(cat3.targets), 2, 'Number of targets rising should be 2')
         cat4 = cat.filter(az_limit_deg=[180, 0], timestamp=self.timestamp, antenna=self.antenna)
         self.assertEqual(len(cat4.targets), 10, 'Number of targets setting should be 10')
         cat5 = cat.filter(el_limit_deg=85, timestamp=self.timestamp, antenna=self.antenna)
         self.assertEqual(len(cat5.targets), 1, 'Number of targets close to zenith should be 1')
-        sun = katpoint.construct_target('Sun, special')
+        sun = katpoint.Target('Sun, special')
         cat6 = cat.filter(dist_limit_deg=[0.0, 1.0], proximity_targets=sun,
                           timestamp=self.timestamp, antenna=self.antenna)
         self.assertEqual(len(cat6.targets), 1, 'Number of targets close to Sun should be 1')

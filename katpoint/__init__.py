@@ -14,7 +14,7 @@ import logging as _logging
 
 from .antenna import Antenna
 
-from .target import Target, construct_target, construct_azel_target, construct_radec_target
+from .target import Target, construct_azel_target, construct_radec_target
 
 from .catalogue import Catalogue, specials, _catalogue_completer
 

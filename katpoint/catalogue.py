@@ -17,7 +17,7 @@ try:
 except ImportError:
     readline_found = False
 
-from .target import construct_target, Target
+from .target import Target
 from .ephem_extra import rad2deg, Timestamp
 
 logger = logging.getLogger("katpoint.catalogue")
@@ -80,8 +80,8 @@ class Catalogue(object):
     providing a list of :class:`Target` objects (or a single object by itself),
     as in the following example::
 
-        t1 = katpoint.construct_target('Ganymede, special')
-        t2 = katpoint.construct_target('Takreem, azel, 20, 30')
+        t1 = katpoint.Target('Ganymede, special')
+        t2 = katpoint.Target('Takreem, azel, 20, 30')
         cat1 = katpoint.Catalogue(t1)
         cat2 = katpoint.Catalogue([t1, t2])
 
@@ -105,8 +105,8 @@ class Catalogue(object):
     target object, a list of target objects, a single string, a list of strings
     or a string iterable. This is illustrated below::
 
-        t1 = katpoint.construct_target('Ganymede, special')
-        t2 = katpoint.construct_target('Takreem, azel, 20, 30')
+        t1 = katpoint.Target('Ganymede, special')
+        t2 = katpoint.Target('Takreem, azel, 20, 30')
         cat = katpoint.Catalogue(add_specials=False)
         cat.add(t1)
         cat.add([t1, t2])
@@ -403,7 +403,7 @@ class Catalogue(object):
                 # Ignore strings starting with a hash (assumed to be comments) or only containing whitespace
                 if (target[0] == '#') or (len(target.strip()) == 0):
                     continue
-                target = construct_target(target)
+                target = Target(target)
             if not isinstance(target, Target):
                 raise ValueError('List of targets should either contain Target objects or description strings')
             if self.lookup.has_key(_hash(target.name)):
