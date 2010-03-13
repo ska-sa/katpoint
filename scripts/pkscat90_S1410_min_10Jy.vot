@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.ivoa.net/xml/VOTable/v1.1"
+  xsi:schemaLocation="http://www.ivoa.net/xml/VOTable/v1.1 http://www.ivoa.net/xml/VOTable/v1.1">
+ <DESCRIPTION>
+   VizieR Astronomical Server: vizier.u-strasbg.fr 	2010-03-12T22:07:49
+   Explanations and Statistics of UCDs:			See LINK below
+   In case of problem, please report to:	question@simbad.u-strasbg.fr
+ </DESCRIPTION>
+<!-- VOTable description at http://www.ivoa.net/Documents/latest/VOT.html -->
+
+<INFO ID="Ref" name="-ref" value="VIZ4b9ab68d5b63"/>
+<INFO ID="MaxTuples" name="-out.max" value="50"/>
+
+<!--
+Execution Reports
+ -->
+
+<RESOURCE ID="yCat_8015" name="VIII/15">
+  <DESCRIPTION>Parkes Radio Sources Catalogue (PKSCAT90) (Wright+ 1990)</DESCRIPTION>
+  <COOSYS ID="B1950" system="eq_FK4" equinox="B1950"/>
+  <TABLE ID="VIII_15_pkscat90" name="VIII/15/pkscat90">
+    <DESCRIPTION>The Catalogue</DESCRIPTION>
+    <!-- Now comes the definition of each field -->
+    <FIELD name="_RAJ2000" ucd="pos.eq.ra;meta.main" ref="J2000" datatype="double" width="8" precision="4" unit="deg"><!-- ucd="POS_EQ_RA_MAIN" -->
+      <DESCRIPTION>Right ascension (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="_DEJ2000" ucd="pos.eq.dec;meta.main" ref="J2000" datatype="double" width="8" precision="4" unit="deg"><!-- ucd="POS_EQ_DEC_MAIN" -->
+      <DESCRIPTION>Declination (FK5) Equinox=J2000. (computed by VizieR, not part of the original data)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Bname" ucd="meta.id;meta.main" datatype="char" arraysize="10*"><!-- ucd="ID_MAIN" -->
+      <DESCRIPTION>B1950 source name</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Alias" ucd="meta.id" datatype="char" arraysize="7*"><!-- ucd="ID_ALTERNATIVE" -->
+      <DESCRIPTION>Alias/other catalogue names</DESCRIPTION>
+    </FIELD>
+    <FIELD name="RAB1950" ucd="pos.eq.ra" ref="B1950" datatype="char" arraysize="10" unit="&quot;h:m:s&quot;"><!-- ucd="POS_EQ_RA" -->
+      <DESCRIPTION>Right Ascension B1950.0 (hours)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="DEB1950" ucd="pos.eq.dec" ref="B1950" datatype="char" arraysize="9" unit="&quot;d:m:s&quot;"><!-- ucd="POS_EQ_DEC" -->
+      <DESCRIPTION>Declination B1950.0 (degrees)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Ident" ucd="src.class" datatype="char" arraysize="4"><!-- ucd="CLASS_OBJECT" -->
+      <DESCRIPTION>Identification of source (1)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="z" ucd="src.redshift" datatype="float" width="6" precision="3"><!-- ucd="REDSHIFT_HC" -->
+      <DESCRIPTION>? Redshift (reference in r_z)</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S80" ucd="phot.flux.density;em.radio.20-100MHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_87M" -->
+      <DESCRIPTION>? Flux density at 80 MHz</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S178" ucd="phot.flux.density;em.radio.100-200MHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_175M" -->
+      <DESCRIPTION>? Flux density at 178 MHz</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S408" ucd="phot.flux.density;em.radio.200-400MHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_400M" -->
+      <DESCRIPTION>? Flux density at 408 MHz</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S635" ucd="phot.flux.density;em.radio.400-750MHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_600M" -->
+      <DESCRIPTION>? Flux density at 635 MHz</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S1410" ucd="phot.flux.density;em.radio.750-1500MHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_1.4G" -->
+      <DESCRIPTION>? Flux density at 1410 MHz (21cm)</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S2700" ucd="phot.flux.density;em.radio.1500-3000MHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_2.7G" -->
+      <DESCRIPTION>? Flux density at 2700 MHz (11cm)</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S5000" ucd="phot.flux.density;em.radio.3-6GHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_5G" -->
+      <DESCRIPTION>? Flux density at 5000 MHz (6cm)</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S8400" ucd="phot.flux.density;em.radio.6-12GHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_8.4G" -->
+      <DESCRIPTION>? Flux density at 8400 MHz</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="S22000" ucd="phot.flux.density;em.radio.12-30GHz" datatype="double" width="8" precision="3" unit="Jy"><!-- ucd="PHOT_FLUX_RADIO_22G" -->
+      <DESCRIPTION>? Flux density at 22000 MHz</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="RA2000" ucd="pos.eq.ra" datatype="char" arraysize="13" unit="&quot;h:m:s&quot;"><!-- ucd="POS_EQ_RA" -->
+      <DESCRIPTION>Right Ascension J2000 (hours)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="DE2000" ucd="pos.eq.dec" datatype="char" arraysize="13" unit="&quot;d:m:s&quot;"><!-- ucd="POS_EQ_DEC" -->
+      <DESCRIPTION>Declination J2000 (degrees)</DESCRIPTION>
+    </FIELD>
+    <FIELD name="Jname" ucd="meta.id" datatype="char" arraysize="11*"><!-- ucd="ID_ALTERNATIVE" -->
+      <DESCRIPTION>J2000 Name</DESCRIPTION>
+    </FIELD>
+    <FIELD name="errPos" ucd="stat.error" datatype="float" width="5" precision="2" unit="arcsec"><!-- ucd="ERROR" -->
+      <DESCRIPTION>? positional accuracy in arcsec. (to be read as "better than")</DESCRIPTION>
+      <VALUES null="" />
+    </FIELD>
+    <FIELD name="r_z" ucd="meta.ref" datatype="char" arraysize="20*"><!-- ucd="REFER_CODE" -->
+      <DESCRIPTION>Comma-separated references for z (see file refs.dat)</DESCRIPTION>
+    </FIELD>
+<DATA>      <TABLEDATA>
+<TR><TD>017.2217</TD><TD>+13.3403</TD><TD>B0106+130</TD><TD>3C33</TD><TD>01 06 14.9</TD><TD>+13 04 26</TD><TD>D   </TD><TD>0.060</TD><TD>93.000</TD><TD>53.000</TD><TD>33.600</TD><TD></TD><TD>14.700</TD><TD>6.700</TD><TD>7.130</TD><TD>0.920</TD><TD></TD><TD>01 08 53.2000</TD><TD>+13 20 24.000</TD><TD>J0108+1320</TD><TD>20.00</TD><TD>s65b</TD></TR>
+<TR><TD>059.7277</TD><TD>+10.4296</TD><TD>B0356+102</TD><TD>3C98</TD><TD>03 56 10.4</TD><TD>+10 17 16</TD><TD>E   </TD><TD>0.031</TD><TD>83.000</TD><TD>44.000</TD><TD>27.500</TD><TD></TD><TD>11.100</TD><TD>6.100</TD><TD>3.290</TD><TD></TD><TD></TD><TD>03 58 54.7000</TD><TD>+10 25 46.000</TD><TD>J0358+1025</TD><TD>20.00</TD><TD>s65b</TD></TR>
+<TR><TD>062.0845</TD><TD>-65.7527</TD><TD>B0407-658</TD><TD>04-62</TD><TD>04 07 58.0</TD><TD>-65 53 00</TD><TD>Q?  </TD><TD></TD><TD></TD><TD></TD><TD>51.100</TD><TD></TD><TD>14.400</TD><TD>6.500</TD><TD>3.280</TD><TD>1.540</TD><TD></TD><TD>04 08 20.3800</TD><TD>-65 45 09.600</TD><TD>J0408-6544</TD><TD>0.50</TD><TD></TD></TR>
+<TR><TD>062.2012</TD><TD>-75.1224</TD><TD>B0409-752</TD><TD>04-71</TD><TD>04 09 58.4</TD><TD>-75 15 06</TD><TD>G?  </TD><TD></TD><TD></TD><TD></TD><TD>36.000</TD><TD></TD><TD>13.400</TD><TD>8.100</TD><TD>4.250</TD><TD>2.070</TD><TD></TD><TD>04 08 48.3800</TD><TD>-75 07 20.400</TD><TD>J0408-7507</TD><TD>0.50</TD><TD></TD></TR>
+<TR><TD>079.9342</TD><TD>-45.7780</TD><TD>B0518-458</TD><TD>05-43</TD><TD>05 18 18.1</TD><TD>-45 49 39</TD><TD>E   </TD><TD>0.035</TD><TD>410.000</TD><TD></TD><TD>166.000</TD><TD></TD><TD>66.000</TD><TD>29.000</TD><TD></TD><TD>3.240</TD><TD></TD><TD>05 19 44.3000</TD><TD>-45 46 40.000</TD><TD>J0519-4546</TD><TD>20.00</TD><TD>dfp77,s65b</TD></TR>
+<TR><TD>080.7417</TD><TD>-36.4589</TD><TD>B0521-365</TD><TD>05-36</TD><TD>05 21 13.0</TD><TD>-36 30 17</TD><TD>N   </TD><TD>0.055</TD><TD>89.000</TD><TD></TD><TD>36.100</TD><TD></TD><TD>16.300</TD><TD>12.500</TD><TD>9.230</TD><TD>6.400</TD><TD></TD><TD>05 22 58.0100</TD><TD>-36 27 31.900</TD><TD>J0522-3627</TD><TD>0.50</TD><TD>sb68</TD></TR>
+<TR><TD>083.8269</TD><TD>-5.3852</TD><TD>B0532-054</TD><TD>3C145</TD><TD>05 32 51.0</TD><TD>-05 25 00</TD><TD>HII </TD><TD></TD><TD></TD><TD></TD><TD>450.000</TD><TD></TD><TD>410.000</TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>05 35 18.4000</TD><TD>-05 23 06.000</TD><TD>J0535-0523</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>085.4275</TD><TD>-1.9046</TD><TD>B0539-019</TD><TD>3C147.1</TD><TD>05 39 11.1</TD><TD>-01 55 42</TD><TD>HII </TD><TD></TD><TD></TD><TD>15.700</TD><TD>450.000</TD><TD></TD><TD>50.000</TD><TD>56.500</TD><TD>43.600</TD><TD></TD><TD></TD><TD>05 41 42.6000</TD><TD>-01 54 16.000</TD><TD>J0541-0154</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>084.6813</TD><TD>-69.0827</TD><TD>B0539-691</TD><TD>MC74</TD><TD>05 39 04.0</TD><TD>-69 06 30</TD><TD>HII </TD><TD></TD><TD></TD><TD></TD><TD>39.100</TD><TD></TD><TD>34.000</TD><TD>29.800</TD><TD>25.100</TD><TD>8.430</TD><TD></TD><TD>05 38 43.5000</TD><TD>-69 04 57.000</TD><TD>J0538-6904</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>092.3987</TD><TD>+20.4885</TD><TD>B0606+204</TD><TD>NRAO229</TD><TD>06 06 37.0</TD><TD>+20 29 54</TD><TD>HII </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>23.000</TD><TD>11.300</TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>06 09 35.6000</TD><TD>+20 29 18.000</TD><TD>J0609+2029</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>096.7921</TD><TD>-5.8848</TD><TD>B0624-058</TD><TD>3C161</TD><TD>06 24 43.2</TD><TD>-05 51 12</TD><TD>Xs  </TD><TD></TD><TD>96.000</TD><TD>78.000</TD><TD>44.700</TD><TD></TD><TD>18.500</TD><TD>11.300</TD><TD>6.600</TD><TD>3.760</TD><TD></TD><TD>06 27 10.1000</TD><TD>-05 53 04.800</TD><TD>J0627-0553</TD><TD>0.15</TD><TD></TD></TR>
+<TR><TD>118.0931</TD><TD>-26.4272</TD><TD>B0750-262</TD><TD>OI-2483</TD><TD>07 50 17.9</TD><TD>-26 17 50</TD><TD>HII </TD><TD></TD><TD></TD><TD></TD><TD>17.200</TD><TD></TD><TD>11.300</TD><TD>7.400</TD><TD>3.790</TD><TD>1.700</TD><TD></TD><TD>07 52 22.3000</TD><TD>-26 25 37.000</TD><TD>J0752-2625</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>126.0306</TD><TD>-42.9963</TD><TD>B0822-428</TD><TD>PUP A</TD><TD>08 22 24.0</TD><TD>-42 50 00</TD><TD>SNR </TD><TD></TD><TD></TD><TD></TD><TD>198.000</TD><TD></TD><TD>18.000</TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>08 24 07.4000</TD><TD>-42 59 46.000</TD><TD>J0824-4259</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>134.8682</TD><TD>-43.7623</TD><TD>B0857-435</TD><TD>CTB32</TD><TD>08 57 40.0</TD><TD>-43 34 00</TD><TD>    </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>260.000</TD><TD>240.000</TD><TD></TD><TD>14.100</TD><TD></TD><TD>08 59 28.3000</TD><TD>-43 45 44.000</TD><TD>J0859-4345</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>134.7805</TD><TD>-47.5232</TD><TD>B0857-473</TD><TD>CTB31</TD><TD>08 57 25.4</TD><TD>-47 19 40</TD><TD>SNR </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>250.000</TD><TD>180.000</TD><TD></TD><TD>45.000</TD><TD></TD><TD>08 59 07.3000</TD><TD>-47 31 23.000</TD><TD>J0859-4731</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>135.9859</TD><TD>-38.6161</TD><TD>B0902-384</TD><TD>09-32</TD><TD>09 02 00.0</TD><TD>-38 25 00</TD><TD>Xsa </TD><TD></TD><TD></TD><TD></TD><TD>12.800</TD><TD></TD><TD>10.000</TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>09 03 56.6000</TD><TD>-38 36 57.000</TD><TD>J0903-3836</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>139.5232</TD><TD>-12.0950</TD><TD>B0915-118</TD><TD>HYDRA A</TD><TD>09 15 41.1</TD><TD>-11 53 03</TD><TD>D   </TD><TD>0.053</TD><TD>441.000</TD><TD></TD><TD>132.000</TD><TD></TD><TD>43.500</TD><TD>23.500</TD><TD>13.100</TD><TD>8.000</TD><TD></TD><TD>09 18 05.6000</TD><TD>-12 05 42.000</TD><TD>J0918-1205</TD><TD></TD><TD></TD></TR>
+<TR><TD>141.1067</TD><TD>-51.9939</TD><TD>B0922-517</TD><TD>RCW42</TD><TD>09 22 45.6</TD><TD>-51 46 40</TD><TD>HII </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>30.000</TD><TD></TD><TD>23.000</TD><TD></TD><TD></TD><TD>09 24 25.6000</TD><TD>-51 59 37.000</TD><TD>J0924-5159</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>182.9832</TD><TD>-53.1604</TD><TD>B1209-528</TD><TD>12-51</TD><TD>12 09 18.1</TD><TD>-52 52 56</TD><TD>SNR </TD><TD></TD><TD>182.000</TD><TD></TD><TD></TD><TD></TD><TD>62.000</TD><TD>30.000</TD><TD></TD><TD>0.010</TD><TD></TD><TD>12 11 56.0000</TD><TD>-53 09 37.000</TD><TD>J1211-5309</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>184.8471</TD><TD>+5.8250</TD><TD>B1216+061</TD><TD>3C270</TD><TD>12 16 50.1</TD><TD>+06 06 09</TD><TD>E   </TD><TD>0.007</TD><TD>93.000</TD><TD>48.000</TD><TD>41.500</TD><TD></TD><TD>17.200</TD><TD>9.800</TD><TD>4.860</TD><TD></TD><TD></TD><TD>12 19 23.3000</TD><TD>+05 49 30.000</TD><TD>J1219+0549</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>187.2777</TD><TD>+2.0523</TD><TD>B1226+023</TD><TD>3C273</TD><TD>12 26 33.2</TD><TD>+02 19 43</TD><TD>Q   </TD><TD>0.158</TD><TD>142.000</TD><TD>75.000</TD><TD>55.100</TD><TD></TD><TD>42.000</TD><TD>40.900</TD><TD>36.700</TD><TD>55.350</TD><TD></TD><TD>12 29 06.7000</TD><TD>+02 03 08.600</TD><TD>J1229+0203</TD><TD>0.02</TD><TD>s63</TD></TR>
+<TR><TD>187.7060</TD><TD>+12.3912</TD><TD>B1228+126</TD><TD>M87</TD><TD>12 28 17.6</TD><TD>+12 40 02</TD><TD>E   </TD><TD>0.004</TD><TD>1414.000</TD><TD>1050.000</TD><TD>519.000</TD><TD></TD><TD>220.000</TD><TD>120.000</TD><TD>67.600</TD><TD>44.000</TD><TD>20.000</TD><TD>12 30 49.4230</TD><TD>+12 23 28.040</TD><TD>J1230+1223</TD><TD>0.02</TD><TD></TD></TR>
+<TR><TD>194.0464</TD><TD>-5.7893</TD><TD>B1253-055</TD><TD>3C279</TD><TD>12 53 35.8</TD><TD>-05 31 08</TD><TD>Q   </TD><TD>0.538</TD><TD>33.000</TD><TD>20.900</TD><TD>14.500</TD><TD>14.300</TD><TD>11.600</TD><TD>12.000</TD><TD>13.000</TD><TD>11.100</TD><TD></TD><TD>12 56 11.1670</TD><TD>-05 47 21.530</TD><TD>J1256-0547</TD><TD>0.02</TD><TD>b65,br65,lsl65</TD></TR>
+<TR><TD>206.7400</TD><TD>-60.3830</TD><TD>B1343-601</TD><TD></TD><TD>13 43 32.0</TD><TD>-60 08 00</TD><TD>Xs  </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>79.000</TD><TD>29.000</TD><TD>27.100</TD><TD>1.700</TD><TD></TD><TD>13 46 57.6000</TD><TD>-60 22 58.000</TD><TD>J1346-6022</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>243.7566</TD><TD>-60.9216</TD><TD>B1610-607</TD><TD>16-61</TD><TD>16 10 40.8</TD><TD>-60 47 46</TD><TD>E   </TD><TD>0.018</TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>43.000</TD><TD>16.800</TD><TD>7.250</TD><TD>2.490</TD><TD></TD><TD>16 15 01.5000</TD><TD>-60 55 18.000</TD><TD>J1615-6055</TD><TD>20.00</TD><TD>bb72</TD></TR>
+<TR><TD>248.6517</TD><TD>-47.5990</TD><TD>B1630-474</TD><TD>CTB33</TD><TD>16 30 54.8</TD><TD>-47 29 44</TD><TD>Xsa </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>87.000</TD><TD>32.000</TD><TD>9.280</TD><TD>5.700</TD><TD></TD><TD>16 34 36.4000</TD><TD>-47 35 56.000</TD><TD>J1634-4735</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>249.9522</TD><TD>-46.8503</TD><TD>B1636-467</TD><TD></TD><TD>16 36 08.1</TD><TD>-46 45 10</TD><TD>Xsa </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>53.000</TD><TD></TD><TD>2.060</TD><TD></TD><TD></TD><TD>16 39 48.6000</TD><TD>-46 51 01.000</TD><TD>J1639-4651</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>252.7840</TD><TD>+4.9926</TD><TD>B1648+050</TD><TD>HER A</TD><TD>16 48 40.0</TD><TD>+05 04 35</TD><TD>D   </TD><TD>0.154</TD><TD>751.000</TD><TD>350.000</TD><TD>169.000</TD><TD></TD><TD>47.000</TD><TD>23.000</TD><TD>12.400</TD><TD></TD><TD></TD><TD>16 51 08.1000</TD><TD>+04 59 33.000</TD><TD>J1651+0459</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>260.1270</TD><TD>-0.9773</TD><TD>B1717-009</TD><TD>3C353</TD><TD>17 17 55.6</TD><TD>-00 55 41</TD><TD>D   </TD><TD>0.031</TD><TD>349.000</TD><TD>220.000</TD><TD>138.000</TD><TD>97.000</TD><TD>54.000</TD><TD>36.300</TD><TD>22.900</TD><TD>8.470</TD><TD></TD><TD>17 20 30.4000</TD><TD>-00 58 38.000</TD><TD>J1720-0058</TD><TD>20.00</TD><TD>s65b</TD></TR>
+<TR><TD>262.6688</TD><TD>-21.4873</TD><TD>B1727-214</TD><TD>3C358</TD><TD>17 27 40.7</TD><TD>-21 27 00</TD><TD>SNR </TD><TD></TD><TD>100.000</TD><TD></TD><TD></TD><TD></TD><TD>14.000</TD><TD>10.100</TD><TD>8.500</TD><TD>2.740</TD><TD></TD><TD>17 30 40.5000</TD><TD>-21 29 14.000</TD><TD>J1730-2129</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>265.0774</TD><TD>-30.9636</TD><TD>B1737-309</TD><TD></TD><TD>17 37 04.9</TD><TD>-30 56 16</TD><TD>Xsa </TD><TD></TD><TD>98.000</TD><TD></TD><TD></TD><TD></TD><TD>35.000</TD><TD>18.500</TD><TD>8.630</TD><TD>3.450</TD><TD></TD><TD>17 40 18.5000</TD><TD>-30 57 49.000</TD><TD>J1740-3057</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>274.8961</TD><TD>-63.7633</TD><TD>B1814-637</TD><TD>18-61</TD><TD>18 14 46.0</TD><TD>-63 47 03</TD><TD>G   </TD><TD></TD><TD></TD><TD></TD><TD>37.000</TD><TD></TD><TD>12.300</TD><TD>7.400</TD><TD>4.210</TD><TD>1.890</TD><TD></TD><TD>18 19 34.9900</TD><TD>-63 45 48.100</TD><TD>J1819-6345</TD><TD>0.50</TD><TD></TD></TR>
+<TR><TD>275.9821</TD><TD>-12.4771</TD><TD>B1821-125</TD><TD></TD><TD>18 21 07.2</TD><TD>-12 30 16</TD><TD>Xa  </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>15.100</TD><TD>6.100</TD><TD>3.800</TD><TD>0.530</TD><TD></TD><TD>18 23 55.7000</TD><TD>-12 28 37.000</TD><TD>J1823-1228</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>281.8256</TD><TD>-2.0445</TD><TD>B1844-021</TD><TD>W43</TD><TD>18 44 42.0</TD><TD>-02 06 00</TD><TD>SNR </TD><TD></TD><TD></TD><TD></TD><TD></TD><TD></TD><TD>330.000</TD><TD>125.000</TD><TD></TD><TD>0.100</TD><TD></TD><TD>18 47 18.1000</TD><TD>-02 02 40.000</TD><TD>J1847-0202</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>282.3432</TD><TD>-0.9226</TD><TD>B1846-009</TD><TD>3C391</TD><TD>18 46 47.5</TD><TD>-00 58 50</TD><TD>Xa  </TD><TD></TD><TD>53.000</TD><TD>25.900</TD><TD></TD><TD></TD><TD>17.800</TD><TD>11.900</TD><TD>9.750</TD><TD>2.270</TD><TD></TD><TD>18 49 22.4000</TD><TD>-00 55 21.000</TD><TD>J1849-0055</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>286.0162</TD><TD>+5.4490</TD><TD>B1901+053</TD><TD>3C396</TD><TD>19 01 36.2</TD><TD>+05 22 25</TD><TD>Xa  </TD><TD></TD><TD>38.000</TD><TD>24.000</TD><TD></TD><TD></TD><TD>15.300</TD><TD>9.100</TD><TD>4.300</TD><TD></TD><TD></TD><TD>19 04 03.9000</TD><TD>+05 26 56.000</TD><TD>J1904+0526</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>293.9855</TD><TD>-46.3444</TD><TD>B1932-464</TD><TD>19-46</TD><TD>19 32 18.4</TD><TD>-46 27 20</TD><TD>Xs  </TD><TD></TD><TD>147.000</TD><TD></TD><TD>39.600</TD><TD></TD><TD>12.600</TD><TD>6.540</TD><TD>3.400</TD><TD>1.680</TD><TD></TD><TD>19 35 56.5000</TD><TD>-46 20 39.000</TD><TD>J1935-4620</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>294.8543</TD><TD>-63.7127</TD><TD>B1934-638</TD><TD></TD><TD>19 34 47.6</TD><TD>-63 49 38</TD><TD>G   </TD><TD>0.185</TD><TD></TD><TD></TD><TD>6.240</TD><TD></TD><TD>16.400</TD><TD>11.500</TD><TD>6.130</TD><TD>3.000</TD><TD></TD><TD>19 39 25.0100</TD><TD>-63 42 45.700</TD><TD>J1939-6342</TD><TD>0.15</TD><TD>pb72</TD></TR>
+<TR><TD>303.6154</TD><TD>+23.5814</TD><TD>B2012+234</TD><TD>3C409</TD><TD>20 12 18.2</TD><TD>+23 25 42</TD><TD>Xa  </TD><TD></TD><TD>146.000</TD><TD>79.000</TD><TD></TD><TD>34.500</TD><TD>11.600</TD><TD>6.400</TD><TD>3.010</TD><TD></TD><TD></TD><TD>20 14 27.7000</TD><TD>+23 34 52.000</TD><TD>J2014+2334</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>316.8358</TD><TD>-25.4498</TD><TD>B2104-256</TD><TD>21-21</TD><TD>21 04 24.8</TD><TD>-25 39 06</TD><TD>E   </TD><TD>0.037</TD><TD>61.000</TD><TD></TD><TD>31.000</TD><TD></TD><TD>11.200</TD><TD>6.200</TD><TD>3.970</TD><TD>0.890</TD><TD></TD><TD>21 07 20.6000</TD><TD>-25 26 59.000</TD><TD>J2107-2526</TD><TD>20.00</TD><TD></TD></TR>
+<TR><TD>320.9365</TD><TD>+25.0689</TD><TD>B2121+248</TD><TD>3C433</TD><TD>21 21 30.7</TD><TD>+24 51 13</TD><TD>DB  </TD><TD>0.102</TD><TD>91.000</TD><TD>54.400</TD><TD></TD><TD>25.000</TD><TD>12.400</TD><TD>6.880</TD><TD>3.620</TD><TD></TD><TD></TD><TD>21 23 44.8000</TD><TD>+25 04 07.000</TD><TD>J2123+2504</TD><TD>20.00</TD><TD>s65b</TD></TR>
+<TR><TD>329.2739</TD><TD>-69.6897</TD><TD>B2152-699</TD><TD>21-64</TD><TD>21 52 57.7</TD><TD>-69 55 40</TD><TD>D   </TD><TD>0.027</TD><TD></TD><TD></TD><TD>80.000</TD><TD></TD><TD>30.000</TD><TD>17.900</TD><TD>13.400</TD><TD>6.220</TD><TD></TD><TD>21 57 05.8000</TD><TD>-69 41 22.000</TD><TD>J2157-6941</TD><TD>3.00</TD><TD></TD></TR>
+<TR><TD>343.4905</TD><TD>+16.1481</TD><TD>B2251+158</TD><TD>3C454.3</TD><TD>22 51 29.5</TD><TD>+15 52 54</TD><TD>Q   </TD><TD>0.859</TD><TD>13.000</TD><TD>12.700</TD><TD>11.600</TD><TD></TD><TD>12.200</TD><TD>10.200</TD><TD>23.300</TD><TD>11.000</TD><TD></TD><TD>22 53 57.7480</TD><TD>+16 08 53.560</TD><TD>J2253+1608</TD><TD>0.02</TD><TD>l67,s68,sbb77</TD></TR>
+<TR><TD>359.7470</TD><TD>-60.9160</TD><TD>B2356-611</TD><TD>23-64</TD><TD>23 56 24.3</TD><TD>-61 11 40</TD><TD>D   </TD><TD>0.096</TD><TD></TD><TD></TD><TD>57.000</TD><TD></TD><TD>22.000</TD><TD>12.000</TD><TD>4.430</TD><TD>1.070</TD><TD></TD><TD>23 58 59.2000</TD><TD>-60 54 57.000</TD><TD>J2358-6054</TD><TD>20.00</TD><TD></TD></TR>
+</TABLEDATA></DATA>
+</TABLE>
+
+
+<!--  INFO Diagnostics (++++ are Warnings, **** are Errors)
+++++No center provided++++
+++++-sort column '_r' ignored
+ -->
+</RESOURCE>
+</VOTABLE>
