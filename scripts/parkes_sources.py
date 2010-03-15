@@ -14,11 +14,6 @@
 # - Add a constraint to S1410 of ">=10", to select sources with L-Band flux above 10 Jy
 # - Select "VOTable" output layout and click on "Submit query"
 # - This downloads a file named vizier_votable.vot
-# - Open this in a text editor and delete the following section around lines 12-14
-#   (The 'DEFINITIONS' element is deprecated in VOTable 1.1):
-#   <DEFINITIONS>
-#     <COOSYS ID="J2000" system="eq_FK5" equinox="J2000"/>
-#   </DEFINITIONS>
 # - Save file as pkscat90_S1410_min_10Jy.vot
 #
 # Thereafter, install the vo Python package from https://www.stsci.edu/trac/ssb/astrolib/
@@ -40,13 +35,13 @@ from vo.table import parse_single_table
 flux_bins = ['S80', 'S178', 'S408', 'S635', 'S1410', 'S2700', 'S5000', 'S8400', 'S22000']
 freq = np.array([80.0, 178.0, 408.0, 635.0, 1410.0, 2700.0, 5000.0, 8400.0, 22000.0])
 start = [20.0, 100.0, 200.0, 400.0, 750.0, 1500.0, 3000.0, 6000.0, 12000.0, 30000.0]
-# List of anomalous flux fields that will be edited out
+# List of anomalous flux fields that will be edited out for the purpose of fitting
 anomalies = {'J0108+1320' : 6, 'J0541-0154' : 2, 'J2253+1608' : 6}
 
-# Load main table in one shot
-table = parse_single_table("pkscat90_S1410_min_10Jy.vot")
+# Load main table in one shot (don't be pedantic, as the VizieR VOTables contain a deprecated DEFINITIONS element)
+table = parse_single_table("pkscat90_S1410_min_10Jy.vot", pedantic=False)
 
-# Fit all sources on one figure
+# Fit all sources onto one figure
 plt.figure(1)
 plt.clf()
 plot_rows = int(np.ceil(np.sqrt(table.nrows)))
@@ -75,6 +70,8 @@ for n, src in enumerate(table.array):
     # Determine widest possible frequency range where flux is defined (ignore internal gaps in this range)
     defined_bins = flux_defined.nonzero()[0]
     freq_range = [start[defined_bins[0]], start[defined_bins[-1] + 1]]
+    # For better or worse, extend range to at least KAT7 frequency band
+    freq_range = [min(freq_range[0], 1000.0), max(freq_range[1], 2000.0)]
     flux_str = '(%g %g %s)' % (freq_range[0], freq_range[1], ' '.join(['%.4g' % (coef,) for coef in flux_poly[::-1]]))
     src_strings.append(', '.join((names, tags, ra, dec, flux_str)) + '\n')
     print src_strings[-1].strip()
@@ -88,6 +85,10 @@ for n, src in enumerate(table.array):
     if not np.isnan(anomalous_flux):
         plt.plot(np.log10(freq[anomalous_bin]), np.log10(anomalous_flux), '*b')
     plt.xticks([]); plt.yticks([])
+    plt.axvspan(np.log10(freq_range[0]), np.log10(freq_range[1]), facecolor='g', alpha=0.5)
 
 with file('parkes_source_list.csv', 'w') as f:
     f.writelines(src_strings)
+
+plt.figtext(0.5, 0.93, 'Log flux / log frequency', ha='center', va='center')
+plt.show()
