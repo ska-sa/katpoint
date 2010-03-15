@@ -270,7 +270,7 @@ class Catalogue(object):
     tags : string or sequence of strings, optional
         Tag or list of tags to add to *targets* (strings will be split on
         whitespace)
-    add_specials: {True, False}, optional
+    add_specials: {False, True}, optional
         True if *special* bodies specified in :data:`specials` (and 'Zenith')
         should be added
     add_stars:  {False, True}, optional
@@ -281,7 +281,7 @@ class Catalogue(object):
         Default frequency at which to evaluate flux density of all targets, in MHz
 
     """
-    def __init__(self, targets=None, tags=None, add_specials=True, add_stars=False,
+    def __init__(self, targets=None, tags=None, add_specials=False, add_stars=False,
                  antenna=None, flux_freq_MHz=None):
         self.lookup = {}
         self.targets = []
@@ -353,6 +353,10 @@ class Catalogue(object):
             return self.lookup[_hash(name)]
         except KeyError:
             return None
+
+    def __contains__(self, name):
+        """Test whether catalogue contains a source with the given name."""
+        return _hash(name) in self.lookup
 
     def __iter__(self):
         """Iterate over targets in catalogue."""
