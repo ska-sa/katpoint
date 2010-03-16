@@ -831,7 +831,7 @@ class Catalogue(object):
             delta_el = rad2deg(target.azel(timestamp + 30.0, antenna)[1] - target.azel(timestamp - 30.0, antenna)[1])
             el_code = '-' if (np.abs(delta_el) < 1.0 / 60.0) else ('/' if delta_el > 0.0 else '\\')
             # If no flux frequency is given, do not attempt to evaluate the flux, as it will fail
-            flux = target.flux_density(flux_freq_MHz) if flux_freq_MHz is not None else None
+            flux = target.flux_density(flux_freq_MHz) if flux_freq_MHz is not None else np.nan
             if antenna2 is not None and flux_freq_MHz is not None:
                 delay, delay_rate = target.geometric_delay(antenna2, timestamp, antenna)
                 fringe_period = 1. / (delay_rate * flux_freq_MHz * 1e6)
@@ -842,7 +842,7 @@ class Catalogue(object):
                 print '--------------------------------------------------------------------------'
                 above_horizon = False
             line = '%-24s %12s %12s %c' % (target.name, az.znorm, el, el_code)
-            line = line + ' %7.1f' % (flux, ) if flux is not None else line +  '        '
+            line = line + ' %7.1f' % (flux, ) if not np.isnan(flux) else line +  '        '
             if fringe_period is not None:
                 line += '    %10.2f' % (fringe_period,)
             print line

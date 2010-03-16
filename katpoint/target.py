@@ -8,6 +8,117 @@ from .conversion import azel_to_enu
 from .projection import sphere_to_plane, plane_to_sphere
 
 #--------------------------------------------------------------------------------------------------
+#--- CLASS :  FluxDensityModel
+#--------------------------------------------------------------------------------------------------
+
+class FluxDensityModel(object):
+    """Spectral flux density model.
+
+    This models the spectral flux density (or spectral energy distribtion - SED)
+    of a radio source as::
+
+       log10(S) = a + b*log10(v) + c*log10(v)**2 + d*log10(v)**3 + e*10**(f*log10(v))
+
+    where *S* is the flux density in janskies (Jy) and *v* is the frequency in
+    MHz. The model is based on the Baars polynomial [1]_ (up to a third-order
+    term) and extended with an exponential term from the 1Jy catalogue [2]_. It
+    is considered valid for a specified frequency range only. For any frequencies
+    outside this range a value of NaN is returned.
+
+    The object can be instantiated directly with the minimum and maximum
+    frequencies of the valid frequency range and the model coefficients, or
+    indirectly via a description string. This string contains the minimum
+    frequency, maximum frequency and model coefficients as space-separated values
+    (optionally with parentheses enclosing the entire string). Some examples::
+
+       '1000.0 2000.0 0.34 -0.85 -0.02'
+       '(1000.0 2000.0 0.34 -0.85 0.0 0.0 2.3 -1.0)'
+
+    If less than the expected number of coefficients are provided, the rest are
+    assumed to be zero. If more than the expected number are provided, the extra
+    coefficients are ignored.
+
+    Parameters
+    ----------
+    min_freq_MHz : float or string
+        Minimum frequency for which model is valid, in MHz. Alternatively, this
+        is a description string containing the minimum frequency, maximum
+        frequency and model coefficients as space-separated values (optionally
+        with parentheses enclosing the entire string).
+    max_freq_MHz : float, optional
+        Maximum frequency for which model is valid, in MHz
+    coefs : sequence of floats, optional
+        Model coefficients (a, b, c, d, e, f), where missing coefficients at the
+        end of the sequence are assumed to be zero, and extra coefficients are
+        ignored
+
+    Raises
+    ------
+    ValueError
+        If description string has the wrong format or is mixed with normal
+        parameters
+
+    References
+    ----------
+    .. [1] J.W.M. Baars, R. Genzel, I.I.K. Pauliny-Toth, A. Witzel, "The Absolute
+       Spectrum of Cas A; An Accurate Flux Density Scale and a Set of Secondary
+       Calibrators," Astron. Astrophys., 61, 99-106, 1977.
+    .. [2] H. Kuehr, A. Witzel, I.I.K. Pauliny-Toth, U. Nauber, "A catalogue of
+       extragalactic radio sources having flux densities greater than 1 Jy at
+       5 GHz," Astron. Astrophys. Suppl. Ser., 45, 367-430, 1981.
+
+    """
+    def __init__(self, min_freq_MHz, max_freq_MHz=None, coefs=None):
+        # If the first parameter is a description string, extract the relevant flux parameters from it
+        if isinstance(min_freq_MHz, basestring):
+            # Cannot have other parameters if description string is given - this is a safety check
+            if not (max_freq_MHz is None and coefs is None):
+                raise ValueError("First parameter '%s' is description string - cannot have other parameters" %
+                                 (min_freq_MHz,))
+            # Split description string on spaces and turn into numbers (discarding any parentheses)
+            flux_info = [float(num) for num in min_freq_MHz.strip(' ()').split()]
+            if len(flux_info) < 2:
+                raise ValueError("Flux density description string '%s' is invalid" % (min_freq_MHz,))
+            min_freq_MHz, max_freq_MHz, coefs = flux_info[0], flux_info[1], tuple(flux_info[2:])
+        self.min_freq_MHz = min_freq_MHz
+        self.max_freq_MHz = max_freq_MHz
+        # Coefficients are zero by default
+        self.coefs = np.zeros(6)
+        # Extract up to the maximum number of coefficients from given sequence
+        self.coefs[:min(len(self.coefs), len(coefs))] = coefs[:min(len(self.coefs), len(coefs))]
+        # Prune zeros at the end of coefficient list for the description string
+        pruned_coefs = self.coefs[:(np.nonzero(self.coefs)[0][-1] + 1)]
+        self.description = '(%s %s %s)' % (min_freq_MHz, max_freq_MHz, ' '.join(['%.4g' % (c,) for c in pruned_coefs]))
+
+    def flux_density(self, freq_MHz):
+        """Calculate flux density for given observation frequency.
+
+        Parameters
+        ----------
+        freq_MHz : float, or sequence of floats
+            Frequency at which to evaluate flux density, in MHz
+
+        Returns
+        -------
+        flux_density : float, or array of floats of same shape as *freq_MHz*
+            Flux density in Jy, or np.nan if the frequency is out of range
+
+        """
+        a, b, c, d, e, f = self.coefs
+        def _scalar_flux_density(v):
+            """Calculate flux density S for a single frequency v in MHz."""
+            if (v < self.min_freq_MHz) or (v > self.max_freq_MHz):
+                # Frequency out of range for flux calculation of target
+                return np.nan
+            log10_v = np.log10(v)
+            log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*10**(f*log10_v)
+            return 10 ** log10_S
+        if is_iterable(freq_MHz):
+            return np.array([_scalar_flux_density(v) for v in freq_MHz])
+        else:
+            return _scalar_flux_density(freq_MHz)
+
+#--------------------------------------------------------------------------------------------------
 #--- CLASS :  Target
 #--------------------------------------------------------------------------------------------------
 
@@ -24,7 +135,7 @@ class Target(object):
     description string. The description string contains up to five
     comma-separated fields, with the format::
 
-        <name list>, <tags>, <longitudinal>, <latitudinal>, <flux info>
+        <name list>, <tags>, <longitudinal>, <latitudinal>, <flux model>
 
     The <name list> contains a pipe-separated list of alternate names for the
     target, with the preferred name either indicated by a prepended asterisk or
@@ -36,11 +147,11 @@ class Target(object):
     are only relevant to *azel* and *radec* targets, in which case they contain
     the relevant coordinates.
 
-    The <flux info> is a space-separated list of numbers used to represent the
+    The <flux model> is a space-separated list of numbers used to represent the
     flux density of the target. The first two numbers specify the frequency
     range for which the flux model is valid (in MHz), and the rest of the numbers
-    are Baars polynomial coefficients. The <flux info> may be enclosed in
-    parentheses to distinguish it from the other fields. An example string is::
+    are model coefficients. The <flux model> may be enclosed in parentheses to
+    distinguish it from the other fields. An example string is::
 
         name1 | *name 2, radec cal, 12:34:56.7, -04:34:34.2, (1000.0 2000.0 1.0)
 
@@ -71,12 +182,8 @@ class Target(object):
         Descriptive tags associated with target, starting with its body type
     aliases : list of strings, optional
         Alternate names of target
-    min_freq_MHz : float, optional
-        Minimum frequency for which flux density estimate is valid, in MHz
-    max_freq_MHz : float, optional
-        Maximum frequency for which flux density estimate is valid, in MHz
-    coefs : sequence of floats, optional
-        Coefficients of Baars polynomial used to estimate flux density
+    flux_model : :class:`FluxDensity` object, optional
+        Object encapsulating spectral flux density model
     antenna : :class:`Antenna` object, optional
         Default antenna to use for position calculations
     flux_freq_MHz : float, optional
@@ -93,11 +200,10 @@ class Target(object):
         If description string has the wrong format
 
     """
-    def __init__(self, body, tags=None, aliases=None, min_freq_MHz=None, max_freq_MHz=None, coefs=None,
-                 antenna=None, flux_freq_MHz=None):
+    def __init__(self, body, tags=None, aliases=None, flux_model=None, antenna=None, flux_freq_MHz=None):
         # If the first parameter is a description string, extract the relevant target parameters from it
         if isinstance(body, basestring):
-            body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs = construct_target_params(body)
+            body, tags, aliases, flux_model = construct_target_params(body)
         self.body = body
         self.name = self.body.name
         self.tags = []
@@ -106,9 +212,7 @@ class Target(object):
             self.aliases = []
         else:
             self.aliases = aliases
-        self.min_freq_MHz = min_freq_MHz
-        self.max_freq_MHz = max_freq_MHz
-        self.coefs = coefs
+        self.flux_model = flux_model
         self.antenna = antenna
         self.flux_freq_MHz = flux_freq_MHz
 
@@ -123,13 +227,13 @@ class Target(object):
             descr += ', %s %s' % (self.body._ra, self.body._dec)
         if self.body_type == 'azel':
             descr += ', %s %s' % (self.body.az, self.body.el)
-        if None in [self.min_freq_MHz, self.max_freq_MHz, self.coefs]:
+        if self.flux_model is None:
             descr += ', no flux info'
         else:
-            descr += ', flux defined for %g - %g MHz' % (self.min_freq_MHz, self.max_freq_MHz)
+            descr += ', flux defined for %g - %g MHz' % (self.flux_model.min_freq_MHz, self.flux_model.max_freq_MHz)
             if not self.flux_freq_MHz is None:
-                flux = self.flux_density(self.flux_freq_MHz)
-                if not flux is None:
+                flux = self.flux_model.flux_density(self.flux_freq_MHz)
+                if not np.isnan(flux):
                     descr += ', flux=%.1f Jy @ %g MHz' % (flux, self.flux_freq_MHz)
         return descr
 
@@ -196,10 +300,7 @@ class Target(object):
         def fget(self):
             names = ' | '.join([self.name] + self.aliases)
             tags = ' '.join(self.tags)
-            fluxinfo = None
-            if self.min_freq_MHz and self.max_freq_MHz and self.coefs:
-                fluxinfo = '(%s %s %s)' % (self.min_freq_MHz, self.max_freq_MHz,
-                                           ' '.join([str(s) for s in self.coefs]))
+            fluxinfo = self.flux_model.description if self.flux_model is not None else None
             fields = [names, tags]
             if self.body_type == 'azel':
                 # Check if it's an unnamed target with a default name
@@ -552,25 +653,26 @@ class Target(object):
         return np.dot(baseline_m, u), np.dot(baseline_m, v), np.dot(baseline_m, w)
 
     def flux_density(self, flux_freq_MHz=None):
-        """Calculate flux density for given observation frequency.
+        """Calculate flux density for given observation frequency (or frequencies).
 
-        This uses a polynomial flux model of the form::
-
-            log10 S[Jy] = a + b*log10(f[MHz]) + c*(log10(f[MHz]))^2
-
-        as used in Baars 1977. If the flux frequency is unspecified, the default
-        value supplied to the target object during construction is used.
+        This uses the stored flux density model to calculate the flux density at
+        a given frequency (or frequencies). See the documentation of
+        :class:`FluxDensityModel` for more details of this model. If the flux
+        frequency is unspecified, the default value supplied to the target object
+        during construction is used. If no flux density model is available or the
+        frequency is out of range, a flux value of NaN is returned for each
+        frequency value.
 
         Parameters
         ----------
-        flux_freq_MHz : float, optional
+        freq_MHz : float, or sequence of floats, optional
             Frequency at which to evaluate flux density, in MHz
 
         Returns
         -------
-        flux_density : float
-            Flux density in Jy, or None if frequency is out of range or target
-            does not have flux info
+        flux_density : float, or array of floats of same shape as *freq_MHz*
+            Flux density in Jy, or np.nan if frequency is out of range or target
+            does not have flux model
 
         Raises
         ------
@@ -582,19 +684,10 @@ class Target(object):
             flux_freq_MHz = self.flux_freq_MHz
         if flux_freq_MHz is None:
             raise ValueError('Please specify frequency at which to measure flux density')
-        if None in [self.min_freq_MHz, self.max_freq_MHz, self.coefs]:
+        if self.flux_model is None:
             # Target has no specified flux density
-            return None
-        if (flux_freq_MHz < self.min_freq_MHz) or (flux_freq_MHz > self.max_freq_MHz):
-            # Frequency out of range for flux calculation of target
-            return None
-        log10_freq = np.log10(flux_freq_MHz)
-        log10_flux = 0.0
-        acc = 1.0
-        for coeff in self.coefs:
-            log10_flux += float(coeff) * acc
-            acc *= log10_freq
-        return 10.0 ** log10_flux
+            return np.tile(np.nan, np.shape(flux_freq_MHz)) if is_iterable(flux_freq_MHz) else np.nan
+        return self.flux_model.flux_density(flux_freq_MHz)
 
     def separation(self, other_target, timestamp=None, antenna=None):
         """Angular separation between this target and another one.
@@ -717,22 +810,18 @@ def construct_target_params(description):
     Parameters
     ----------
     description : string
-        String containing target name(s), tags, location and flux info
+        String containing target name(s), tags, location and flux model
 
     Returns
     -------
     body : :class:`ephem.Body` object
         PyEphem Body object that will be used for position calculations
-    tags : list of strings, or whitespace-delimited string
+    tags : list of strings
         Descriptive tags associated with target, starting with its body type
-    aliases : list of strings, optional
+    aliases : list of strings
         Alternate names of target
-    min_freq_MHz : float, optional
-        Minimum frequency for which flux density estimate is valid, in MHz
-    max_freq_MHz : float, optional
-        Maximum frequency for which flux density estimate is valid, in MHz
-    coefs : sequence of floats, optional
-        Coefficients of Baars polynomial used to estimate flux density
+    flux_model : :class:`FluxDensity` object
+        Object encapsulating spectral flux density model
 
     Raises
     ------
@@ -856,16 +945,10 @@ def construct_target_params(description):
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
 
-    # Extract flux info if it is available
-    if (len(fields) > 4) and (len(fields[4].strip(' ()')) > 0):
-        flux_info = [float(num) for num in fields[4].strip(' ()').split()]
-        if len(flux_info) < 3:
-            raise ValueError("Target description '%s' has invalid flux info" % description)
-        min_freq_MHz, max_freq_MHz, coefs = flux_info[0], flux_info[1], tuple(flux_info[2:])
-    else:
-        min_freq_MHz = max_freq_MHz = coefs = None
+    # Extract flux model if it is available
+    flux_model = FluxDensityModel(fields[4]) if (len(fields) > 4) and (len(fields[4].strip(' ()')) > 0) else None
 
-    return body, tags, aliases, min_freq_MHz, max_freq_MHz, coefs
+    return body, tags, aliases, flux_model
 
 #--------------------------------------------------------------------------------------------------
 #--- FUNCTION :  construct_azel_target
