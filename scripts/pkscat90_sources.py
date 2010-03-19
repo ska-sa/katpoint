@@ -5,8 +5,8 @@
 # This builds a katpoint catalogue from the included pkscat90_S1410_min_10Jy.vot file.
 # This file is obtained as follows:
 #
-# - Visit the VizieR web site: http://vizier.u-strasbg.fr/cgi-bin/VizieR
-# - Under "Direct access to Catalogues from Name or Designation", enter "pkscat90"
+# - Visit the VizieR web site: http://vizier.u-strasbg.fr/
+# - In the leftmost text entry field for the catalogue name, enter "pkscat90"
 # - Click on "VIII/15/pkscat90" ("The Catalogue")
 # - Select at least the following fields:
 #     Jname Alias Ident RA2000 DE2000
@@ -72,7 +72,7 @@ for n, src in enumerate(table.array):
     freq_range = [start[defined_bins[0]], start[defined_bins[-1] + 1]]
     # For better or worse, extend range to at least KAT7 frequency band
     freq_range = [min(freq_range[0], 1000.0), max(freq_range[1], 2000.0)]
-    flux_str = '(%g %g %s)' % (freq_range[0], freq_range[1], ' '.join(['%.4g' % (coef,) for coef in flux_poly[::-1]]))
+    flux_str = katpoint.FluxDensityModel(freq_range[0], freq_range[1], flux_poly[::-1]).description
     src_strings.append(', '.join((names, tags, ra, dec, flux_str)) + '\n')
     print src_strings[-1].strip()
 
@@ -90,5 +90,5 @@ for n, src in enumerate(table.array):
 with file('parkes_source_list.csv', 'w') as f:
     f.writelines(src_strings)
 
-plt.figtext(0.5, 0.93, 'Log flux / log frequency', ha='center', va='center')
+plt.figtext(0.5, 0.93, 'Spectra (log S vs. log v) for %d sources' % (len(src_strings)), ha='center', va='center')
 plt.show()
