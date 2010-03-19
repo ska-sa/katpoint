@@ -510,6 +510,37 @@ class Catalogue(object):
                 self.lookup.pop(_hash(alias))
             self.targets.remove(target)
 
+    def closest_to(self, target, timestamp=None, antenna=None):
+        """Determine target in catalogue that is closest to given target.
+
+        The comparison is based on the apparent angular separation between the
+        targets, as seen from the specified antenna and at the given time instant.
+
+        Parameters
+        ----------
+        target : :class:`Target` object
+            Target with which catalogue targets are compared
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp at which to evaluate target positions, in UTC seconds
+            since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at targets (defaults to default antenna)
+
+        Returns
+        -------
+        closest_target : :class:`Target` object or None
+            Target in catalogue that is closest to given *target*, or None if
+            catalogue is empty
+        min_dist : float
+            Angular separation between *target* and *closest_target*, in degrees
+
+        """
+        if len(self.targets) == 0:
+            return None, 180.0
+        dist = rad2deg(np.array([target.separation(tgt, timestamp, antenna) for tgt in self.targets]))
+        closest = dist.argmin()
+        return self.targets[closest], dist[closest]
+
     def iterfilter(self, tags=None, flux_limit_Jy=None, flux_freq_MHz=None, az_limit_deg=None, el_limit_deg=None,
                    dist_limit_deg=None, proximity_targets=None, timestamp=None, antenna=None):
         """Generator function which returns targets satisfying various criteria.
