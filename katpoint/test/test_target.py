@@ -116,3 +116,6 @@ class TestGeomDelay(unittest.TestCase):
         delay, delay_rate = self.target.geometric_delay(self.ant2, now, self.ant1)
         np.testing.assert_almost_equal(delay, 0.0, decimal=12)
         np.testing.assert_almost_equal(delay_rate, 0.0, decimal=12)
+        delay, delay_rate = self.target.geometric_delay(self.ant2, [now, now], self.ant1)
+        np.testing.assert_almost_equal(delay, np.array([0.0, 0.0]), decimal=12)
+        np.testing.assert_almost_equal(delay_rate, np.array([0.0, 0.0]), decimal=12)

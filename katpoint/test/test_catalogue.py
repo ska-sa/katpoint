@@ -13,10 +13,11 @@ class TestCatalogueConstruction(unittest.TestCase):
                           '1 22700U 93042A   07266.32333151  .00000012  00000-0  10000-3 0  8054\n',
                           '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n']
         self.edb_lines = ['HIC 13847,f|S|A4,2:58:16.03,-40:18:17.1,2.906,2000,\n']
+        self.antenna = katpoint.Antenna('XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0')
 
     def test_construct_catalogue(self):
         """Test construction of catalogues."""
-        cat = katpoint.Catalogue(add_specials=True, add_stars=True)
+        cat = katpoint.Catalogue(add_specials=True, add_stars=True, antenna=self.antenna)
         cat.add(katpoint.Target('Sun, special'))
         num_targets = len(cat.targets)
         self.assertEqual(num_targets, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
@@ -28,6 +29,10 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.assertEqual(len(cat.targets), num_targets + 2, 'Number of targets incorrect')
         cat.remove(cat.targets[-1].name)
         self.assertEqual(len(cat.targets), num_targets + 1, 'Number of targets incorrect')
+        closest_target, dist = cat.closest_to(test_target)
+        self.assertEqual(closest_target.description, test_target.description, 'Closest target incorrect')
+# Reinstate this test once separation() can handle angles on top of each other (currently produces NaNs)
+#        self.assertAlmostEqual(dist, 0.0, places=5, msg='Target should be on top of itself')
 
 class TestCatalogueFilterSort(unittest.TestCase):
     """Test filtering and sorting of catalogues."""
