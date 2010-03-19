@@ -17,7 +17,7 @@ class FluxDensityModel(object):
     This models the spectral flux density (or spectral energy distribtion - SED)
     of a radio source as::
 
-       log10(S) = a + b*log10(v) + c*log10(v)**2 + d*log10(v)**3 + e*10**(f*log10(v))
+       log10(S) = a + b*log10(v) + c*log10(v)**2 + d*log10(v)**3 + e*exp(f*log10(v))
 
     where *S* is the flux density in janskies (Jy) and *v* is the frequency in
     MHz. The model is based on the Baars polynomial [1]_ (up to a third-order
@@ -90,6 +90,17 @@ class FluxDensityModel(object):
         pruned_coefs = self.coefs[:(np.nonzero(self.coefs)[0][-1] + 1)]
         self.description = '(%s %s %s)' % (min_freq_MHz, max_freq_MHz, ' '.join(['%.4g' % (c,) for c in pruned_coefs]))
 
+    def __str__(self):
+        """Verbose human-friendly string representation."""
+        return "Flux density defined for %d-%d MHz, coefs=(%s)" % \
+               (self.min_freq_MHz, self.max_freq_MHz, ', '.join(['%.4g' % (c,) for c in self.coefs]))
+
+    def __repr__(self):
+        """Short human-friendly string representation."""
+        param_str = ','.join(np.array('a,b,c,d,e,f'.split(','))[self.coefs != 0.0])
+        return "<katpoint.FluxDensityModel %d-%d MHz params=%s at 0x%x>" % \
+               (self.min_freq_MHz, self.max_freq_MHz, param_str, id(self))
+
     def flux_density(self, freq_MHz):
         """Calculate flux density for given observation frequency.
 
@@ -111,7 +122,7 @@ class FluxDensityModel(object):
                 # Frequency out of range for flux calculation of target
                 return np.nan
             log10_v = np.log10(v)
-            log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*10**(f*log10_v)
+            log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*np.exp(f*log10_v)
             return 10 ** log10_S
         if is_iterable(freq_MHz):
             return np.array([_scalar_flux_density(v) for v in freq_MHz])
@@ -385,9 +396,9 @@ class Target(object):
 
         Returns
         -------
-        az : :class:`ephem.Angle` object, or sequence of objects
+        az : :class:`ephem.Angle` object, or array of same shape as *timestamp*
             Azimuth angle(s), in radians
-        el : :class:`ephem.Angle` object, or sequence of objects
+        el : :class:`ephem.Angle` object, or array of same shape as *timestamp*
             Elevation angle(s), in radians
 
         Raises
@@ -427,9 +438,9 @@ class Target(object):
 
         Returns
         -------
-        ra : :class:`ephem.Angle` object, or sequence of objects
+        ra : :class:`ephem.Angle` object, or array of same shape as *timestamp*
             Right ascension, in radians
-        dec : :class:`ephem.Angle` object, or sequence of objects
+        dec : :class:`ephem.Angle` object, or array of same shape as *timestamp*
             Declination, in radians
 
         Raises
@@ -469,9 +480,9 @@ class Target(object):
 
         Returns
         -------
-        ra : :class:`ephem.Angle` object, or sequence of objects
+        ra : :class:`ephem.Angle` object, or array of same shape as *timestamp*
             Right ascension, in radians
-        dec : :class:`ephem.Angle` object, or sequence of objects
+        dec : :class:`ephem.Angle` object, or array of same shape as *timestamp*
             Declination, in radians
 
         Raises
@@ -515,7 +526,7 @@ class Target(object):
 
         Returns
         -------
-        parangle : float or sequence
+        parangle : float, or array of same shape as *timestamp*
             Parallactic angle, in radians
 
         Raises
@@ -566,9 +577,9 @@ class Target(object):
 
         Returns
         -------
-        delay : float or sequence
+        delay : float, or array of same shape as *timestamp*
             Geometric delay, in seconds
-        delay_rate : float or sequence
+        delay_rate : float, or array of same shape as *timestamp*
             Rate of change of geometric delay, in seconds per second
 
         Raises
@@ -620,7 +631,7 @@ class Target(object):
 
         Returns
         -------
-        u, v, w : float or array
+        u, v, w : float, or array of same shape as *timestamp*
             (u, v, w) coordinates of baseline, in metres
 
         Notes
@@ -659,18 +670,18 @@ class Target(object):
         a given frequency (or frequencies). See the documentation of
         :class:`FluxDensityModel` for more details of this model. If the flux
         frequency is unspecified, the default value supplied to the target object
-        during construction is used. If no flux density model is available or the
-        frequency is out of range, a flux value of NaN is returned for each
-        frequency value.
+        during construction is used. If no flux density model is available or a
+        frequency is out of range, a flux value of NaN is returned for that
+        frequency.
 
         Parameters
         ----------
-        freq_MHz : float, or sequence of floats, optional
+        freq_MHz : float or sequence, optional
             Frequency at which to evaluate flux density, in MHz
 
         Returns
         -------
-        flux_density : float, or array of floats of same shape as *freq_MHz*
+        flux_density : float, or array of same shape as *freq_MHz*
             Flux density in Jy, or np.nan if frequency is out of range or target
             does not have flux model
 
@@ -696,8 +707,8 @@ class Target(object):
         ----------
         other_target : :class:`Target` object
             The other target
-        timestamp : :class:`Timestamp` object or equivalent, optional
-            Timestamp when separation is measured, in UTC seconds since Unix
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) when separation is measured, in UTC seconds since Unix
             epoch (defaults to now)
         antenna : class:`Antenna` object, optional
             Antenna that observes both targets, from where separation is measured
@@ -705,15 +716,21 @@ class Target(object):
 
         Returns
         -------
-        separation : :class:`ephem.Angle` object
+        separation : :class:`ephem.Angle` object, or array of shape of *timestamp*
             Angular separation between the targets, in radians
 
         """
         # Get a common timestamp and antenna for both targets
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        # Work in apparent (ra, dec), as this is the most reliable common coordinate frame in ephem
-        return ephem.separation(self.apparent_radec(timestamp, antenna),
-                                other_target.apparent_radec(timestamp, antenna))
+        def _scalar_separation(t):
+            """Calculate angular separation for a single time instant."""
+            # Work in apparent (ra, dec), as this is the most reliable common coordinate frame in ephem
+            return ephem.separation(self.apparent_radec(t, antenna),
+                                    other_target.apparent_radec(t, antenna))
+        if is_iterable(timestamp):
+            return np.array([_scalar_separation(t) for t in timestamp])
+        else:
+            return _scalar_separation(timestamp)
 
     def sphere_to_plane(self, az, el, timestamp=None, antenna=None, projection_type='ARC', coord_system='azel'):
         """Project spherical coordinates to plane with target position as reference.
