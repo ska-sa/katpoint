@@ -21,7 +21,7 @@ class TestRefractionCorrection(unittest.TestCase):
         """Test closure between refraction correction and its reverse operation."""
         print repr(self.rc)
         self.assertRaises(ValueError, katpoint.RefractionCorrection, 'unknown')
-        # Generate random meteorological data (hopefully sensible)
+        # Generate random meteorological data (hopefully sensible) - first only a single weather measurement
         temp = -10. + 50. * np.random.rand()
         pressure = 900. + 200. * np.random.rand()
         humidity = 5. + 90. * np.random.rand()
@@ -30,6 +30,16 @@ class TestRefractionCorrection(unittest.TestCase):
         reversed_el = self.rc.reverse(refracted_el, temp, pressure, humidity)
         assert_angles_almost_equal(reversed_el, self.el, decimal=7,
                                    err_msg='Elevation closure error for temp=%f, pressure=%f, humidity=%f' %
+                                           (temp, pressure, humidity))
+        # Generate random meteorological data, now one weather measurement per elevation value
+        temp = -10. + 50. * np.random.rand(len(self.el))
+        pressure = 900. + 200. * np.random.rand(len(self.el))
+        humidity = 5. + 90. * np.random.rand(len(self.el))
+        # Test closure on el grid
+        refracted_el = self.rc.apply(self.el, temp, pressure, humidity)
+        reversed_el = self.rc.reverse(refracted_el, temp, pressure, humidity)
+        assert_angles_almost_equal(reversed_el, self.el, decimal=7,
+                                   err_msg='Elevation closure error for temp=%s, pressure=%s, humidity=%s' %
                                            (temp, pressure, humidity))
 
 class TestPointingModel(unittest.TestCase):

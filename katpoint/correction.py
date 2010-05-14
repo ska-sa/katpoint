@@ -23,17 +23,19 @@ def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
 
     This uses the refraction model in the VLBI Field System to calculate a
     correction to a given elevation angle to account for refractive bending in
-    the atmosphere, based on surface weather measurements.
+    the atmosphere, based on surface weather measurements. Each input parameter
+    can either be a scalar value or an array of values, as long as all arrays
+    are of the same shape.
 
     Parameters
     ----------
     el : float or array
         Requested elevation angle(s), in radians
-    temperature_C : float
+    temperature_C : float or array
         Ambient air temperature at surface, in degrees Celsius
-    pressure_hPa : float
+    pressure_hPa : float or array
         Total barometric pressure at surface, in hectopascal (hPa) or millibars
-    humidity_percent : float
+    humidity_percent : float or array
         Relative humidity at surface, as a percentage in range [0, 100]
 
     Returns
@@ -71,7 +73,7 @@ def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
     # Compute SN (surface refractivity) (via dewpoint and water vapor partial pressure? [LS])
     rhumi = (100. - humidity_percent) * 0.9
     dewpt = temperature_C - rhumi * (0.136667 + rhumi * 1.33333e-3 + temperature_C * 1.5e-3)
-    pp = np.dot(p, dewpt ** np.arange(5))
+    pp = p[0] + p[1]*dewpt + p[2]*(dewpt**2) + p[3]*(dewpt**3) + p[4]*(dewpt**4)
     temperature_K = temperature_C + 273.
     # This looks like Smith & Weintraub (1953) or Crane (1976) [LS]
     sn = 77.6 * (pressure_hPa + (4810.0 * cvt * pp) / temperature_K) / temperature_K
@@ -122,15 +124,18 @@ class RefractionCorrection(object):
     def apply(self, el, temperature_C, pressure_hPa, humidity_percent):
         """Apply refraction correction to elevation angle.
 
+        Each input parameter can either be a scalar value or an array of values,
+        as long as all arrays are of the same shape.
+
         Parameters
         ----------
         el : float or array
             Requested elevation angle(s), in radians
-        temperature_C : float
+        temperature_C : float or array
             Ambient air temperature at surface, in degrees Celsius
-        pressure_hPa : float
+        pressure_hPa : float or array
             Total barometric pressure at surface, in hectopascal (hPa) or millibars
-        humidity_percent : float
+        humidity_percent : float or array
             Relative humidity at surface, as a percentage in range [0, 100]
 
         Returns
@@ -151,11 +156,11 @@ class RefractionCorrection(object):
         ----------
         refracted_el : float or array
             Elevation angle(s), corrected for refraction, in radians
-        temperature_C : float
+        temperature_C : float or array
             Ambient air temperature at surface, in degrees Celsius
-        pressure_hPa : float
+        pressure_hPa : float or array
             Total barometric pressure at surface, in hectopascal (hPa) or millibars
-        humidity_percent : float
+        humidity_percent : float or array
             Relative humidity at surface, as a percentage in range [0, 100]
 
         Returns
