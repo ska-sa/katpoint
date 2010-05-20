@@ -25,14 +25,14 @@ of the *x*-axis on the plane (which is defined to point in the direction of
 increasing longitudinal coordinate).
 
 The projection plane is tangent to the sphere at the reference point, which also
-coincides with the origin of the plane. All projections in this module are
-*zenithal* or *azimuthal* projections that map the sphere directly onto this
-plane. The *y* coordinate axis in the plane points along the reference meridian
-of longitude towards the north pole of the sphere (in the direction of
-increasing elevation). The *x* coordinate axis is perpendicular to it and points
-in the direction of increasing azimuth (which may be towards the right or left,
-depending on whether the azimuth coordinate increases clockwise or
-anti-clockwise).
+coincides with the origin of the plane. All projections in this module (except
+the plate carree projection) are *zenithal* or *azimuthal* projections that map
+the sphere directly onto this plane. The *y* coordinate axis in the plane points
+along the reference meridian of longitude towards the north pole of the sphere
+(in the direction of increasing elevation). The *x* coordinate axis is
+perpendicular to it and points in the direction of increasing azimuth (which may
+be towards the right or left, depending on whether the azimuth coordinate
+increases clockwise or anti-clockwise).
 
 If the reference point is at a pole, its azimuth angle is undefined and the
 reference meridian is therefore arbitrary. Nevertheless, the (x, y) axes are
@@ -53,11 +53,18 @@ The following projections are implemented:
 - Gnomonic (**TAN**): This is commonly used in optical astronomy.
 
 - Zenithal equidistant (**ARC**): This is commonly used for single-dish maps,
-  and is obtained if relative (az, el) coordinates are directly plotted. It
-  preserves angular distances.
+  and is obtained if relative (cross-el, el) coordinates are directly plotted
+  (cross-elevation is azimuth scaled by the cosine of elevation). It preserves
+  angular distances.
 
 - Stereographic (**STG**): This is useful to represent polar regions and large
   fields. It preserves circles.
+
+- Plate carree (**CAR**): This is a very simple cylindrical projection that
+  directly maps azimuth and elevation to a rectangular (*x*, *y*) grid, and
+  returns offsets from the reference point on this plane. The *x* offset is
+  therefore equal to the azimuth offset, while the *y* offset is equal to the
+  elevation offset. It does not preserve angles, distances or circles.
 
 Each projection typically has restrictions on the input domain and output range
 of values, which are highlighted in the docstrings of the individual functions.
@@ -499,6 +506,70 @@ def plane_to_sphere_stg(az0, el0, x, y):
     return az, el
 
 #--------------------------------------------------------------------------------------------------
+#--- Plate carree projection (CAR)
+#--------------------------------------------------------------------------------------------------
+
+def sphere_to_plane_car(az0, el0, az, el):
+    """Project sphere to plane using plate carree (CAR) projection.
+
+    The target point can be anywhere on the sphere. The output (x, y)
+    coordinates are likewise unrestricted.
+
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
+
+    Parameters
+    ----------
+    az0 : float or array
+        Azimuth / right ascension / longitude of reference point(s), in radians
+    el0 : float or array
+        Elevation / declination / latitude of reference point(s), in radians
+    az : float or array
+        Azimuth / right ascension / longitude of target point(s), in radians
+    el : float or array
+        Elevation / declination / latitude of target point(s), in radians
+
+    Returns
+    -------
+    x : float or array
+        Azimuth-like coordinate(s) on plane, in radians
+    y : float or array
+        Elevation-like coordinate(s) on plane, in radians
+
+    """
+    return az - az0, el - el0
+
+def plane_to_sphere_car(az0, el0, x, y):
+    """Deproject plane to sphere using plate carree (CAR) projection.
+
+    The input (x, y) coordinates are unrestricted. The target point can likewise
+    be anywhere on the sphere.
+
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
+
+    Parameters
+    ----------
+    az0 : float or array
+        Azimuth / right ascension / longitude of reference point(s), in radians
+    el0 : float or array
+        Elevation / declination / latitude of reference point(s), in radians
+    x : float or array
+        Azimuth-like coordinate(s) on plane, in radians
+    y : float or array
+        Elevation-like coordinate(s) on plane, in radians
+
+    Returns
+    -------
+    az : float or array
+        Azimuth / right ascension / longitude of target point(s), in radians
+    el : float or array
+        Elevation / declination / latitude of target point(s), in radians
+
+    """
+    return az0 + x, el0 + y
+
+#--------------------------------------------------------------------------------------------------
 #--- Top-level projection routines
 #--------------------------------------------------------------------------------------------------
 
@@ -506,9 +577,11 @@ def plane_to_sphere_stg(az0, el0, x, y):
 sphere_to_plane = {'SIN' : sphere_to_plane_sin,
                    'TAN' : sphere_to_plane_tan,
                    'ARC' : sphere_to_plane_arc,
-                   'STG' : sphere_to_plane_stg}
+                   'STG' : sphere_to_plane_stg,
+                   'CAR' : sphere_to_plane_car}
 
 plane_to_sphere = {'SIN' : plane_to_sphere_sin,
                    'TAN' : plane_to_sphere_tan,
                    'ARC' : plane_to_sphere_arc,
-                   'STG' : plane_to_sphere_stg}
+                   'STG' : plane_to_sphere_stg,
+                   'CAR' : plane_to_sphere_car}

@@ -413,3 +413,24 @@ class TestProjectionSTG(unittest.TestCase):
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
         ae = np.array(projection.plane_to_sphere_stg(0.0,  -np.pi / 2.0, 0.0, -2.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
+
+class TestProjectionCAR(unittest.TestCase):
+    """Test plate carree projection."""
+    def setUp(self):
+        N = 100
+        # Unrestricted (az0, el0) points on sphere
+        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        self.el0 = np.pi * (np.random.rand(N) - 0.5)
+        # Unrestricted (x, y) points on corresponding plane
+        self.x = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        self.y = np.pi * (np.random.rand(N) - 0.5)
+
+    def test_random_closure(self):
+        """CAR projection: do random projections and check closure."""
+        az, el = projection.plane_to_sphere_car(self.az0, self.el0, self.x, self.y)
+        xx, yy = projection.sphere_to_plane_car(self.az0, self.el0, az, el)
+        aa, ee = projection.plane_to_sphere_car(self.az0, self.el0, xx, yy)
+        np.testing.assert_almost_equal(self.x, xx, decimal=12)
+        np.testing.assert_almost_equal(self.y, yy, decimal=12)
+        assert_angles_almost_equal(az, aa, decimal=12)
+        assert_angles_almost_equal(el, ee, decimal=12)
