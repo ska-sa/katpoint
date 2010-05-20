@@ -50,15 +50,18 @@ The following projections are implemented:
   projection of AIPS and [1]_, not the generalised slant orthographic projection
   of [3]_.
 
-- Gnomonic (**TAN**): This is commonly used in optical astronomy.
+- Gnomonic (**TAN**): This is commonly used in optical astronomy. Great circles
+  are projected as straight lines, so that the shortest distance between two
+  points on the sphere is represented as a straight line interval (non-uniformly
+  divided though).
 
 - Zenithal equidistant (**ARC**): This is commonly used for single-dish maps,
   and is obtained if relative (cross-el, el) coordinates are directly plotted
   (cross-elevation is azimuth scaled by the cosine of elevation). It preserves
-  angular distances.
+  angular distances from the reference point.
 
 - Stereographic (**STG**): This is useful to represent polar regions and large
-  fields. It preserves circles.
+  fields. It preserves angles and circles.
 
 - Plate carree (**CAR**): This is a very simple cylindrical projection that
   directly maps azimuth and elevation to a rectangular (*x*, *y*) grid, and
