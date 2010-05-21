@@ -274,13 +274,15 @@ class PointingModel(object):
                     params = params[:self.num_params]
         self.params = params
 
-    def param_str(self, param):
+    def param_str(self, param, scale_format='%.9g'):
         """Human-friendly string representation of a specific parameter value.
 
         Parameters
         ----------
         param : integer
             Index of parameter (starts at **1** and corresponds to P-number)
+        scale_format : string, optional
+            Format string for P9 and P12, which are scale factors and not angles
 
         Returns
         -------
@@ -291,7 +293,7 @@ class PointingModel(object):
         if self.params[param - 1] == 0.0:
             return '0'
         elif param in [9, 12]:
-            return '%.9g' % self.params[param - 1]
+            return scale_format % self.params[param - 1]
         else:
             return str(ephem.degrees(self.params[param - 1]).znorm)
 
@@ -590,6 +592,7 @@ class PointingModel(object):
 
         # Number of active parameters
         M = len(enabled_params)
+        cos_el = np.cos(el)
         # Number of data points (az and el measurements count as separate data points)
         N = 2 * len(az)
         # Construct design matrix, containing weighted basis functions
@@ -599,13 +602,14 @@ class PointingModel(object):
             self.params[:] = 0.0
             self.params[param - 1] = 1.0
             basis_az, basis_el = self.offset(az, el)
-            A[:, m] = np.hstack((basis_az / sigma_daz, basis_el / sigma_del))
+            A[:, m] = np.hstack((basis_az * cos_el / sigma_daz, basis_el / sigma_del))
         # Measurement vector, containing weighted observed offsets
-        b = np.hstack((delta_az / sigma_daz, delta_el / sigma_del))
+        b = np.hstack((delta_az * cos_el / sigma_daz, delta_el / sigma_del))
         # Solve linear least-squares problem using SVD (see NRinC, 2nd ed, Eq. 15.4.17)
         U, s, Vt = np.linalg.svd(A, full_matrices=False)
         self.params[enabled_params - 1] = np.dot(Vt.T, np.dot(U.T, b) / s)
         # Also obtain standard errors of parameters (see NRinC, 2nd ed, Eq. 15.4.19)
         sigma_params[enabled_params - 1] = np.sqrt(np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1))
+#        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f' % (N, M, s[0] / s[-1]))
 
         return self.params, sigma_params
