@@ -42,3 +42,17 @@ class TestGeodetic(unittest.TestCase):
         np.testing.assert_almost_equal(new_x, x, decimal=8)
         np.testing.assert_almost_equal(new_y, y, decimal=8)
         np.testing.assert_almost_equal(new_z, z, decimal=8)
+
+class TestSpherical(unittest.TestCase):
+    """Closure tests for spherical coordinate transformations."""
+    def setUp(self):
+        N = 1000
+        self.az = 2.0 * np.pi * np.random.rand(N)
+        self.el = 0.999 * np.pi * (np.random.rand(N) - 0.5)
+
+    def test_azel_to_enu(self):
+        """Closure tests for (az, el) to ENU conversion and vice versa."""
+        e, n, u = katpoint.azel_to_enu(self.az, self.el)
+        new_az, new_el = katpoint.enu_to_azel(e, n, u)
+        assert_angles_almost_equal(new_az, self.az, decimal=15)
+        assert_angles_almost_equal(new_el, self.el, decimal=15)

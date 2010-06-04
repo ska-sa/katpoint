@@ -267,6 +267,27 @@ def azel_to_enu(az_rad, el_rad):
     sin_el, cos_el = np.sin(el_rad), np.cos(el_rad)
     return sin_az * cos_el, cos_az * cos_el, sin_el
 
+def enu_to_azel(e, n, u):
+    """Convert vector in ENU coordinates to (az, el) spherical coordinates.
+
+    This converts a vector in the local east-north-up (ENU) coordinate system to
+    the corresponding horizontal spherical coordinates (azimuth and elevation
+    angle). The ENU coordinates can be in any unit, as the vector length will be
+    normalised in the conversion process.
+
+    Parameters
+    ----------
+    e, n, u : float or array
+        East, North, Up coordinates (any unit)
+
+    Returns
+    -------
+    az_rad, el_rad : float or array
+        Azimuth and elevation angle, in radians
+
+    """
+    return np.arctan2(e, n), np.arctan2(u, np.sqrt(e * e + n * n))
+
 def hadec_to_enu(ha_rad, dec_rad, lat_rad):
     """Convert (ha, dec) spherical coordinates to unit vector in ENU coordinates.
 
