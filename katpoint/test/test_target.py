@@ -16,6 +16,8 @@ class TestTargetConstruction(unittest.TestCase):
                               'radec J2000, 0, 0.0, (1000.0 2000.0 1.0 10.0)',
                               ', radec B1950, 14:23:45.6, -60:34:21.1',
                               'radec B1900, 14:23:45.6, -60:34:21.1',
+                              'gal, 300.0, 0.0',
+                              'Sag A, gal, 0.0, 0.0',
                               'Zizou, radec cal, 1.4, 30.0, (1000.0 2000.0 1.0 10.0)',
                               'Fluffy | *Dinky, radec, 12.5, -50.0, (1.0 2.0 1.0 2.0 3.0 4.0)',
                               'tle, GPS BIIA-21 (PRN 09)    \n' +
@@ -38,6 +40,7 @@ class TestTargetConstruction(unittest.TestCase):
                                 ', azel, -45:00:00.0',
                                 'Zenith, azel blah',
                                 'radec J2000, 0.3',
+                                'gal, 0.0',
                                 'Zizou, radec cal, 1.4, 30.0, (1000.0, 2000.0, 1.0, 10.0)',
                                 'tle, GPS BIIA-21 (PRN 09)    \n' +
                                 '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n',
@@ -49,7 +52,8 @@ class TestTargetConstruction(unittest.TestCase):
                                 'xephem star, Sadr~20:22:13.7|2.43~40:15:24|-0.93~2.23~2000~0',
                                 'hotbody, 34.0, 45.0']
         self.azel_target = 'azel, 10.0, -10.0'
-        self.radec_target = 'radec, 10.0, -10.0'
+        self.radec_target = 'radec, 20.0, -20.0'
+        self.gal_target = 'gal, 30.0, -30.0'
         self.tag_target = 'azel J2000 GPS, 40.0, -30.0'
 
     def test_construct_target(self):
@@ -67,8 +71,27 @@ class TestTargetConstruction(unittest.TestCase):
         azel2 = katpoint.construct_azel_target('10:00:00.0', '-10:00:00.0')
         self.assertEqual(azel1.description, azel2.description, 'Special azel constructor failed')
         radec1 = katpoint.Target(self.radec_target)
-        radec2 = katpoint.construct_radec_target('10:00:00.0', '-10:00:00.0')
+        radec2 = katpoint.construct_radec_target('20:00:00.0', '-20:00:00.0')
         self.assertEqual(radec1.description, radec2.description, 'Special radec constructor failed')
+
+    def test_constructed_coords(self):
+        """Test whether calculated coordinates match those with which it is constructed."""
+        antenna = katpoint.Antenna('test, -30, 21, 1000., 12')
+        azel = katpoint.Target(self.azel_target, antenna=antenna)
+        calc_azel = azel.azel()
+        calc_az, calc_el = katpoint.rad2deg(calc_azel[0]), katpoint.rad2deg(calc_azel[1])
+        self.assertEqual(calc_az, 10.0, 'Calculated az does not match specified value in azel target')
+        self.assertEqual(calc_el, -10.0, 'Calculated el does not match specified value in azel target')
+        radec = katpoint.Target(self.radec_target, antenna=antenna)
+        calc_radec = radec.radec()
+        calc_ra, calc_dec = katpoint.rad2deg(calc_radec[0]), katpoint.rad2deg(calc_radec[1])
+        np.testing.assert_almost_equal(calc_ra, 20.0 * 360 / 24., decimal=4)
+        np.testing.assert_almost_equal(calc_dec, -20.0, decimal=4)
+        lb = katpoint.Target(self.gal_target, antenna=antenna)
+        calc_lb = lb.galactic()
+        calc_l, calc_b = katpoint.rad2deg(calc_lb[0]), katpoint.rad2deg(calc_lb[1])
+        np.testing.assert_almost_equal(calc_l, 30.0, decimal=4)
+        np.testing.assert_almost_equal(calc_b, -30.0, decimal=4)
 
     def test_add_tags(self):
         """Test adding tags."""

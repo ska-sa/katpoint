@@ -3,7 +3,7 @@
 import numpy as np
 import ephem
 
-from .ephem_extra import Timestamp, StationaryBody, NullBody, is_iterable, lightspeed
+from .ephem_extra import Timestamp, StationaryBody, NullBody, is_iterable, lightspeed, deg2rad, rad2deg
 from .conversion import azel_to_enu
 from .projection import sphere_to_plane, plane_to_sphere
 
@@ -238,6 +238,9 @@ class Target(object):
             descr += ', %s %s' % (self.body._ra, self.body._dec)
         if self.body_type == 'azel':
             descr += ', %s %s' % (self.body.az, self.body.el)
+        if self.body_type == 'gal':
+            l, b = ephem.Galactic(ephem.Equatorial(self.body._ra, self.body._dec)).get()
+            descr += ', %.4f %.4f' % (rad2deg(l), rad2deg(b))
         if self.flux_model is None:
             descr += ', no flux info'
         else:
@@ -250,9 +253,7 @@ class Target(object):
 
     def __repr__(self):
         """Short human-friendly string representation of target object."""
-        sub_type = ''
-        if (self.body_type == 'xephem') and (len(self.tags) > 1):
-            sub_type = ' (%s)' % self.tags[1]
+        sub_type = (' (%s)' % self.tags[1]) if (self.body_type == 'xephem') and (len(self.tags) > 1) else ''
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.body_type + sub_type, id(self))
 
     def format_katcp(self):
@@ -325,6 +326,15 @@ class Target(object):
                     fields = [tags]
                 # pylint: disable-msg=W0212
                 fields += [str(self.body._ra), str(self.body._dec)]
+                if fluxinfo:
+                    fields += [fluxinfo]
+
+            elif self.body_type == 'gal':
+                # Check if it's an unnamed target with a default name
+                if names.startswith('Galactic l:'):
+                    fields = [tags]
+                l, b = ephem.Galactic(ephem.Equatorial(self.body._ra, self.body._dec)).get()
+                fields += ['%.4f' % (rad2deg(l),), '%.4f' % (rad2deg(b),)]
                 if fluxinfo:
                     fields += [fluxinfo]
 
@@ -505,6 +515,44 @@ class Target(object):
 
     # The default (ra, dec) coordinates are the astrometric ones
     radec = astrometric_radec
+
+    def galactic(self, timestamp=None, antenna=None):
+        """Calculate target's galactic (l, b) coordinates as seen from antenna at time(s).
+
+        This calculates the galactic coordinates of the target, based on the
+        J2000 *astrometric* equatorial coordinates. This is its position relative
+        to the Galactic reference frame for the epoch of J2000. Some targets are
+        unable to provide this (due to a limitation of pyephem), notably
+        stationary (*azel*) targets, and provide the galactic coordinates based
+        on *apparent* equatorial coordinates instead. The difference is on the
+        order of a few arcminutes.
+
+        Parameters
+        ----------
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Antenna which points at target (defaults to default antenna)
+
+        Returns
+        -------
+        l : :class:`ephem.Angle` object, or array of same shape as *timestamp*
+            Galactic longitude, in radians
+        b : :class:`ephem.Angle` object, or array of same shape as *timestamp*
+            Galactic latitude, in radians
+
+        Raises
+        ------
+        ValueError
+            If no antenna is specified, and no default antenna was set either
+
+        """
+        ra, dec = self.astrometric_radec(timestamp, antenna)
+        if is_iterable(ra):
+            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in xrange(len(ra))])
+            return lb[:, 0], lb[:, 1]
+        else:
+            return ephem.Galactic(ephem.Equatorial(ra, dec)).get()
 
     def parallactic_angle(self, timestamp=None, antenna=None):
         """Calculate parallactic angle on target as seen from antenna at time(s).
@@ -851,7 +899,7 @@ def construct_target_params(description):
         raise ValueError("Target description '%s' must have at least two fields" % description)
     # Check if first name starts with body type tag, while the next field does not
     # This indicates a missing names field -> add an empty name list in front
-    body_types = ['azel', 'radec', 'tle', 'special', 'star', 'xephem']
+    body_types = ['azel', 'radec', 'gal', 'tle', 'special', 'star', 'xephem']
     if np.any([fields[0].startswith(s) for s in body_types]) and \
        not np.any([fields[1].startswith(s) for s in body_types]):
         fields = [''] + fields
@@ -897,6 +945,21 @@ def construct_target_params(description):
             body._epoch = ephem.B1950
         else:
             body._epoch = ephem.J2000
+        body._ra = ra
+        body._dec = dec
+
+    elif body_type == 'gal':
+        if len(fields) < 4:
+            raise ValueError("Target description '%s' contains *gal* body with no (l, b) coordinates"
+                             % description)
+        l, b = float(fields[2]), float(fields[3])
+        body = ephem.FixedBody()
+        ra, dec = ephem.Galactic(deg2rad(l), deg2rad(b)).to_radec()
+        if preferred_name:
+            body.name = preferred_name
+        else:
+            body.name = "Galactic l: %.4f b: %.4f" % (l, b)
+        body._epoch = ephem.J2000
         body._ra = ra
         body._dec = dec
 
