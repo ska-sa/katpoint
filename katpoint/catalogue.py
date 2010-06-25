@@ -354,9 +354,15 @@ class Catalogue(object):
         except KeyError:
             return None
 
-    def __contains__(self, name):
-        """Test whether catalogue contains a source with the given name."""
-        return _hash(name) in self.lookup
+    def __contains__(self, obj):
+        """Test whether catalogue contains exact target, or target with given name."""
+        name = obj.name if isinstance(obj, Target) else obj
+        target = self[name]
+        return target is not None and (not isinstance(obj, Target) or target == obj)
+
+    def __eq__(self, other):
+        """Equality comparison operator."""
+        return set([t.description for t in self.targets]) == set([t.description for t in other.targets])
 
     def __iter__(self):
         """Iterate over targets in catalogue."""
@@ -549,7 +555,7 @@ class Catalogue(object):
         Parameters
         ----------
         filename : string
-            Name of file to write catalogue to
+            Name of file to write catalogue to (overwriting existing contents)
 
         """
         file(filename, 'w').writelines([t.description + '\n' for t in self.targets])

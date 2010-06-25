@@ -256,6 +256,10 @@ class Target(object):
         sub_type = (' (%s)' % self.tags[1]) if (self.body_type == 'xephem') and (len(self.tags) > 1) else ''
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.body_type + sub_type, id(self))
 
+    def __eq__(self, other):
+        """Equality comparison operator."""
+        return self.description == other.description
+
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""
         return self.description

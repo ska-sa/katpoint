@@ -39,6 +39,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
     def setUp(self):
         self.flux_target = katpoint.Target('radec, 0.0, 0.0, (1.0 2.0 2.0 0.0 0.0)')
         self.antenna = katpoint.Antenna('XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0')
+        self.antenna2 = katpoint.Antenna('XDM2, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0, 100.0 0.0 0.0')
         self.timestamp = time.mktime(time.strptime('2009/06/14 12:34:56', '%Y/%m/%d %H:%M:%S'))
 
     def test_filter_catalogue(self):
@@ -66,6 +67,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
         cat = katpoint.Catalogue(add_specials=True, add_stars=True)
         self.assertEqual(len(cat.targets), len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
         cat1 = cat.sort(key='name')
+        self.assertEqual(cat1, cat, 'Catalogue equality failed')
         self.assertEqual(cat1.targets[0].name, 'Achernar', 'Sorting on name failed')
         cat2 = cat.sort(key='ra', timestamp=self.timestamp, antenna=self.antenna)
         self.assertEqual(str(cat2.targets[0].body.ra), '0:08:53.09', 'Sorting on ra failed')
@@ -83,7 +85,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
         """Test output of visibility list."""
         cat = katpoint.Catalogue(add_specials=True, add_stars=True)
         cat.add(self.flux_target)
-        cat.visibility_list(timestamp=self.timestamp, antenna=self.antenna, flux_freq_MHz=1.5)
+        cat.visibility_list(timestamp=self.timestamp, antenna=self.antenna, flux_freq_MHz=1.5, antenna2=self.antenna2)
         cat.antenna = self.antenna
         cat.flux_freq_MHz = 1.5
         cat.visibility_list(timestamp=self.timestamp)

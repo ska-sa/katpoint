@@ -69,10 +69,10 @@ class TestTargetConstruction(unittest.TestCase):
             self.assertRaises(ValueError, katpoint.Target, descr)
         azel1 = katpoint.Target(self.azel_target)
         azel2 = katpoint.construct_azel_target('10:00:00.0', '-10:00:00.0')
-        self.assertEqual(azel1.description, azel2.description, 'Special azel constructor failed')
+        self.assertEqual(azel1, azel2, 'Special azel constructor failed')
         radec1 = katpoint.Target(self.radec_target)
         radec2 = katpoint.construct_radec_target('20:00:00.0', '-20:00:00.0')
-        self.assertEqual(radec1.description, radec2.description, 'Special radec constructor failed')
+        self.assertEqual(radec1, radec2, 'Special radec constructor failed')
 
     def test_constructed_coords(self):
         """Test whether calculated coordinates match those with which it is constructed."""
