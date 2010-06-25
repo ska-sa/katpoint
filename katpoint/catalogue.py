@@ -362,7 +362,8 @@ class Catalogue(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return set([t.description for t in self.targets]) == set([t.description for t in other.targets])
+        # Use lookup dict instead of targets list, as it has a fixed order based on target name
+        return self.lookup.values() == other.lookup.values()
 
     def __iter__(self):
         """Iterate over targets in catalogue."""

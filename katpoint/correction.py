@@ -492,7 +492,8 @@ class PointingModel(object):
             a11, a12, a21, a22 = self._jacobian(az, el)
             test_az, test_el = self.apply(az, el)
             b1, b2 = pointed_az - test_az, pointed_el - test_el
-            if np.all(np.sqrt(b1 ** 2 + b2 ** 2) < tolerance):
+            sky_error = np.sqrt((np.cos(el) * b1) ** 2 + b2 ** 2)
+            if np.all(sky_error < tolerance):
                 break
             # Newton step: Solve linear system via crappy Cramer rule... 3 reasons why this is OK:
             # (1) J is nearly an identity matrix, as long as model parameters are all small
@@ -502,9 +503,10 @@ class PointingModel(object):
             az = az + (a22 * b1 - a12 * b2) / det_J
             el = el + (a11 * b2 - a21 * b1) / det_J
         else:
-            logger.warning('Reverse pointing correction did not converge' +
-                           ' in %d iterations - differs by at most %f arcsecs' %
-                           (iteration + 1, rad2deg(np.max(np.sqrt(b1 ** 2 + b2 ** 2))) * 3600.))
+            max_error, max_az, max_el = np.vstack((sky_error, pointed_az, pointed_el))[:, np.argmax(sky_error)]
+            logger.warning('Reverse pointing correction did not converge in ' +
+                           '%d iterations - maximum error is %f arcsecs at (az, el) = (%f, %f) radians' %
+                           (iteration + 1, rad2deg(max_error) * 3600., max_az, max_el))
         return az, el
 
     @dynamic_doc(num_params, num_params)
