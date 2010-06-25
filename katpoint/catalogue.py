@@ -543,6 +543,17 @@ class Catalogue(object):
                 self.lookup.pop(_hash(alias))
             self.targets.remove(target)
 
+    def save(self, filename):
+        """Save catalogue to file in CSV format.
+
+        Parameters
+        ----------
+        filename : string
+            Name of file to write catalogue to
+
+        """
+        file(filename, 'w').writelines([t.description + '\n' for t in self.targets])
+
     def closest_to(self, target, timestamp=None, antenna=None):
         """Determine target in catalogue that is closest to given target.
 
@@ -888,8 +899,8 @@ class Catalogue(object):
             title += " and fringe period (s) toward antenna '%s' at same frequency" % (antenna2.name)
         print title
         print
-        print 'Target                        Azimuth    Elevation R/S  Flux Fringe period'
-        print '------                        -------    --------- ---  ---- -------------'
+        print 'Target                        Azimuth    Elevation <    Flux Fringe period'
+        print '------                        -------    --------- -    ---- -------------'
         for target in self.sort('el', timestamp=timestamp, antenna=antenna, ascending=False):
             az, el = target.azel(timestamp, antenna)
             delta_el = rad2deg(target.azel(timestamp + 30.0, antenna)[1] - target.azel(timestamp - 30.0, antenna)[1])
