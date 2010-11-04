@@ -86,8 +86,6 @@ class Antenna(object):
 
     Arguments
     ---------
-    description : string
-        Description string of antenna, used to reconstruct the object
     position_enu : tuple of 3 floats
         East-North-Up offset from WGS84 reference position, in metres
     position_wgs84 : tuple of 3 floats
@@ -117,8 +115,8 @@ class Antenna(object):
     that it is a nice container for the reference latitude, longitude and altitude.
 
     It is a bad idea to edit the coordinates of the antenna in-place, as the
-    various position tuples and the description string will not be updated -
-    reconstruct a new antenna object instead.
+    various position tuples will not be updated - reconstruct a new antenna
+    object instead.
 
     """
     def __init__(self, name, latitude=None, longitude=None, altitude=None,
@@ -168,8 +166,6 @@ class Antenna(object):
         # Disable ephem's built-in refraction model, since it's for optical wavelengths
         self.ref_observer.pressure = 0.0
         self.ref_position_wgs84 = self.ref_observer.lat, self.ref_observer.long, self.ref_observer.elevation
-        # These fields are used to build up the antenna description string
-        fields = [self.name]
 
         if offset is not None:
             self.position_enu = tuple(offset)
@@ -184,22 +180,11 @@ class Antenna(object):
             self.observer.epoch = ephem.J2000
             self.observer.pressure = 0.0
             self.position_wgs84 = self.observer.lat, self.observer.long, self.observer.elevation
-            fields += [str(coord) for coord in self.ref_position_wgs84]
-            fields += [str(self.diameter), ' '.join([str(coord) for coord in self.position_enu])]
         else:
             self.observer = self.ref_observer
             self.position_enu = (0.0, 0.0, 0.0)
             self.position_wgs84 = lat, lon, alt = self.observer.lat, self.observer.long, self.observer.elevation
             self.position_ecef = enu_to_ecef(lat, lon, alt, *self.position_enu)
-            fields += [str(coord) for coord in self.position_wgs84]
-            fields += [str(self.diameter), '']
-
-        # Add compact version of pointing model and beamwidth factor to description string
-        params = self.pointing_model.description.split(', ')
-        while (len(params) > 0) and (params[-1] == '0'):
-            params.pop()
-        fields += [' '.join(params), str(self.beamwidth)]
-        self.description = ', '.join(fields)
 
     def __str__(self):
         """Verbose human-friendly string representation of antenna object."""
@@ -213,6 +198,24 @@ class Antenna(object):
     def __repr__(self):
         """Short human-friendly string representation of antenna object."""
         return "<katpoint.Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
+
+    @property
+    def description(self):
+        """Complete string representation of antenna object, sufficient to reconstruct it."""
+        # These fields are used to build up the antenna description string
+        fields = [self.name]
+        if np.any(self.position_enu):
+            fields += [str(coord) for coord in self.ref_position_wgs84]
+            fields += [str(self.diameter), ' '.join([str(coord) for coord in self.position_enu])]
+        else:
+            fields += [str(coord) for coord in self.position_wgs84]
+            fields += [str(self.diameter), '']
+        # Add compact version of pointing model and beamwidth factor to description string
+        params = self.pointing_model.description.split(', ')
+        while (len(params) > 0) and (params[-1] == '0'):
+            params.pop()
+        fields += [' '.join(params), str(self.beamwidth)]
+        return ', '.join(fields)
 
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""

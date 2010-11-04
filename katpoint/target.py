@@ -308,65 +308,59 @@ class Target(object):
         return locals()
     body_type = property(**body_type())
 
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
-    def description():
-        """Class method which creates description property."""
-        doc = 'Complete string representation of target object, sufficient to reconstruct it.'
+    @property
+    def description(self):
+        """Complete string representation of target object, sufficient to reconstruct it."""
+        names = ' | '.join([self.name] + self.aliases)
+        tags = ' '.join(self.tags)
+        fluxinfo = self.flux_model.description if self.flux_model is not None else None
+        fields = [names, tags]
+        if self.body_type == 'azel':
+            # Check if it's an unnamed target with a default name
+            if names.startswith('Az:'):
+                fields = [tags]
+            fields += [str(self.body.az), str(self.body.el)]
 
-        def fget(self):
-            names = ' | '.join([self.name] + self.aliases)
-            tags = ' '.join(self.tags)
-            fluxinfo = self.flux_model.description if self.flux_model is not None else None
-            fields = [names, tags]
-            if self.body_type == 'azel':
-                # Check if it's an unnamed target with a default name
-                if names.startswith('Az:'):
-                    fields = [tags]
-                fields += [str(self.body.az), str(self.body.el)]
+        elif self.body_type == 'radec':
+            # Check if it's an unnamed target with a default name
+            if names.startswith('Ra:'):
+                fields = [tags]
+            # pylint: disable-msg=W0212
+            fields += [str(self.body._ra), str(self.body._dec)]
+            if fluxinfo:
+                fields += [fluxinfo]
 
-            elif self.body_type == 'radec':
-                # Check if it's an unnamed target with a default name
-                if names.startswith('Ra:'):
-                    fields = [tags]
-                # pylint: disable-msg=W0212
-                fields += [str(self.body._ra), str(self.body._dec)]
-                if fluxinfo:
-                    fields += [fluxinfo]
+        elif self.body_type == 'gal':
+            # Check if it's an unnamed target with a default name
+            if names.startswith('Galactic l:'):
+                fields = [tags]
+            l, b = ephem.Galactic(ephem.Equatorial(self.body._ra, self.body._dec)).get()
+            fields += ['%.4f' % (rad2deg(l),), '%.4f' % (rad2deg(b),)]
+            if fluxinfo:
+                fields += [fluxinfo]
 
-            elif self.body_type == 'gal':
-                # Check if it's an unnamed target with a default name
-                if names.startswith('Galactic l:'):
-                    fields = [tags]
-                l, b = ephem.Galactic(ephem.Equatorial(self.body._ra, self.body._dec)).get()
-                fields += ['%.4f' % (rad2deg(l),), '%.4f' % (rad2deg(b),)]
-                if fluxinfo:
-                    fields += [fluxinfo]
+        elif self.body_type == 'tle':
+            # Switch body type to xephem, as XEphem only saves bodies in xephem edb format (no TLE output)
+            tags = tags.replace(tags.partition(' ')[0], 'xephem tle')
+            edb_string = self.body.writedb().replace(',', '~')
+            # Suppress name if it's the same as in the xephem db string
+            edb_name = edb_string[:edb_string.index('~')]
+            if edb_name == names:
+                fields = [tags, edb_string]
+            else:
+                fields = [names, tags, edb_string]
 
-            elif self.body_type == 'tle':
-                # Switch body type to xephem, as XEphem only saves bodies in xephem edb format (no TLE output)
-                tags = tags.replace(tags.partition(' ')[0], 'xephem tle')
-                edb_string = self.body.writedb().replace(',', '~')
-                # Suppress name if it's the same as in the xephem db string
-                edb_name = edb_string[:edb_string.index('~')]
-                if edb_name == names:
-                    fields = [tags, edb_string]
-                else:
-                    fields = [names, tags, edb_string]
+        elif self.body_type == 'xephem':
+            # Replace commas in xephem string with tildes, to avoid clashing with main string structure
+            # Also remove extra spaces added into string by writedb
+            edb_string = '~'.join([edb_field.strip() for edb_field in self.body.writedb().split(',')])
+            # Suppress name if it's the same as in the xephem db string
+            edb_name = edb_string[:edb_string.index('~')]
+            if edb_name == names:
+                fields = [tags]
+            fields += [edb_string]
 
-            elif self.body_type == 'xephem':
-                # Replace commas in xephem string with tildes, to avoid clashing with main string structure
-                # Also remove extra spaces added into string by writedb
-                edb_string = '~'.join([edb_field.strip() for edb_field in self.body.writedb().split(',')])
-                # Suppress name if it's the same as in the xephem db string
-                edb_name = edb_string[:edb_string.index('~')]
-                if edb_name == names:
-                    fields = [tags]
-                fields += [edb_string]
-
-            return ', '.join(fields)
-
-        return locals()
-    description = property(**description())
+        return ', '.join(fields)
 
     def add_tags(self, tags):
         """Add tags to target object.

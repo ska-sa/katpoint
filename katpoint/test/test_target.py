@@ -73,6 +73,11 @@ class TestTargetConstruction(unittest.TestCase):
         radec1 = katpoint.Target(self.radec_target)
         radec2 = katpoint.construct_radec_target('20:00:00.0', '-20:00:00.0')
         self.assertEqual(radec1, radec2, 'Special radec constructor failed')
+        # Check that description string updates when object is updated
+        t1 = katpoint.Target('piet, azel, 20, 30')
+        t2 = katpoint.Target('piet | bollie, azel, 20, 30')
+        t1.aliases += ['bollie']
+        self.assertEqual(t1.description, t2.description, 'Target description string not updated')
 
     def test_constructed_coords(self):
         """Test whether calculated coordinates match those with which it is constructed."""

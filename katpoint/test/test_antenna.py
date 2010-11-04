@@ -37,6 +37,14 @@ class TestAntennaConstruction(unittest.TestCase):
         descr = valid_antennas[0].description
         self.assertEqual(descr, katpoint.Antenna(*descr.split(', ')).description)
         self.assertRaises(ValueError, katpoint.Antenna, descr, *descr.split(', ')[1:])
+        # Check that description string updates when object is updated
+        a1 = katpoint.Antenna('FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7 0.0')
+        a2 = katpoint.Antenna('FF2, -30:43:17.3, 21:24:38.5, 1038.0, 13.0, 18.4 -8.7 0.0, 0.1, 1.22')
+        a1.name = 'FF2'
+        a1.diameter = 13.0
+        a1.pointing_model = katpoint.PointingModel('0.1', strict=False)
+        a1.beamwidth = 1.22
+        self.assertEqual(a1.description, a2.description, 'Antenna description string not updated')
 
     def test_local_sidereal_time(self):
         """Test sidereal time and the use of date/time strings vs floats as timestamps."""
