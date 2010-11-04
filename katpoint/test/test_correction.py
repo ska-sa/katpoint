@@ -45,7 +45,7 @@ class TestRefractionCorrection(unittest.TestCase):
 class TestPointingModel(unittest.TestCase):
     """Test pointing model."""
     def setUp(self):
-        az_range = katpoint.deg2rad(np.arange(-180.0, 180.0, 5.0))
+        az_range = katpoint.deg2rad(np.arange(-185.0, 275.0, 5.0))
         el_range = katpoint.deg2rad(np.arange(0.0, 86.0, 1.0))
         mesh_az, mesh_el = np.meshgrid(az_range, el_range)
         self.az = mesh_az.ravel()
