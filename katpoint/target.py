@@ -153,7 +153,7 @@ class Target(object):
     assumed to be the first name in the list. The names may contain spaces, and
     the list may be empty. The <tags> field contains a space-separated list of
     descriptive tags for the target. The first tag is mandatory and indicates
-    the body type of the target, which should be one of (*azel*, *radec*,
+    the body type of the target, which should be one of (*azel*, *radec*, *gal*,
     *tle*, *special*, *star*, *xephem*). The longidutinal and latitudinal fields
     are only relevant to *azel* and *radec* targets, in which case they contain
     the relevant coordinates.
@@ -298,15 +298,10 @@ class Target(object):
             raise ValueError('Antenna object needed to calculate target position')
         return timestamp, antenna
 
-    # Provide body type tag and description string as read-only properties, which are more compact than methods
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
-    def body_type():
-        """Class method which creates body_type property."""
-        doc = 'Type of target body, as a string tag.'
-        def fget(self):
-            return self.tags[0].lower()
-        return locals()
-    body_type = property(**body_type())
+    @property
+    def body_type(self):
+        """Type of target body, as a string tag."""
+        return self.tags[0].lower()
 
     @property
     def description(self):
@@ -415,6 +410,11 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
 
         """
+        if self.body_type == 'azel':
+            if is_iterable(timestamp):
+                return np.tile(self.body.az, len(timestamp)), np.tile(self.body.el, len(timestamp))
+            else:
+                return self.body.az, self.body.el
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_azel(t):
             """Calculate (az, el) coordinates for a single time instant."""
@@ -499,6 +499,11 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
 
         """
+        if self.body_type == 'radec':
+            if is_iterable(timestamp):
+                return np.tile(self.body._ra, len(timestamp)), np.tile(self.body._dec, len(timestamp))
+            else:
+                return self.body._ra, self.body._dec
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
@@ -545,6 +550,12 @@ class Target(object):
             If no antenna is specified, and no default antenna was set either
 
         """
+        if self.body_type == 'gal':
+            l, b = ephem.Galactic(ephem.Equatorial(self.body._ra, self.body._dec)).get()
+            if is_iterable(timestamp):
+                return np.tile(l, len(timestamp)), np.tile(b, len(timestamp))
+            else:
+                return l, b
         ra, dec = self.astrometric_radec(timestamp, antenna)
         if is_iterable(ra):
             lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in xrange(len(ra))])

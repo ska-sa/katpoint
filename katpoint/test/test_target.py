@@ -81,18 +81,21 @@ class TestTargetConstruction(unittest.TestCase):
 
     def test_constructed_coords(self):
         """Test whether calculated coordinates match those with which it is constructed."""
-        antenna = katpoint.Antenna('test, -30, 21, 1000., 12')
-        azel = katpoint.Target(self.azel_target, antenna=antenna)
+        azel = katpoint.Target(self.azel_target)
         calc_azel = azel.azel()
         calc_az, calc_el = katpoint.rad2deg(calc_azel[0]), katpoint.rad2deg(calc_azel[1])
         self.assertEqual(calc_az, 10.0, 'Calculated az does not match specified value in azel target')
         self.assertEqual(calc_el, -10.0, 'Calculated el does not match specified value in azel target')
-        radec = katpoint.Target(self.radec_target, antenna=antenna)
+        radec = katpoint.Target(self.radec_target)
         calc_radec = radec.radec()
         calc_ra, calc_dec = katpoint.rad2deg(calc_radec[0]), katpoint.rad2deg(calc_radec[1])
+        # You would think that these could be made exactly equal, but the following assignment is inexact:
+        # body = ephem.FixedBody()
+        # body._ra = ra
+        # Then body._ra != ra... Possibly due to double vs float? This problem goes all the way to libastro.
         np.testing.assert_almost_equal(calc_ra, 20.0 * 360 / 24., decimal=4)
         np.testing.assert_almost_equal(calc_dec, -20.0, decimal=4)
-        lb = katpoint.Target(self.gal_target, antenna=antenna)
+        lb = katpoint.Target(self.gal_target)
         calc_lb = lb.galactic()
         calc_l, calc_b = katpoint.rad2deg(calc_lb[0]), katpoint.rad2deg(calc_lb[1])
         np.testing.assert_almost_equal(calc_l, 30.0, decimal=4)
