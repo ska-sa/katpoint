@@ -65,11 +65,10 @@ class Catalogue(object):
 
         cat = katpoint.Catalogue()
 
-    This adds the standard *special* targets to the catalogue by default, which
-    are the Sun, Moon, planets and Zenith. A completely empty catalogue is
-    obtained by::
+    which produces an empty catalogue. The standard *special* targets, which are
+    the Sun, Moon, planets and Zenith, can be added as follows::
 
-        cat = katpoint.Catalogue(add_specials=False)
+        cat = katpoint.Catalogue(add_specials=True)
 
     Another built-in set of targets is the small star catalogue included with
     PyEphem. These *star* targets are added as follows::
