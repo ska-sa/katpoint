@@ -75,7 +75,7 @@ class TestPointingModel(unittest.TestCase):
         # Test closure on (az, el) grid
         pointed_az, pointed_el = pm.apply(self.az, self.el)
         az, el = pm.reverse(pointed_az, pointed_el)
-        assert_angles_almost_equal(az, self.az, decimal=7, err_msg='Azimuth closure error for params=%s' % (params,))
+        assert_angles_almost_equal(az, self.az, decimal=6, err_msg='Azimuth closure error for params=%s' % (params,))
         assert_angles_almost_equal(el, self.el, decimal=7, err_msg='Elevation closure error for params=%s' % (params,))
 
     def test_pointing_fit(self):
