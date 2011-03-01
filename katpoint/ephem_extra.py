@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import ephem
+import math
 
 #--------------------------------------------------------------------------------------------------
 #--- Helper functions
@@ -74,8 +75,9 @@ class Timestamp(object):
             self.secs = time.time()
         elif isinstance(timestamp, ephem.Date):
             timestamp = list(timestamp.tuple()) + [0, 0, 0]
-            frac_secs = timestamp[5] - np.floor(timestamp[5])
-            timestamp[5] = int(np.floor(timestamp[5]))
+            int_secs = math.floor(timestamp[5])
+            frac_secs = timestamp[5] - int_secs
+            timestamp[5] = int(int_secs)
             self.secs = time.mktime(timestamp) - time.timezone + frac_secs
         else:
             self.secs = float(timestamp)
@@ -138,7 +140,7 @@ class Timestamp(object):
 
     def local(self):
         """Convert timestamp to local time string representation (for display only)."""
-        int_secs = np.floor(self.secs)
+        int_secs = math.floor(self.secs)
         frac_secs = np.round(1000.0 * (self.secs - int_secs)) / 1000.0
         if frac_secs >= 1.0:
             int_secs += 1.0
@@ -152,7 +154,7 @@ class Timestamp(object):
 
     def to_string(self):
         """Convert timestamp to UTC string representation."""
-        int_secs = np.floor(self.secs)
+        int_secs = math.floor(self.secs)
         frac_secs = np.round(1000.0 * (self.secs - int_secs)) / 1000.0
         if frac_secs >= 1.0:
             int_secs += 1.0
@@ -165,8 +167,9 @@ class Timestamp(object):
 
     def to_ephem_date(self):
         """Convert timestamp to :class:`ephem.Date` object."""
-        timetuple = list(time.gmtime(np.floor(self.secs))[:6])
-        timetuple[5] += self.secs - np.floor(self.secs)
+        int_secs = math.floor(self.secs)
+        timetuple = list(time.gmtime(int_secs)[:6])
+        timetuple[5] += self.secs - int_secs
         return ephem.Date(tuple(timetuple))
 
     def to_mjd(self):
