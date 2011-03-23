@@ -13,6 +13,14 @@ try:
 except ImportError:
     found_aips = False
 
+def skip(reason=''):
+    """Use nose to skip a test."""
+    try:
+        import nose
+        raise nose.SkipTest(reason)
+    except ImportError:
+        pass
+
 def assert_angles_almost_equal(x, y, decimal):
     primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
@@ -41,24 +49,25 @@ class TestProjectionSIN(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=10)
         assert_angles_almost_equal(el, ee, decimal=10)
 
-    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """SIN projection: compare with original AIPS routine."""
-        if found_aips:
-            az, el = projection.plane_to_sphere_sin(self.az0, self.el0, self.x, self.y)
-            xx, yy = projection.sphere_to_plane_sin(self.az0, self.el0, az, el)
-            az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
-            x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-            for n in xrange(len(az)):
-                az_aips[n], el_aips[n], ierr = \
-                newpos(2, self.az0[n], self.el0[n], self.x[n], self.y[n])
-                x_aips[n], y_aips[n], ierr = \
-                dircos(2, self.az0[n], self.el0[n], az[n], el[n])
-            self.assertEqual(ierr, 0)
-            assert_angles_almost_equal(az, az_aips, decimal=9)
-            assert_angles_almost_equal(el, el_aips, decimal=9)
-            np.testing.assert_almost_equal(xx, x_aips, decimal=9)
-            np.testing.assert_almost_equal(yy, y_aips, decimal=9)
+        if not found_aips:
+            skip("AIPS projection module not found")
+            return
+        az, el = projection.plane_to_sphere_sin(self.az0, self.el0, self.x, self.y)
+        xx, yy = projection.sphere_to_plane_sin(self.az0, self.el0, az, el)
+        az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
+        x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
+        for n in xrange(len(az)):
+            az_aips[n], el_aips[n], ierr = \
+            newpos(2, self.az0[n], self.el0[n], self.x[n], self.y[n])
+            x_aips[n], y_aips[n], ierr = \
+            dircos(2, self.az0[n], self.el0[n], az[n], el[n])
+        self.assertEqual(ierr, 0)
+        assert_angles_almost_equal(az, az_aips, decimal=9)
+        assert_angles_almost_equal(el, el_aips, decimal=9)
+        np.testing.assert_almost_equal(xx, x_aips, decimal=9)
+        np.testing.assert_almost_equal(yy, y_aips, decimal=9)
 
     def test_corner_cases(self):
         """SIN projection: test special corner cases."""
@@ -139,28 +148,29 @@ class TestProjectionTAN(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=8)
         assert_angles_almost_equal(el, ee, decimal=8)
 
-    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """TAN projection: compare with original AIPS routine."""
-        if found_aips:
-            # AIPS TAN only deprojects (x, y) coordinates within unit circle
-            r = self.x * self.x + self.y * self.y
-            az0, el0 = self.az0[r <= 1.0], self.el0[r <= 1.0]
-            x, y = self.x[r <= 1.0], self.y[r <= 1.0]
-            az, el = projection.plane_to_sphere_tan(az0, el0, x, y)
-            xx, yy = projection.sphere_to_plane_tan(az0, el0, az, el)
-            az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
-            x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-            for n in xrange(len(az)):
-                az_aips[n], el_aips[n], ierr = \
-                newpos(3, az0[n], el0[n], x[n], y[n])
-                x_aips[n], y_aips[n], ierr = \
-                dircos(3, az0[n], el0[n], az[n], el[n])
-            self.assertEqual(ierr, 0)
-            assert_angles_almost_equal(az, az_aips, decimal=10)
-            assert_angles_almost_equal(el, el_aips, decimal=10)
-            np.testing.assert_almost_equal(xx, x_aips, decimal=10)
-            np.testing.assert_almost_equal(yy, y_aips, decimal=10)
+        if not found_aips:
+            skip("AIPS projection module not found")
+            return
+        # AIPS TAN only deprojects (x, y) coordinates within unit circle
+        r = self.x * self.x + self.y * self.y
+        az0, el0 = self.az0[r <= 1.0], self.el0[r <= 1.0]
+        x, y = self.x[r <= 1.0], self.y[r <= 1.0]
+        az, el = projection.plane_to_sphere_tan(az0, el0, x, y)
+        xx, yy = projection.sphere_to_plane_tan(az0, el0, az, el)
+        az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
+        x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
+        for n in xrange(len(az)):
+            az_aips[n], el_aips[n], ierr = \
+            newpos(3, az0[n], el0[n], x[n], y[n])
+            x_aips[n], y_aips[n], ierr = \
+            dircos(3, az0[n], el0[n], az[n], el[n])
+        self.assertEqual(ierr, 0)
+        assert_angles_almost_equal(az, az_aips, decimal=10)
+        assert_angles_almost_equal(el, el_aips, decimal=10)
+        np.testing.assert_almost_equal(xx, x_aips, decimal=10)
+        np.testing.assert_almost_equal(yy, y_aips, decimal=10)
 
     def test_corner_cases(self):
         """TAN projection: test special corner cases."""
@@ -238,24 +248,25 @@ class TestProjectionARC(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=8)
         assert_angles_almost_equal(el, ee, decimal=8)
 
-    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """ARC projection: compare with original AIPS routine."""
-        if found_aips:
-            az, el = projection.plane_to_sphere_arc(self.az0, self.el0, self.x, self.y)
-            xx, yy = projection.sphere_to_plane_arc(self.az0, self.el0, az, el)
-            az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
-            x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-            for n in xrange(len(az)):
-                az_aips[n], el_aips[n], ierr = \
-                newpos(4, self.az0[n], self.el0[n], self.x[n], self.y[n])
-                x_aips[n], y_aips[n], ierr = \
-                dircos(4, self.az0[n], self.el0[n], az[n], el[n])
-            self.assertEqual(ierr, 0)
-            assert_angles_almost_equal(az, az_aips, decimal=8)
-            assert_angles_almost_equal(el, el_aips, decimal=8)
-            np.testing.assert_almost_equal(xx, x_aips, decimal=8)
-            np.testing.assert_almost_equal(yy, y_aips, decimal=8)
+        if not found_aips:
+            skip("AIPS projection module not found")
+            return
+        az, el = projection.plane_to_sphere_arc(self.az0, self.el0, self.x, self.y)
+        xx, yy = projection.sphere_to_plane_arc(self.az0, self.el0, az, el)
+        az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
+        x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
+        for n in xrange(len(az)):
+            az_aips[n], el_aips[n], ierr = \
+            newpos(4, self.az0[n], self.el0[n], self.x[n], self.y[n])
+            x_aips[n], y_aips[n], ierr = \
+            dircos(4, self.az0[n], self.el0[n], az[n], el[n])
+        self.assertEqual(ierr, 0)
+        assert_angles_almost_equal(az, az_aips, decimal=8)
+        assert_angles_almost_equal(el, el_aips, decimal=8)
+        np.testing.assert_almost_equal(xx, x_aips, decimal=8)
+        np.testing.assert_almost_equal(yy, y_aips, decimal=8)
 
     def test_corner_cases(self):
         """ARC projection: test special corner cases."""
@@ -348,25 +359,26 @@ class TestProjectionSTG(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=9)
         assert_angles_almost_equal(el, ee, decimal=9)
 
-    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """STG projection: compare with original AIPS routine."""
-        if found_aips:
-            az, el = projection.plane_to_sphere_stg(self.az0, self.el0, self.x, self.y)
-            xx, yy = projection.sphere_to_plane_stg(self.az0, self.el0, az, el)
-            az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
-            x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-            for n in xrange(len(az)):
-                az_aips[n], el_aips[n], ierr = \
-                newpos(9, self.az0[n], self.el0[n], self.x[n], self.y[n])
-                x_aips[n], y_aips[n], ierr = \
-                dircos(9, self.az0[n], self.el0[n], az[n], el[n])
-            self.assertEqual(ierr, 0)
-            # AIPS NEWPOS STG has poor accuracy on azimuth angle (large closure errors by itself)
-            # assert_angles_almost_equal(az, az_aips, decimal=9)
-            assert_angles_almost_equal(el, el_aips, decimal=9)
-            np.testing.assert_almost_equal(xx, x_aips, decimal=9)
-            np.testing.assert_almost_equal(yy, y_aips, decimal=9)
+        if not found_aips:
+            skip("AIPS projection module not found")
+            return
+        az, el = projection.plane_to_sphere_stg(self.az0, self.el0, self.x, self.y)
+        xx, yy = projection.sphere_to_plane_stg(self.az0, self.el0, az, el)
+        az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
+        x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
+        for n in xrange(len(az)):
+            az_aips[n], el_aips[n], ierr = \
+            newpos(9, self.az0[n], self.el0[n], self.x[n], self.y[n])
+            x_aips[n], y_aips[n], ierr = \
+            dircos(9, self.az0[n], self.el0[n], az[n], el[n])
+        self.assertEqual(ierr, 0)
+        # AIPS NEWPOS STG has poor accuracy on azimuth angle (large closure errors by itself)
+        # assert_angles_almost_equal(az, az_aips, decimal=9)
+        assert_angles_almost_equal(el, el_aips, decimal=9)
+        np.testing.assert_almost_equal(xx, x_aips, decimal=9)
+        np.testing.assert_almost_equal(yy, y_aips, decimal=9)
 
     def test_corner_cases(self):
         """STG projection: test special corner cases."""
