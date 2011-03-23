@@ -4,6 +4,7 @@
 import unittest
 
 import numpy as np
+from numpy.testing import dec
 
 from katpoint import _projection as projection
 try:
@@ -40,6 +41,7 @@ class TestProjectionSIN(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=10)
         assert_angles_almost_equal(el, ee, decimal=10)
 
+    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """SIN projection: compare with original AIPS routine."""
         if found_aips:
@@ -137,6 +139,7 @@ class TestProjectionTAN(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=8)
         assert_angles_almost_equal(el, ee, decimal=8)
 
+    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """TAN projection: compare with original AIPS routine."""
         if found_aips:
@@ -235,6 +238,7 @@ class TestProjectionARC(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=8)
         assert_angles_almost_equal(el, ee, decimal=8)
 
+    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """ARC projection: compare with original AIPS routine."""
         if found_aips:
@@ -344,6 +348,7 @@ class TestProjectionSTG(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=9)
         assert_angles_almost_equal(el, ee, decimal=9)
 
+    @dec.skipif(not found_aips, "AIPS projection module not found")
     def test_aips_compatibility(self):
         """STG projection: compare with original AIPS routine."""
         if found_aips:
