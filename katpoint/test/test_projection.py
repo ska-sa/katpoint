@@ -4,7 +4,6 @@
 import unittest
 
 import numpy as np
-from numpy.testing import dec
 
 from katpoint import _projection as projection
 try:
