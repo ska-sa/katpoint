@@ -364,6 +364,10 @@ class Catalogue(object):
         # Use lookup dict instead of targets list, as it has a fixed order based on target name
         return self.lookup.values() == other.lookup.values()
 
+    def __ne__(self, other):
+        """Inequality comparison operator."""
+        return self.lookup.values() != other.lookup.values()
+
     def __iter__(self):
         """Iterate over targets in catalogue."""
         return iter(self.targets)

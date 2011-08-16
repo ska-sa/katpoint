@@ -121,6 +121,14 @@ class RefractionCorrection(object):
         """Short human-friendly string representation of refraction correction object."""
         return "<katpoint.RefractionCorrection model='%s' at 0x%x>" % (self.model, id(self))
 
+    def __eq__(self, other):
+        """Equality comparison operator."""
+        return self.model == other.model
+
+    def __ne__(self, other):
+        """Inequality comparison operator."""
+        return self.model != other.model
+
     def apply(self, el, temperature_C, pressure_hPa, humidity_percent):
         """Apply refraction correction to elevation angle.
 
@@ -333,14 +341,18 @@ class PointingModel(object):
         param_strs = [descr[p] % self.param_str(p + 1) for p in xrange(self.num_params) if self.params[p] != 0.0]
         return summary + ':\n' + '\n'.join(param_strs)
 
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
-    def description():
-        """Class method which creates description property."""
-        doc = 'String representation of pointing model, sufficient to reconstruct it.'
-        def fget(self):
-            return ', '.join([self.param_str(p + 1) for p in xrange(self.num_params)])
-        return locals()
-    description = property(**description())
+    def __eq__(self, other):
+        """Equality comparison operator."""
+        return self.description == other.description
+
+    def __ne__(self, other):
+        """Inequality comparison operator."""
+        return self.description != other.description
+
+    @property
+    def description(self):
+        """String representation of pointing model, sufficient to reconstruct it."""
+        return ', '.join([self.param_str(p + 1) for p in xrange(self.num_params)])
 
     # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):

@@ -199,6 +199,14 @@ class Antenna(object):
         """Short human-friendly string representation of antenna object."""
         return "<katpoint.Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
 
+    def __eq__(self, other):
+        """Equality comparison operator."""
+        return self.description == other.description
+
+    def __ne__(self, other):
+        """Inequality comparison operator."""
+        return self.description != other.description
+
     @property
     def description(self):
         """Complete string representation of antenna object, sufficient to reconstruct it."""
