@@ -2,12 +2,12 @@
 from setuptools import setup, find_packages
 
 setup (
-    name = "katpoint",
-    version = "trunk",
-    description = "Karoo Array Telescope pointing coordinate library'",
-    author = "Ludwig Schwardt",
-    author_email = "ludwig@ska.ac.za",
-    packages = find_packages(),
+    name="katpoint",
+    version="trunk",
+    description="Karoo Array Telescope pointing coordinate library'",
+    author="Ludwig Schwardt",
+    author_email="ludwig@ska.ac.za",
+    packages=find_packages(),
     url='http://ska.ac.za/',
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -18,9 +18,10 @@ setup (
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Scientific/Engineering :: Astronomy",
     ],
-    platforms = [ "OS Independent" ],
+    platforms=[ "OS Independent" ],
     keywords="kat kat7 ska",
-    zip_safe = False,
+    zip_safe=False,
     # Bitten Test Suite
-    test_suite = "katpoint.test.suite",
+    test_suite="katpoint.test.suite",
+    requires=["ephem"]
 )
