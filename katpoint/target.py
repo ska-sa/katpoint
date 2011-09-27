@@ -87,7 +87,9 @@ class FluxDensityModel(object):
         # Extract up to the maximum number of coefficients from given sequence
         self.coefs[:min(len(self.coefs), len(coefs))] = coefs[:min(len(self.coefs), len(coefs))]
         # Prune zeros at the end of coefficient list for the description string
-        pruned_coefs = self.coefs[:(np.nonzero(self.coefs)[0][-1] + 1)]
+        nonzero_coefs = np.nonzero(self.coefs)[0]
+        last_nonzero_coef = nonzero_coefs[-1] if len(nonzero_coefs) > 0 else 0
+        pruned_coefs = self.coefs[:last_nonzero_coef + 1]
         self.description = '(%s %s %s)' % (min_freq_MHz, max_freq_MHz, ' '.join(['%.4g' % (c,) for c in pruned_coefs]))
 
     def __str__(self):

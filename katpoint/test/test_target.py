@@ -120,6 +120,8 @@ class TestFluxDensityModel(unittest.TestCase):
 
     def test_flux_density(self):
         """Test flux density calculation."""
+        unit_model = katpoint.FluxDensityModel(100., 200., [0.])
+        self.assertEqual(unit_model.flux_density(110.), 1.0, 'Flux calculation wrong')
         self.assertRaises(ValueError, katpoint.FluxDensityModel, '1.0 2.0 2.0', 2.0, [2.0])
         self.assertRaises(ValueError, katpoint.FluxDensityModel, '1.0')
         self.assertEqual(self.flux_model.flux_density(1.5), 100.0, 'Flux calculation wrong')
