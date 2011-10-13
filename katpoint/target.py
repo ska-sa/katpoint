@@ -260,11 +260,11 @@ class Target(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return self.description == other.description
+        return self.description == (other.description if isinstance(other, Target) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
-        return self.description != other.description
+        return not (self == other)
 
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""

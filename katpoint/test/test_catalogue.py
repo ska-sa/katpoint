@@ -21,6 +21,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         cat.add(katpoint.Target('Sun, special'))
         num_targets = len(cat.targets)
         self.assertEqual(num_targets, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
+        self.assertEqual(cat, cat, 'Catalogue not equal to itself')
         test_target = cat.targets[0]
         self.assertEqual(test_target.description, cat[test_target.name].description, 'Lookup failed')
         self.assertEqual(cat['Non-existent'], None, 'Lookup of non-existent target failed')
@@ -50,6 +51,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
         cat.add(self.flux_target)
         cat2 = cat.filter(flux_limit_Jy=50.0, flux_freq_MHz=1.5)
         self.assertEqual(len(cat2.targets), 1, 'Number of targets with sufficient flux should be 1')
+        self.assertNotEqual(cat, cat2, 'Catalogues should be inequal')
         cat.add(katpoint.Target('Zenith, azel, 0, 90'))
         cat3 = cat.filter(az_limit_deg=[0, 180], timestamp=self.timestamp, antenna=self.antenna)
         self.assertEqual(len(cat3.targets), 2, 'Number of targets rising should be 2')

@@ -201,11 +201,11 @@ class Antenna(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return self.description == other.description
+        return self.description == (other.description if isinstance(other, Antenna) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
-        return self.description != other.description
+        return not (self == other)
 
     @property
     def description(self):

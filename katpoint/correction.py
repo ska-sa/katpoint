@@ -123,11 +123,11 @@ class RefractionCorrection(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return self.model == other.model
+        return isinstance(other, RefractionCorrection) and (self.model == other.model)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
-        return self.model != other.model
+        return not (self == other)
 
     def apply(self, el, temperature_C, pressure_hPa, humidity_percent):
         """Apply refraction correction to elevation angle.
@@ -343,11 +343,11 @@ class PointingModel(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return self.description == other.description
+        return self.description == (other.description if isinstance(other, PointingModel) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
-        return self.description != other.description
+        return not (self == other)
 
     @property
     def description(self):

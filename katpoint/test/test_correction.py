@@ -17,10 +17,14 @@ class TestRefractionCorrection(unittest.TestCase):
         self.rc = katpoint.RefractionCorrection()
         self.el = katpoint.deg2rad(np.arange(0.0, 90.1, 0.1))
 
-    def test_refraction_closure(self):
-        """Test closure between refraction correction and its reverse operation."""
+    def test_refraction_basic(self):
+        """Test basic refraction correction properties."""
         print repr(self.rc)
         self.assertRaises(ValueError, katpoint.RefractionCorrection, 'unknown')
+        self.assertEqual(self.rc, self.rc, 'Refraction models should be equal')
+
+    def test_refraction_closure(self):
+        """Test closure between refraction correction and its reverse operation."""
         # Generate random meteorological data (hopefully sensible) - first only a single weather measurement
         temp = -10. + 50. * np.random.rand()
         pressure = 900. + 200. * np.random.rand()
@@ -65,6 +69,8 @@ class TestPointingModel(unittest.TestCase):
         self.assertEqual(pm3.params[-1], params[-2], 'Superfluous pointing model params not handled correctly')
         pm4 = katpoint.PointingModel(pm.description)
         self.assertEqual(pm4.description, pm.description, 'Saving pointing model to string and loading it again failed')
+        self.assertEqual(pm4, pm, 'Pointing models should be equal')
+        self.assertNotEqual(pm2, pm, 'Pointing models should be inequal')
         np.testing.assert_almost_equal(pm4.params, pm.params, decimal=6)
 
     def test_pointing_closure(self):
