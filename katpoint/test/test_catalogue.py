@@ -19,7 +19,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         """Test construction of catalogues."""
         cat = katpoint.Catalogue(add_specials=True, add_stars=True, antenna=self.antenna)
         cat.add(katpoint.Target('Sun, special'))
-        num_targets = len(cat.targets)
+        num_targets = len(cat)
         self.assertEqual(num_targets, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
         self.assertEqual(cat, cat, 'Catalogue not equal to itself')
         test_target = cat.targets[0]

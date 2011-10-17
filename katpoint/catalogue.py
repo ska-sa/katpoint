@@ -331,6 +331,10 @@ class Catalogue(object):
         return "<katpoint.Catalogue targets=%d names=%d at 0x%x>" % \
                (len(self.targets), len(self.lookup.keys()), id(self))
 
+    def __len__(self):
+        """Number of targets in catalogue."""
+        return len(self.targets)
+
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object.
 
