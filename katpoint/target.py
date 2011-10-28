@@ -118,18 +118,15 @@ class FluxDensityModel(object):
 
         """
         a, b, c, d, e, f = self.coefs
-        def _scalar_flux_density(v):
-            """Calculate flux density S for a single frequency v in MHz."""
-            if (v < self.min_freq_MHz) or (v > self.max_freq_MHz):
-                # Frequency out of range for flux calculation of target
-                return np.nan
-            log10_v = np.log10(v)
-            log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*np.exp(f*log10_v)
-            return 10 ** log10_S
+        log10_v = np.log10(freq_MHz)
+        log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*np.exp(f*log10_v)
+        flux = 10 ** log10_S
         if is_iterable(freq_MHz):
-            return np.array([_scalar_flux_density(v) for v in freq_MHz])
+            flux[freq_MHz < self.min_freq_MHz] = np.nan
+            flux[freq_MHz > self.max_freq_MHz] = np.nan
+            return flux
         else:
-            return _scalar_flux_density(freq_MHz)
+            return flux if (freq_MHz >= self.min_freq_MHz) and (freq_MHz <= self.max_freq_MHz) else np.nan
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Target
