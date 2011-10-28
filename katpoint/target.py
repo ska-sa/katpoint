@@ -1031,7 +1031,7 @@ def construct_target_params(description):
         if edb_type == 'f':
             tags.insert(1, 'radec')
         elif edb_type in ['e', 'h', 'p']:
-            tags.insert(1, 'solar_system')
+            tags.insert(1, 'solarsys')
         elif edb_type == 'E':
             tags.insert(1, 'tle')
         elif edb_type == 'P':
