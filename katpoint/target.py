@@ -122,6 +122,7 @@ class FluxDensityModel(object):
         log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*np.exp(f*log10_v)
         flux = 10 ** log10_S
         if is_iterable(freq_MHz):
+            freq_MHz = np.asarray(freq_MHz)
             flux[freq_MHz < self.min_freq_MHz] = np.nan
             flux[freq_MHz > self.max_freq_MHz] = np.nan
             return flux
@@ -185,9 +186,9 @@ class Target(object):
 
     Parameters
     ----------
-    body : :class:`ephem.Body` object or string
+    body : :class:`ephem.Body` object or :class:`Target` object or string
         Pre-constructed PyEphem Body object to embed in target object, or
-        description string
+        existing target object or description string
     tags : list of strings, or whitespace-delimited string, optional
         Descriptive tags associated with target, starting with its body type
     aliases : list of strings, optional
@@ -211,6 +212,8 @@ class Target(object):
 
     """
     def __init__(self, body, tags=None, aliases=None, flux_model=None, antenna=None, flux_freq_MHz=None):
+        if isinstance(body, Target):
+            body = body.description
         # If the first parameter is a description string, extract the relevant target parameters from it
         if isinstance(body, basestring):
             body, tags, aliases, flux_model = construct_target_params(body)

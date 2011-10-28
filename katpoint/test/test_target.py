@@ -81,6 +81,7 @@ class TestTargetConstruction(unittest.TestCase):
         self.assertEqual(t1.description, t2.description, 'Target description string not updated')
         self.assertEqual(t1, t2.description, 'Equality with description string failed')
         self.assertEqual(t1, t2, 'Equality with target failed')
+        self.assertEqual(t1, katpoint.Target(t2), 'Construction with target object failed')
 
     def test_constructed_coords(self):
         """Test whether calculated coordinates match those with which it is constructed."""
@@ -132,6 +133,8 @@ class TestFluxDensityModel(unittest.TestCase):
         self.assertEqual(self.too_few_params.flux_density(1.5), 100.0, 'Flux calculation for too few params wrong')
         np.testing.assert_equal(self.flux_model.flux_density([1.5, 1.5]),
                                 np.array([100.0, 100.0]), 'Flux calculation for multiple frequencies wrong')
+        np.testing.assert_equal(self.flux_model.flux_density([0.5, 2.5]),
+                                np.array([np.nan, np.nan]), 'Flux calculation for out-of-range frequencies wrong')
         self.assertRaises(ValueError, self.no_flux_target.flux_density)
         np.testing.assert_equal(self.no_flux_target.flux_density([1.5, 1.5]),
                                 np.array([np.nan, np.nan]), 'Empty flux model leads to wrong empty flux shape')
