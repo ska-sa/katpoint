@@ -39,11 +39,17 @@ except NameError:
 
 # Attempt to register custom IPython tab completer for catalogue name lookups
 try:
-    import IPython.ipapi as _ipapi
-    _ip = _ipapi.get()
+    # IPython 0.11 and above
+    from IPython.core.interactiveshell import InteractiveShell as _ipshell
+    _ip = _ipshell.instance()
 except ImportError:
-    _ip = None
-if not _ip is None:
+    try:
+        # IPython 0.10 and below
+        import IPython.ipapi as _ipshell
+        _ip = _ipshell.get()
+    except ImportError:
+        _ip = None
+if _ip is not None:
     _ip.set_hook('complete_command', _catalogue_completer, re_key = r"(?:.*\=)?(.+?)\[")
 
 # Setup library logger, and suppress spurious logger messages via a null handler

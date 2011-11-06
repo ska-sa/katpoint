@@ -7,15 +7,19 @@ import ephem.stars
 import numpy as np
 # This is needed for tab completion, but is ignored if no IPython is installed
 try:
-    import IPython.ipapi
+    # IPython 0.11 and above
+    from IPython.core.error import TryNext
 except ImportError:
-    pass
+    try:
+        # IPython 0.10 and below
+        from IPython.ipapi import TryNext
+    except ImportError:
+        pass
 # The same goes for readline
 try:
     import readline
-    readline_found = True
 except ImportError:
-    readline_found = False
+    readline = None
 
 from .target import Target
 from .ephem_extra import rad2deg, Timestamp
@@ -940,33 +944,33 @@ class Catalogue(object):
 #--- FUNCTION :  _catalogue_completer
 #--------------------------------------------------------------------------------------------------
 
-cat_lookup_match = re.compile(r"""(?:.*\=)?(.*)\[(?P<quote>['|"])(?!.*(?P=quote))(.*)$""")
+dict_lookup_match = re.compile(r"""(?:.*\=)?(.*)\[(?P<quote>['|"])(?!.*(?P=quote))(.*)$""")
 
-def _catalogue_completer(self, event):
+def _catalogue_completer(context, event):
     """Custom IPython completer for catalogue name lookups.
 
     This is inspired by Darren Dale's custom dict-like completer for h5py.
 
     """
     # Parse command line as (ignored = )base['start_of_name
-    base, start_of_name = cat_lookup_match.split(event.line)[1:4:2]
+    base, start_of_name = dict_lookup_match.split(event.line)[1:4:2]
 
     # Avoid calling any functions during eval()...
     if '(' in base:
-        raise IPython.ipapi.TryNext
+        raise TryNext
 
     # Obtain catalogue object from user namespace
     try:
-        cat = eval(base, self.shell.user_ns)
+        cat = eval(base, context.shell.user_ns)
     except:
-        raise IPython.ipapi.TryNext
+        raise TryNext
 
     # Only continue if this object is actually a Catalogue
     if not isinstance(cat, Catalogue):
-        raise IPython.ipapi.TryNext
+        raise TryNext
 
-    if readline_found:
+    if readline:
         # Remove space and plus from delimiter list, so completion works past spaces and pluses in names
-        readline.set_completer_delims('\t\n`!@#$^&*()=[{]}\\|;:\'",<>?')
+        readline.set_completer_delims(readline.get_completer_delims().replace(' ','').replace('+', ''))
 
     return [name for name in cat.iternames() if name[:len(start_of_name)] == start_of_name]
