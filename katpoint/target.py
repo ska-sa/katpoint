@@ -266,6 +266,10 @@ class Target(object):
         """Inequality comparison operator."""
         return not (self == other)
 
+    def __lt__(self, other):
+        """Less-than comparison operator (needed for sorting and np.unique)."""
+        return self.description < (other.description if isinstance(other, Target) else other)
+
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""
         return self.description

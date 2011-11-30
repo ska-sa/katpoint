@@ -207,6 +207,10 @@ class Antenna(object):
         """Inequality comparison operator."""
         return not (self == other)
 
+    def __lt__(self, other):
+        """Less-than comparison operator (needed for sorting and np.unique)."""
+        return self.description < (other.description if isinstance(other, Antenna) else other)
+
     @property
     def description(self):
         """Complete string representation of antenna object, sufficient to reconstruct it."""
