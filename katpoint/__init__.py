@@ -38,11 +38,16 @@ except NameError:
     pass
 
 # Attempt to register custom IPython tab completer for catalogue name lookups
+_IPythonStartupError = None
 try:
     # IPython 0.11 and above
     from IPython.core.interactiveshell import InteractiveShell as _ipshell
+    # This exception is raised if the IPython history db is locked because of multiple IPythons starting in parallel.
+    # Disable tab completion, as this occurs when KAT system processes start up and they don't need user interaction.
+    # SQLite is a dependency of IPython 0.11 and above, so no need to make it a dependency of katpoint.
+    from sqlite3 import OperationalError as _IPythonStartupError
     _ip = _ipshell.instance()
-except ImportError:
+except (ImportError, _IPythonStartupError):
     try:
         # IPython 0.10 and below
         import IPython.ipapi as _ipshell
