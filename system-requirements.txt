@@ -3,3 +3,5 @@ coverage
 nosexcover
 virtualenv
 unittest2
+numpy
+pyephem
