@@ -23,5 +23,5 @@ setup (
     zip_safe=False,
     # Bitten Test Suite
     test_suite="nose.collector",
-    requires=["pyephem"]
+    install_requires=["pyephem"]
 )
