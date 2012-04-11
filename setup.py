@@ -20,9 +20,8 @@ setup (
     ],
     platforms=[ "OS Independent" ],
     keywords="kat kat7 ska",
-    install_requires = ["nose",],
     zip_safe=False,
     # Bitten Test Suite
     test_suite="nose.collector",
-    requires=["ephem"]
+    requires=["pyephem"]
 )
