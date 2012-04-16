@@ -23,5 +23,8 @@ setup (
     zip_safe=False,
     # Bitten Test Suite
     test_suite="nose.collector",
-    install_requires=["pyephem"]
+    install_requires=[
+        "numpy",
+        "pyephem",
+        ]
 )
