@@ -510,10 +510,13 @@ class Target(object):
 
         """
         if self.body_type == 'radec':
+            # Convert to J2000 equatorial coordinates
+            original_radec = ephem.Equatorial(self.body._ra, self.body._dec, epoch=self.body._epoch)
+            ra, dec = ephem.Equatorial(original_radec, epoch=ephem.J2000).get()
             if is_iterable(timestamp):
-                return np.tile(self.body._ra, len(timestamp)), np.tile(self.body._dec, len(timestamp))
+                return np.tile(ra, len(timestamp)), np.tile(dec, len(timestamp))
             else:
-                return self.body._ra, self.body._dec
+                return ra, dec
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
