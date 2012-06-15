@@ -445,7 +445,10 @@ class Target(object):
         *not* the "star-atlas" position of the target, but the position as is
         actually seen from the antenna at the given times. The difference is on
         the order of a few arcminutes. These are the coordinates that a telescope
-        with an equatorial mount would use to track the target.
+        with an equatorial mount would use to track the target. Some targets are
+        unable to provide this (due to a limitation of pyephem), notably
+        stationary (*azel*) targets, and provide the *astrometric geocentric
+        position* instead.
 
         Parameters
         ----------
@@ -484,10 +487,7 @@ class Target(object):
 
         This calculates the J2000 *astrometric geocentric position* of the
         target, in equatorial coordinates. This is its star atlas position for
-        the epoch of J2000. Some targets are unable to provide this (due to a
-        limitation of pyephem), notably stationary (*azel*) targets, and provide
-        the *apparent topocentric position* instead. The difference is on the
-        order of a few arcminutes.
+        the epoch of J2000.
 
         Parameters
         ----------
@@ -537,11 +537,7 @@ class Target(object):
 
         This calculates the galactic coordinates of the target, based on the
         J2000 *astrometric* equatorial coordinates. This is its position relative
-        to the Galactic reference frame for the epoch of J2000. Some targets are
-        unable to provide this (due to a limitation of pyephem), notably
-        stationary (*azel*) targets, and provide the galactic coordinates based
-        on *apparent* equatorial coordinates instead. The difference is on the
-        order of a few arcminutes.
+        to the Galactic reference frame for the epoch of J2000.
 
         Parameters
         ----------
