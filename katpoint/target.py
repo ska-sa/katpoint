@@ -711,12 +711,16 @@ class Target(object):
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         # Obtain baseline vector from reference antenna to second antenna
         baseline_m = antenna.baseline_toward(antenna2)
+        # NCP vector is J2000 NCP
+        ncp = construct_radec_target(0.0,np.pi/2)
+        # Get J2000 NCP az-el vector at current epoch pointed to by reference antenna
+        ncp_az,ncp_el = ncp.azel(timestamp, antenna)
         # Obtain direction vector(s) from reference antenna to target
         az, el = self.azel(timestamp, antenna)
         # w axis points toward target
         w = np.array(azel_to_enu(az, el))
-        # Vector pointing from reference antenna to north celestial pole
-        z = np.array([0.0, np.cos(antenna.observer.lat), np.sin(antenna.observer.lat)])
+        # enu vector pointing from reference antenna to north celestial pole
+        z = np.array(azel_to_enu(ncp_az, ncp_el))
         # u axis is orthogonal to z and w, and row_stack ensures it's 2-D array of column vectors
         u = np.row_stack(np.cross(z, w, axis=0))
         u_norm = np.sqrt(np.sum(u ** 2, axis=0))
