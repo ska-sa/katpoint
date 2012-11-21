@@ -721,7 +721,7 @@ class Target(object):
         w = np.array(azel_to_enu(az, el))
         # enu vector pointing from reference antenna to north celestial pole
         z = np.array(azel_to_enu(ncp_az, ncp_el))
-        # u axis is orthogonal to z and w, and row_stack ensures it's 2-D array of column vectors
+        # u axis is orthogonal to z and w, and row_stack makes it 2-D array of column vectors (for finding poles)
         u = np.row_stack(np.cross(z, w, axis=0))
         u_norm = np.sqrt(np.sum(u ** 2, axis=0))
         # If the target is a celestial pole (so that w equals z or -z), u and v become degenerate
@@ -729,7 +729,8 @@ class Target(object):
         # Arbitrarily pick east vector of ENU system as u in this case
         u[:, poles] = [[1.0], [0.0], [0.0]]
         u_norm[poles] = 1.0
-        u = u.squeeze() / u_norm
+        # Ensure that u and w (and therefore v) have the same shape to handle scalar vs array output correctly
+        u = u.reshape(w.shape) / u_norm
         v = np.cross(w, u, axis=0)
         return np.dot(baseline_m, u), np.dot(baseline_m, v), np.dot(baseline_m, w)
 
