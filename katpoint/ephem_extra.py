@@ -14,7 +14,7 @@ import math
 lightspeed = ephem.c
 
 def is_iterable(x):
-    """Checks if object is iterable (but not a string)."""
+    """Checks if object is iterable (but not a string or 0-dimensional array)."""
     return hasattr(x, '__iter__') and not (getattr(x, 'shape', None) == ())
 
 def rad2deg(x):
