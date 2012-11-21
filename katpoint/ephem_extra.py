@@ -15,7 +15,7 @@ lightspeed = ephem.c
 
 def is_iterable(x):
     """Checks if object is iterable (but not a string)."""
-    return hasattr(x, '__iter__')
+    return hasattr(x, '__iter__') and not (getattr(x, 'shape', None) == ())
 
 def rad2deg(x):
     """Converts radians to degrees (also works for arrays)."""
