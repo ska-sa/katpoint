@@ -917,6 +917,10 @@ def construct_target_params(description):
         If *description* has the wrong format
 
     """
+    try:
+        description.encode('ascii')
+    except UnicodeError:
+        raise ValueError("Target description %r contains non-ASCII characters" % description)
     fields = [s.strip() for s in description.split(',')]
     if len(fields) < 2:
         raise ValueError("Target description '%s' must have at least two fields" % description)

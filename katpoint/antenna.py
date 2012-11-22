@@ -123,6 +123,10 @@ class Antenna(object):
                  diameter=0.0, offset=None, pointing_model=None, beamwidth=1.22):
         # The presence of a comma indicates that a description string is passed in - parse this string into parameters
         if name.find(',') >= 0:
+            try:
+                name.encode('ascii')
+            except UnicodeError:
+                raise ValueError("Antenna description string %r contains non-ASCII characters" % (name,))
             # Cannot have other parameters if description string is given - this is a safety check
             if not (latitude is None and longitude is None and altitude is None):
                 raise ValueError("First parameter '%s' contains comma" % (name,) +
