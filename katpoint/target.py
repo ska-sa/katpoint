@@ -325,6 +325,8 @@ class Target(object):
             if names.startswith('Az:'):
                 fields = [tags]
             fields += [str(self.body.az), str(self.body.el)]
+            if fluxinfo:
+                fields += [fluxinfo]
 
         elif self.body_type == 'radec':
             # Check if it's an unnamed target with a default name
