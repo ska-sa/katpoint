@@ -142,19 +142,42 @@ class TestFluxDensityModel(unittest.TestCase):
         self.assertEqual(self.flux_target.flux_density(), 100.0, 'Flux calculation for default freq wrong')
         print self.flux_target
 
-class TestGeomDelay(unittest.TestCase):
-    """Test geometric delay."""
+class TestTargetCalculations(unittest.TestCase):
+    """Test various calculations involving antennas and timestamps."""
     def setUp(self):
         self.target = katpoint.construct_azel_target('45:00:00.0', '75:00:00.0')
         self.ant1 = katpoint.Antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0 0.0 0.0')
         self.ant2 = katpoint.Antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0 -10.0 0.0')
+        self.ts = katpoint.Timestamp('2013-08-14 08:25')
+
+    def test_coords(self):
+        """Test coordinate conversions for coverage."""
+        self.target.azel(self.ts, self.ant1)
+        self.target.apparent_radec(self.ts, self.ant1)
+        self.target.astrometric_radec(self.ts, self.ant1)
+        self.target.galactic(self.ts, self.ant1)
+        self.target.parallactic_angle(self.ts, self.ant1)
 
     def test_delay(self):
         """Test geometric delay."""
-        now = katpoint.Timestamp()
-        delay, delay_rate = self.target.geometric_delay(self.ant2, now, self.ant1)
+        delay, delay_rate = self.target.geometric_delay(self.ant2, self.ts, self.ant1)
         np.testing.assert_almost_equal(delay, 0.0, decimal=12)
         np.testing.assert_almost_equal(delay_rate, 0.0, decimal=12)
-        delay, delay_rate = self.target.geometric_delay(self.ant2, [now, now], self.ant1)
+        delay, delay_rate = self.target.geometric_delay(self.ant2, [self.ts, self.ts], self.ant1)
         np.testing.assert_almost_equal(delay, np.array([0.0, 0.0]), decimal=12)
         np.testing.assert_almost_equal(delay_rate, np.array([0.0, 0.0]), decimal=12)
+
+    def test_uvw(self):
+        """Test uvw calculation."""
+        u, v, w = self.target.uvw(self.ant2, self.ts, self.ant1)
+        np.testing.assert_almost_equal(u, 10.821750916197391, decimal=12)
+        np.testing.assert_almost_equal(v, -9.1043784587765906, decimal=12)
+        np.testing.assert_almost_equal(w, 4.7781625336985198e-10, decimal=12)
+
+    def test_projection(self):
+        """Test projection."""
+        az, el = katpoint.deg2rad(50.0), katpoint.deg2rad(80.0)
+        x, y = self.target.sphere_to_plane(az, el, self.ts, self.ant1)
+        re_az, re_el = self.target.plane_to_sphere(x, y, self.ts, self.ant1)
+        np.testing.assert_almost_equal(re_az, az, decimal=12)
+        np.testing.assert_almost_equal(re_el, el, decimal=12)
