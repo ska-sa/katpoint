@@ -170,9 +170,9 @@ class TestTargetCalculations(unittest.TestCase):
     def test_uvw(self):
         """Test uvw calculation."""
         u, v, w = self.target.uvw(self.ant2, self.ts, self.ant1)
-        np.testing.assert_almost_equal(u, 10.821750916197391, decimal=12)
-        np.testing.assert_almost_equal(v, -9.1043784587765906, decimal=12)
-        np.testing.assert_almost_equal(w, 4.7781625336985198e-10, decimal=12)
+        np.testing.assert_almost_equal(u, 10.821750916197391, decimal=5)
+        np.testing.assert_almost_equal(v, -9.1043784587765906, decimal=5)
+        np.testing.assert_almost_equal(w, 4.7781625336985198e-10, decimal=5)
 
     def test_projection(self):
         """Test projection."""

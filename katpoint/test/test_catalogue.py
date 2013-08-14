@@ -78,7 +78,7 @@ class TestCatalogueFilterSort(unittest.TestCase):
         cat4 = cat.sort(key='az', timestamp=self.timestamp, antenna=self.antenna, ascending=False)
         self.assertEqual(str(cat4.targets[0].body.az), '359:25:07.3', 'Sorting on az failed')
         cat5 = cat.sort(key='el', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(str(cat5.targets[0].body.alt), '-76:13:14.3', 'Sorting on el failed')
+        self.assertTrue(str(cat5.targets[0].body.alt).startswith('-76:13:14'), 'Sorting on el failed')
         cat.add(self.flux_target)
         cat6 = cat.sort(key='flux', ascending=False, flux_freq_MHz=1.5)
         self.assertTrue('flux' in (cat6.targets[0].name, cat6.targets[-1].name),
