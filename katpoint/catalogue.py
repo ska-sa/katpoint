@@ -30,7 +30,7 @@ specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Ura
 
 def _hash(name):
     """Normalise string to make name lookup more robust."""
-    return name.strip().lower().replace(' ', '')
+    return name.strip().lower().replace(' ', '').replace('_', '')
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Catalogue
