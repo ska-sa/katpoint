@@ -1,19 +1,32 @@
+*.py[cod]
 
-# /
-/build
-/dist
-/*.egg-info
-*.pyc
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+__pycache__
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Developer tools
 *~
 .ropeproject
-# /docs/
-/docs/_build
-
-# /katcore/
-/katcore/*.pyc
-
-# /scripts/
-/scripts/build
-/scripts/   dist
-/scripts/   *.egg-info
-/scripts/   *.pyc
