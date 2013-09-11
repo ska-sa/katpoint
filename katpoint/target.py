@@ -3,7 +3,8 @@
 import numpy as np
 import ephem
 
-from .ephem_extra import Timestamp, StationaryBody, NullBody, is_iterable, lightspeed, deg2rad, rad2deg
+from .timestamp import Timestamp
+from .ephem_extra import StationaryBody, NullBody, is_iterable, lightspeed, deg2rad, rad2deg
 from .conversion import azel_to_enu
 from .projection import sphere_to_plane, plane_to_sphere
 

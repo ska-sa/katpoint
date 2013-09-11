@@ -8,7 +8,7 @@ import test_target
 import test_antenna
 import test_catalogue
 import test_projection
-import test_ephem_extra
+import test_timestamp
 import test_conversion
 import test_pointing
 import test_refraction
@@ -28,7 +28,7 @@ def suite():
     testsuite.addTests(loader.loadTestsFromModule(test_antenna))
     testsuite.addTests(loader.loadTestsFromModule(test_catalogue))
     testsuite.addTests(loader.loadTestsFromModule(test_projection))
-    testsuite.addTests(loader.loadTestsFromModule(test_ephem_extra))
+    testsuite.addTests(loader.loadTestsFromModule(test_timestamp))
     testsuite.addTests(loader.loadTestsFromModule(test_conversion))
     testsuite.addTests(loader.loadTestsFromModule(test_pointing))
     testsuite.addTests(loader.loadTestsFromModule(test_refraction))

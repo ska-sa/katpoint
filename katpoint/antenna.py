@@ -9,7 +9,8 @@ and other parameters that affect pointing and delay calculations.
 import numpy as np
 import ephem
 
-from .ephem_extra import Timestamp, is_iterable
+from .timestamp import Timestamp
+from .ephem_extra import is_iterable
 from .conversion import enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
 from .pointing import PointingModel
 
