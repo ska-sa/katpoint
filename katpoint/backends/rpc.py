@@ -10,7 +10,7 @@
 
 # XXX There is no provision for call timeout on TCP connections
 
-import xdr
+import xdrlib as xdr
 import socket
 import os
 
@@ -186,7 +186,7 @@ def unix_epoch():
     now = time.time()
     localt = time.localtime(now)        # (y, m, d, hh, mm, ss, ..., ..., ...)
     gmt = time.gmtime(now)
-    offset = time.mktime(localt) - time.mktime(gmt)
+    offset = int(time.mktime(localt) - time.mktime(gmt))
     y, m, d, hh, mm, ss = 1970, 1, 1, 0, 0, 0
     offset, ss = divmod(ss + offset, 60)
     offset, mm = divmod(mm + offset, 60)
