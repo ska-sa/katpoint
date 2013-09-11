@@ -25,15 +25,17 @@ from .conversion import lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu, \
 
 from .projection import sphere_to_plane, plane_to_sphere
 
-from .correction import RefractionCorrection, PointingModel
+from .pointing import PointingModel
+
+from .refraction import RefractionCorrection
 
 # Hide submodules in module namespace, to avoid confusion with corresponding class names
 # If the module is reloaded, this will fail - ignore the resulting NameError
 # pylint: disable-msg=E0601
 try:
-    _antenna, _target, _catalogue, _ephem_extra, _conversion, _projection, _correction = \
-        antenna, target, catalogue, ephem_extra, conversion, projection, correction
-    del antenna, target, catalogue, ephem_extra, conversion, projection, correction
+    _antenna, _target, _catalogue, _ephem_extra, _conversion, _projection, _pointing, _refraction = \
+        antenna, target, catalogue, ephem_extra, conversion, projection, pointing, refraction
+    del antenna, target, catalogue, ephem_extra, conversion, projection, pointing, refraction
 except NameError:
     pass
 

@@ -10,7 +10,8 @@ import test_catalogue
 import test_projection
 import test_ephem_extra
 import test_conversion
-import test_correction
+import test_pointing
+import test_refraction
 
 # Enable verbose logging to stdout for katpoint module - see output via nosetests -s flag
 logger = logging.getLogger("katpoint")
@@ -29,7 +30,8 @@ def suite():
     testsuite.addTests(loader.loadTestsFromModule(test_projection))
     testsuite.addTests(loader.loadTestsFromModule(test_ephem_extra))
     testsuite.addTests(loader.loadTestsFromModule(test_conversion))
-    testsuite.addTests(loader.loadTestsFromModule(test_correction))
+    testsuite.addTests(loader.loadTestsFromModule(test_pointing))
+    testsuite.addTests(loader.loadTestsFromModule(test_refraction))
     return testsuite
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ import ephem
 
 from .ephem_extra import Timestamp, is_iterable
 from .conversion import enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
-from .correction import PointingModel
+from .pointing import PointingModel
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Antenna
