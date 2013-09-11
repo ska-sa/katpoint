@@ -12,11 +12,13 @@ and CASA.
 
 import logging as _logging
 
-from .target import FluxDensityModel, Target, construct_azel_target, construct_radec_target
+from .target import Target, construct_azel_target, construct_radec_target
 
 from .antenna import Antenna
 
 from .timestamp import Timestamp
+
+from .flux import FluxDensityModel
 
 from .catalogue import Catalogue, specials, _catalogue_completer
 
@@ -35,9 +37,9 @@ from .refraction import RefractionCorrection
 # If the module is reloaded, this will fail - ignore the resulting NameError
 # pylint: disable-msg=E0601
 try:
-    _target, _antenna, _timestamp, _catalogue, _ephem_extra, _conversion, _projection, _pointing, _refraction = \
-        target, antenna, timestamp, catalogue, ephem_extra, conversion, projection, pointing, refraction
-    del target, antenna, timestamp, catalogue, ephem_extra, conversion, projection, pointing, refraction
+    _target, _antenna, _timestamp, _flux, _catalogue, _ephem_extra, _conversion, _projection, _pointing, _refraction =\
+        target, antenna, timestamp, flux, catalogue, ephem_extra, conversion, projection, pointing, refraction
+    del target, antenna, timestamp, flux, catalogue, ephem_extra, conversion, projection, pointing, refraction
 except NameError:
     pass
 
