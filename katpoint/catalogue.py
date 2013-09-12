@@ -22,7 +22,8 @@ except ImportError:
     readline = None
 
 from .target import Target
-from .ephem_extra import rad2deg, Timestamp
+from .timestamp import Timestamp
+from .ephem_extra import rad2deg
 
 logger = logging.getLogger("katpoint.catalogue")
 
