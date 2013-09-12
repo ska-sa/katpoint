@@ -1,4 +1,4 @@
-"""Tests for the ephem_extra module."""
+"""Tests for the timestamp module."""
 # pylint: disable-msg=C0103,W0212
 
 import unittest
