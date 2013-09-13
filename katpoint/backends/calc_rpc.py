@@ -89,6 +89,58 @@ class CalcClient(rpc.TCPClient):
                 self.packer.pack_calc_args, \
                 self.unpacker.unpack_calc_reply)
 
+import ephem
+import numpy as np
+
+def dut1(mjd, leap_secs):
+    obs = ephem.Observer()
+    obs.date = mjd - (2415020 - 2400000.5)
+    return 32.184 + leap_secs - ephem.delta_t(obs)
+
+def delay_rate_uvw(target, ant2, timestamp, ant1):
+    """Used to compare original katpoint with CALC."""
+    mjd = timestamp.to_mjd()
+    xyz1, xyz2 = ant1.position_ecef, ant2.position_ecef
+    radec = target.radec(timestamp, ant1)
+    mjd_range = np.arange(int(mjd) - 1, int(mjd) + 4, dtype=np.float).tolist()
+    leap_secs = 35.0 # Correct after July 2012
+    args = {
+        'date' : int(mjd),
+        'time' : mjd - int(mjd),
+        'request_id' : 100,
+        'ref_frame' : 0,
+        'kflags' : 64 * [-1],
+        'station_a' : ant1.name,
+        'a_x' : xyz1[0],
+        'a_y' : xyz1[1],
+        'a_z' : xyz1[2],
+        'axis_type_a' : 'altz',
+        'axis_off_a' : 0.00,
+        'station_b' : ant2.name,
+        'b_x' : xyz2[0],
+        'b_y' : xyz2[1],
+        'b_z' : xyz2[2],
+        'axis_type_b' : 'altz',
+        'axis_off_b' : 0.00,
+        'source' : target.name,
+        'ra' : radec[0],
+        'dec' : radec[1],
+        'dra' : 0.0,
+        'ddec' : 0.0,
+        'depoch' : 0.0,
+        'parallax' : 0.0,
+        'pressure_a' : 0.0,
+        'pressure_b' : 0.0,
+        'EOP_time' : mjd_range,
+        'tai_utc' : 5 * [leap_secs],
+        'ut1_utc' : [dut1(d, leap_secs) for d in mjd_range],
+        'xpole' : 5 * [0.],
+        'ypole' : 5 * [0.],
+    }
+    c = CalcClient()
+    res = c.get_calc(**args)
+    return res[3], res[4], res[5]
+
 two_pi = 6.2831853071795864769
 
 args = {
@@ -127,3 +179,30 @@ args = {
 
 c = CalcClient()
 print c.get_calc(**args)
+
+import katpoint
+
+target = katpoint.Target('1934-638, radec, 19:39:25.03, -63:42:45.7,  (200.0 12000.0 -11.11 7.777 -1.231)')
+ant1 = katpoint.Antenna('ant7, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, -87.9881 75.7543 0.138305, , 1.22')
+ant2 = katpoint.Antenna('ant2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 90.2844 26.3804 -0.22636, , 1.22')
+timestamp = katpoint.Timestamp('2013-09-13 15:49')
+
+delay, rate, uvw = delay_rate_uvw(target, ant2, timestamp, ant1)
+calc_delay_rate = np.array([delay, rate])
+katpoint_delay_rate = np.array(target.geometric_delay(ant2, timestamp, ant1))
+calc_uvw = -np.array(uvw)
+katpoint_uvw = np.array(target.uvw(ant2, timestamp, ant1))
+
+print "CALC delay + rate:", calc_delay_rate
+print "katpoint delay + rate:", katpoint_delay_rate
+print "diff (s, s/s):", katpoint_delay_rate - calc_delay_rate
+
+print "CALC uvw:", calc_uvw
+print "katpoint uvw:", katpoint_uvw
+print "diff (m):", katpoint_uvw - calc_uvw
+print "angle (uvw arcsec):", np.arccos(np.dot(katpoint_uvw, calc_uvw) /
+                                       np.sqrt(np.dot(katpoint_uvw, katpoint_uvw) *
+                                               np.dot(calc_uvw, calc_uvw))) * 180 / np.pi * 3600
+print "angle (uv arcsec):", np.arccos(np.dot(katpoint_uvw[:2], calc_uvw[:2]) /
+                                      np.sqrt(np.dot(katpoint_uvw[:2], katpoint_uvw[:2]) *
+                                              np.dot(calc_uvw[:2], calc_uvw[:2]))) * 180 / np.pi * 3600
