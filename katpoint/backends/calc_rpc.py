@@ -97,7 +97,7 @@ def dut1(mjd, leap_secs):
     obs.date = mjd - (2415020 - 2400000.5)
     return 32.184 + leap_secs - ephem.delta_t(obs)
 
-def delay_rate_uvw(target, ant2, timestamp, ant1):
+def do_calc(target, ant2, timestamp, ant1):
     """Used to compare original katpoint with CALC."""
     mjd = timestamp.to_mjd()
     xyz1, xyz2 = ant1.position_ecef, ant2.position_ecef
@@ -139,7 +139,7 @@ def delay_rate_uvw(target, ant2, timestamp, ant1):
     }
     c = CalcClient()
     res = c.get_calc(**args)
-    return res[3], res[4], res[5]
+    return res[3], res[4], res[5], res[9][0], res[10][0]
 
 two_pi = 6.2831853071795864769
 
@@ -187,11 +187,13 @@ ant1 = katpoint.Antenna('ant7, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, -87.9881 7
 ant2 = katpoint.Antenna('ant2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 90.2844 26.3804 -0.22636, , 1.22')
 timestamp = katpoint.Timestamp('2013-09-13 15:49')
 
-delay, rate, uvw = delay_rate_uvw(target, ant2, timestamp, ant1)
+delay, rate, uvw, az, el = do_calc(target, ant2, timestamp, ant1)
 calc_delay_rate = np.array([delay, rate])
-katpoint_delay_rate = np.array(target.geometric_delay(ant2, timestamp, ant1))
 calc_uvw = -np.array(uvw)
+calc_azel = np.array([az, el])
+katpoint_delay_rate = np.array(target.geometric_delay(ant2, timestamp, ant1))
 katpoint_uvw = np.array(target.uvw(ant2, timestamp, ant1))
+katpoint_azel = np.array(target.azel(timestamp, ant1))
 
 print "CALC delay + rate:", calc_delay_rate
 print "katpoint delay + rate:", katpoint_delay_rate
@@ -206,3 +208,9 @@ print "angle (uvw arcsec):", np.arccos(np.dot(katpoint_uvw, calc_uvw) /
 print "angle (uv arcsec):", np.arccos(np.dot(katpoint_uvw[:2], calc_uvw[:2]) /
                                       np.sqrt(np.dot(katpoint_uvw[:2], katpoint_uvw[:2]) *
                                               np.dot(calc_uvw[:2], calc_uvw[:2]))) * 180 / np.pi * 3600
+
+print "CALC azel:", calc_azel
+print "katpoint azel:", katpoint_azel
+cazel = katpoint.construct_azel_target(*calc_azel)
+kazel = katpoint.construct_azel_target(*katpoint_azel)
+print "separation (sky arcsec)", cazel.separation(kazel, timestamp, ant1) * 180 / np.pi * 3600
