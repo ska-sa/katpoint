@@ -701,7 +701,7 @@ class Target(object):
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna pointing at target (defaults to default antenna)
-        projection_type : {'ARC', 'SIN', 'TAN', 'STG', 'CAR'}, optional
+        projection_type : {'ARC', 'SIN', 'TAN', 'STG', 'CAR', 'SSN'}, optional
             Type of spherical projection
         coord_system : {'azel', 'radec'}, optional
             Spherical coordinate system
@@ -742,7 +742,7 @@ class Target(object):
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna pointing at target (defaults to default antenna)
-        projection_type : {'ARC', 'SIN', 'TAN', 'STG', 'CAR'}, optional
+        projection_type : {'ARC', 'SIN', 'TAN', 'STG', 'CAR', 'SSN'}, optional
             Type of spherical projection
         coord_system : {'azel', 'radec'}, optional
             Spherical coordinate system

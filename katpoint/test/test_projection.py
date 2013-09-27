@@ -20,9 +20,11 @@ def skip(reason=''):
     except ImportError:
         pass
 
+
 def assert_angles_almost_equal(x, y, decimal):
     primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
+
 
 class TestProjectionSIN(unittest.TestCase):
     """Test orthographic projection."""
@@ -121,6 +123,7 @@ class TestProjectionSIN(unittest.TestCase):
         # Points outside allowed domain in plane
         self.assertRaises(ValueError, projection.plane_to_sphere_sin, 0.0, 0.0, 2.0, 0.0)
         self.assertRaises(ValueError, projection.plane_to_sphere_sin, 0.0, 0.0, 0.0, 2.0)
+
 
 class TestProjectionTAN(unittest.TestCase):
     """Test gnomonic projection."""
@@ -221,6 +224,7 @@ class TestProjectionTAN(unittest.TestCase):
         assert_angles_almost_equal(ae, [0.0, -np.pi / 4.0], decimal=12)
         ae = np.array(projection.plane_to_sphere_tan(0.0,  -np.pi / 2.0, 0.0, -1.0))
         assert_angles_almost_equal(ae, [np.pi, -np.pi / 4.0], decimal=12)
+
 
 class TestProjectionARC(unittest.TestCase):
     """Test zenithal equidistant projection."""
@@ -332,6 +336,7 @@ class TestProjectionARC(unittest.TestCase):
         self.assertRaises(ValueError, projection.plane_to_sphere_arc, 0.0, 0.0, 4.0, 0.0)
         self.assertRaises(ValueError, projection.plane_to_sphere_arc, 0.0, 0.0, 0.0, 4.0)
 
+
 class TestProjectionSTG(unittest.TestCase):
     """Test stereographic projection."""
     def setUp(self):
@@ -430,6 +435,7 @@ class TestProjectionSTG(unittest.TestCase):
         ae = np.array(projection.plane_to_sphere_stg(0.0,  -np.pi / 2.0, 0.0, -2.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
 
+
 class TestProjectionCAR(unittest.TestCase):
     """Test plate carree projection."""
     def setUp(self):
@@ -450,3 +456,82 @@ class TestProjectionCAR(unittest.TestCase):
         np.testing.assert_almost_equal(self.y, yy, decimal=12)
         assert_angles_almost_equal(az, aa, decimal=12)
         assert_angles_almost_equal(el, ee, decimal=12)
+
+
+class TestProjectionSSN(unittest.TestCase):
+    """Test swapped orthographic projection."""
+    def setUp(self):
+        N = 100
+        max_theta = np.pi / 2.0
+        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        # Keep away from poles (leave them as corner cases)
+        self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
+        # (x, y) points within unit circle
+        theta = max_theta * np.random.rand(N)
+        phi = 2 * np.pi * np.random.rand(N)
+        self.x = np.sin(theta) * np.cos(phi)
+        self.y = np.sin(theta) * np.sin(phi)
+
+    def test_random_closure(self):
+        """SSN projection: do random projections and check closure."""
+        az, el = projection.plane_to_sphere_ssn(self.az0, self.el0, self.x, self.y)
+        xx, yy = projection.sphere_to_plane_ssn(self.az0, self.el0, az, el)
+        aa, ee = projection.plane_to_sphere_ssn(self.az0, self.el0, xx, yy)
+        np.testing.assert_almost_equal(self.x, xx, decimal=10)
+        np.testing.assert_almost_equal(self.y, yy, decimal=10)
+        assert_angles_almost_equal(az, aa, decimal=10)
+        assert_angles_almost_equal(el, ee, decimal=10)
+
+    def test_corner_cases(self):
+        """SSN projection: test special corner cases."""
+        # SPHERE TO PLANE
+        # Origin
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, 0.0, 0.0, 0.0))
+        np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
+        # Points 90 degrees from reference point on sphere
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, 0.0, np.pi / 2.0, 0.0))
+        np.testing.assert_almost_equal(xy, [1.0, 0.0], decimal=12)
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, 0.0, -np.pi / 2.0, 0.0))
+        np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, 0.0, 0.0, np.pi / 2.0))
+        np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, 0.0, 0.0, -np.pi / 2.0))
+        np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
+        # Reference point at pole on sphere
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, np.pi / 2.0, 0.0, 0.0))
+        np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, np.pi / 2.0, np.pi, 1e-8))
+        np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, np.pi / 2.0, np.pi / 2.0, 0.0))
+        np.testing.assert_almost_equal(xy, [1.0, 0.0], decimal=12)
+        xy = np.array(projection.sphere_to_plane_ssn(0.0, np.pi / 2.0, -np.pi / 2.0, 0.0))
+        np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
+        # Points outside allowed domain on sphere
+        self.assertRaises(ValueError, projection.sphere_to_plane_ssn, 0.0, 0.0, np.pi, 0.0)
+        self.assertRaises(ValueError, projection.sphere_to_plane_ssn, 0.0, 0.0, 0.0, np.pi)
+
+        # PLANE TO SPHERE
+        # Origin
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, 0.0, 0.0, 0.0))
+        assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
+        # Points on unit circle in plane
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, 0.0, 1.0, 0.0))
+        assert_angles_almost_equal(ae, [np.pi / 2.0, 0.0], decimal=12)
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, 0.0, -1.0, 0.0))
+        assert_angles_almost_equal(ae, [-np.pi / 2.0, 0.0], decimal=12)
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, 0.0, 0.0, 1.0))
+        assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, 0.0, 0.0, -1.0))
+        assert_angles_almost_equal(ae, [0.0, -np.pi / 2.0], decimal=12)
+        # Reference point at pole on sphere
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, -np.pi / 2.0, 1.0, 0.0))
+        assert_angles_almost_equal(ae, [np.pi / 2.0, 0.0], decimal=12)
+        ae = np.array(projection.plane_to_sphere_ssn(0.0,  -np.pi / 2.0, -1.0, 0.0))
+        assert_angles_almost_equal(ae, [-np.pi / 2.0, 0.0], decimal=12)
+        ae = np.array(projection.plane_to_sphere_ssn(0.0,  -np.pi / 2.0, 0.0, 1.0))
+        assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
+        ae = np.array(projection.plane_to_sphere_ssn(0.0,  -np.pi / 2.0, 0.0, -1.0))
+        assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
+        # Points outside allowed domain in plane
+        self.assertRaises(ValueError, projection.plane_to_sphere_ssn, 0.0, 0.0, 2.0, 0.0)
+        self.assertRaises(ValueError, projection.plane_to_sphere_ssn, 0.0, 0.0, 0.0, 2.0)

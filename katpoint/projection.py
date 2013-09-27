@@ -69,6 +69,11 @@ The following projections are implemented:
   therefore equal to the azimuth offset, while the *y* offset is equal to the
   elevation offset. It does not preserve angles, distances or circles.
 
+- Swapped orthographic (**SSN**): This is the standard SIN projection with the
+  roles of reference and target points reversed. It is useful for holography
+  and other beam pattern measurements where a dish moves relative to a fixed
+  beacon but the beam pattern is referenced to the boresight of the moving dish.
+
 Each projection typically has restrictions on the input domain and output range
 of values, which are highlighted in the docstrings of the individual functions.
 Each function in this module is also vectorised, and will operate on single
@@ -573,6 +578,107 @@ def plane_to_sphere_car(az0, el0, x, y):
     return az0 + x, el0 + y
 
 #--------------------------------------------------------------------------------------------------
+#--- Swapped orthographic projection (SSN)
+#--------------------------------------------------------------------------------------------------
+
+def sphere_to_plane_ssn(az0, el0, az, el):
+    """Project sphere to plane using swapped orthographic (SSN) projection.
+
+    This is identical to the usual orthographic (SIN) projection, but with the
+    roles of the reference point (az0, el0) and target point (az, el) swapped.
+    It has the same restrictions as the orthographic projection, i.e. the
+    angular separation between the target and reference points should be less
+    than or equal to pi/2 radians. The output (x, y) coordinates are also
+    constrained to lie within or on the unit circle in the plane.
+
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
+
+    Parameters
+    ----------
+    az0 : float or array
+        Azimuth / right ascension / longitude of reference point(s), in radians
+    el0 : float or array
+        Elevation / declination / latitude of reference point(s), in radians
+    az : float or array
+        Azimuth / right ascension / longitude of target point(s), in radians
+    el : float or array
+        Elevation / declination / latitude of target point(s), in radians
+
+    Returns
+    -------
+    x : float or array
+        Azimuth-like coordinate(s) on plane, in radians
+    y : float or array
+        Elevation-like coordinate(s) on plane, in radians
+
+    Raises
+    ------
+    ValueError
+        If input values are out of range, or target is too far from reference
+
+    Notes
+    -----
+    This projection was originally introduced by Mattieu de Villiers for use
+    in holography experiments.
+
+    """
+    return sphere_to_plane_sin(az, el, az0, el0)
+
+def plane_to_sphere_ssn(az0, el0, x, y):
+    """Deproject plane to sphere using swapped orthographic (SSN) projection.
+
+    The swapped orthographic projection requires the (x, y) coordinates to lie
+    within or on the unit circle. The target point is constrained to lie within
+    the hemisphere centred on the reference point.
+
+    Please read the module documentation for the interpretation of the input
+    parameters and return values.
+
+    Parameters
+    ----------
+    az0 : float or array
+        Azimuth / right ascension / longitude of reference point(s), in radians
+    el0 : float or array
+        Elevation / declination / latitude of reference point(s), in radians
+    x : float or array
+        Azimuth-like coordinate(s) on plane, in radians
+    y : float or array
+        Elevation-like coordinate(s) on plane, in radians
+
+    Returns
+    -------
+    az : float or array
+        Azimuth / right ascension / longitude of target point(s), in radians
+    el : float or array
+        Elevation / declination / latitude of target point(s), in radians
+
+    Raises
+    ------
+    ValueError
+        If input values are out of range, or the radius of (x, y) > 1.0
+
+    Notes
+    -----
+    This projection was originally introduced by Mattieu de Villiers for use
+    in holography experiments.
+
+    """
+    if np.any(np.abs(el0) > np.pi / 2.0):
+        raise ValueError('Elevation angle outside range of +- pi/2 radians')
+    sin2_theta = x * x + y * y
+    if np.any(sin2_theta > 1.0):
+        raise ValueError('Length of (x, y) vector bigger than 1.0')
+    cos_theta = np.sqrt(1.0 - sin2_theta)
+    sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
+    # Safeguard the arcsines
+    # scanaz=targetaz-np.arcsin(np.clip(ll/np.cos(targetel),-1.0,1.0))
+    az = az0 - np.arcsin(np.clip(x / cos_el0, -1.0, 1.0))
+    # scanelalternate1=np.arcsin((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.cos(targetel)*np.cos(targetaz-scanaz)*mm)/(1.0-ll**2))
+    el = np.arcsin((sin_el0 * cos_theta - cos_el0 * np.cos(az - az0) * y) / (1.0 - x ** 2))
+    return az, el
+
+#--------------------------------------------------------------------------------------------------
 #--- Top-level projection routines
 #--------------------------------------------------------------------------------------------------
 
@@ -581,10 +687,12 @@ sphere_to_plane = {'SIN' : sphere_to_plane_sin,
                    'TAN' : sphere_to_plane_tan,
                    'ARC' : sphere_to_plane_arc,
                    'STG' : sphere_to_plane_stg,
-                   'CAR' : sphere_to_plane_car}
+                   'CAR' : sphere_to_plane_car,
+                   'SSN' : sphere_to_plane_ssn}
 
 plane_to_sphere = {'SIN' : plane_to_sphere_sin,
                    'TAN' : plane_to_sphere_tan,
                    'ARC' : plane_to_sphere_arc,
                    'STG' : plane_to_sphere_stg,
-                   'CAR' : plane_to_sphere_car}
+                   'CAR' : plane_to_sphere_car,
+                   'SSN' : plane_to_sphere_ssn}
