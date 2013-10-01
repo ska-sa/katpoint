@@ -675,7 +675,13 @@ def plane_to_sphere_ssn(az0, el0, x, y):
     # scanaz=targetaz-np.arcsin(np.clip(ll/np.cos(targetel),-1.0,1.0))
     az = az0 - np.arcsin(np.clip(x / cos_el0, -1.0, 1.0))
     # scanelalternate1=np.arcsin((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.cos(targetel)*np.cos(targetaz-scanaz)*mm)/(1.0-ll**2))
-    el = np.arcsin((sin_el0 * cos_theta - cos_el0 * np.cos(az - az0) * y) / (1.0 - x ** 2))
+    cos_el0_cos_daz = cos_el0 * np.cos(az - az0)
+    num = sin_el0 * cos_theta - cos_el0_cos_daz * y
+    # Rather use arctan instead of arcsin to avoid divisions by zero
+    # el = np.arcsin(np.clip(num / (1 - x * x), -1.0, 1.0))
+    den = -sin_el0 * y - cos_theta * cos_el0_cos_daz
+    # Ensure that cos(el) denominator term is positive to have abs(el) <= 90 degrees
+    el = np.arctan2(num, np.abs(den))
     return az, el
 
 #--------------------------------------------------------------------------------------------------
