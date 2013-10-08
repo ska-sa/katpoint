@@ -628,9 +628,18 @@ def sphere_to_plane_ssn(az0, el0, az, el):
 def plane_to_sphere_ssn(az0, el0, x, y):
     """Deproject plane to sphere using swapped orthographic (SSN) projection.
 
-    The swapped orthographic projection requires the (x, y) coordinates to lie
-    within or on the unit circle. The target point is constrained to lie within
-    the hemisphere centred on the reference point.
+    The swapped orthographic deprojection has more restrictions than the
+    corresponding orthographic (SIN) deprojection:
+
+    - The (x, y) coordinates should lie within or on the unit circle
+    - The magnitude of the x coordinate should be less than cos(el0) radians
+    - The y coordinate should satisfy
+        y >= -sqrt(cos(el0) ** 2 - x ** 2), el0 >= 0, and
+        y <=  sqrt(cos(el0) ** 2 - x ** 2), el0 < 0,
+      to ensure that the target elevation is within pi/2 radians of reference
+      elevation - the y domain is therefore bounded by two semicircles with
+      radii 1 and cos(el0), respectively
+    - The target azimuth will be within pi/2 radians of the reference azimuth
 
     Please read the module documentation for the interpretation of the input
     parameters and return values.
@@ -656,7 +665,7 @@ def plane_to_sphere_ssn(az0, el0, x, y):
     Raises
     ------
     ValueError
-        If input values are out of range, or the radius of (x, y) > 1.0
+        If input values are out of range, or (x, y) is outside valid domain
 
     Notes
     -----
@@ -671,20 +680,20 @@ def plane_to_sphere_ssn(az0, el0, x, y):
         raise ValueError('Length of (x, y) vector bigger than 1.0')
     cos_theta = np.sqrt(1.0 - sin2_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
-    # scanaz=targetaz-np.arcsin(np.clip(ll/np.cos(targetel),-1.0,1.0))
     sin_daz = -x / cos_el0
     if np.any(np.abs(sin_daz) > 1.0):
-        raise ValueError('x coordinate outside range of +- cos(el0) radians')
+        raise ValueError('The x coordinate is outside range of +- cos(el0) radians')
+    # Since delta_az = az - az0 is the azimuth angle of final (x, cos(theta), y)
+    # unit vector and cos(theta) >= 0, delta_az is restricted to +-90 degrees,
+    # making the use of arcsin OK here
     az = az0 + np.arcsin(sin_daz)
-    # scanelalternate1=np.arcsin((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.cos(targetel)*np.cos(targetaz-scanaz)*mm)/(1.0-ll**2))
+    # Because of restrictions of el0 and delta_az, cos(el0) cos(delta_az) >= 0
     cos_el0_cos_daz = cos_el0 * np.cos(az - az0)
     num = sin_el0 * cos_theta - cos_el0_cos_daz * y
-    # Rather use arctan instead of arcsin to avoid divisions by zero
-    # el = np.arcsin(np.clip(num / (1 - x * x), -1.0, 1.0))
     den = sin_el0 * y + cos_theta * cos_el0_cos_daz
     # Ensure that cos(el) denominator term is positive to have abs(el) <= 90 degrees
-    if np.any(den < 0):
-        raise ValueError('y coordinate causes abs(el) > 90 degrees')
+    if np.any(den < -1e-12):
+        raise ValueError('The y coordinate causes el to be outside range of +- pi/2 radians')
     el = np.arctan2(num, den)
     return az, el
 
