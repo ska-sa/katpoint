@@ -671,17 +671,21 @@ def plane_to_sphere_ssn(az0, el0, x, y):
         raise ValueError('Length of (x, y) vector bigger than 1.0')
     cos_theta = np.sqrt(1.0 - sin2_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
-    # Safeguard the arcsines
     # scanaz=targetaz-np.arcsin(np.clip(ll/np.cos(targetel),-1.0,1.0))
-    az = az0 - np.arcsin(np.clip(x / cos_el0, -1.0, 1.0))
+    sin_daz = -x / cos_el0
+    if np.any(np.abs(sin_daz) > 1.0):
+        raise ValueError('x coordinate outside range of +- cos(el0) radians')
+    az = az0 + np.arcsin(sin_daz)
     # scanelalternate1=np.arcsin((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.cos(targetel)*np.cos(targetaz-scanaz)*mm)/(1.0-ll**2))
     cos_el0_cos_daz = cos_el0 * np.cos(az - az0)
     num = sin_el0 * cos_theta - cos_el0_cos_daz * y
     # Rather use arctan instead of arcsin to avoid divisions by zero
     # el = np.arcsin(np.clip(num / (1 - x * x), -1.0, 1.0))
-    den = -sin_el0 * y - cos_theta * cos_el0_cos_daz
+    den = sin_el0 * y + cos_theta * cos_el0_cos_daz
     # Ensure that cos(el) denominator term is positive to have abs(el) <= 90 degrees
-    el = np.arctan2(num, np.abs(den))
+    if np.any(den < 0):
+        raise ValueError('y coordinate causes abs(el) > 90 degrees')
+    el = np.arctan2(num, den)
     return az, el
 
 #--------------------------------------------------------------------------------------------------
