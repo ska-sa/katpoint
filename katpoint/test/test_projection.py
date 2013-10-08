@@ -465,23 +465,25 @@ class TestProjectionSSN(unittest.TestCase):
         self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
         self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
-        max_theta = np.pi / 2.0
-        # (x, y) points within unit circle
-        theta = max_theta * np.random.rand(N)
-        phi = 2 * np.pi * np.random.rand(N)
-        sinx = np.sin(theta) * np.cos(phi)
-        siny = np.sin(theta) * np.sin(phi)
-        self.az, self.el = projection.plane_to_sphere_sin(self.az0, self.el0, sinx, siny)
+        # (x, y) points within complicated SSN domain - clipped unit circle
+        cos_el0 = np.cos(self.el0)
+        # The x coordinate is bounded by +- cos(el0)
+        self.x = (2 * np.random.rand(N) - 1) * cos_el0
+        # The y coordinate ranges between two (semi-)circles centred on origin:
+        # the unit circle on one side and circle of radius cos(el0) on other side
+        y_offset = -np.sqrt(cos_el0 ** 2 - self.x ** 2)
+        y_range = -y_offset + np.sqrt(1.0 - self.x ** 2)
+        self.y = (y_range * np.random.rand(N) + y_offset) * np.sign(self.el0)
 
     def test_random_closure(self):
         """SSN projection: do random projections and check closure."""
-        x, y = projection.sphere_to_plane_ssn(self.az0, self.el0, self.az, self.el)
-        az, el = projection.plane_to_sphere_ssn(self.az0, self.el0, x, y)
+        az, el = projection.plane_to_sphere_ssn(self.az0, self.el0, self.x, self.y)
         xx, yy = projection.sphere_to_plane_ssn(self.az0, self.el0, az, el)
-        np.testing.assert_almost_equal(x, xx, decimal=10)
-        np.testing.assert_almost_equal(y, yy, decimal=10)
-        assert_angles_almost_equal(self.az, az, decimal=10)
-        assert_angles_almost_equal(self.el, el, decimal=10)
+        aa, ee = projection.plane_to_sphere_ssn(self.az0, self.el0, xx, yy)
+        np.testing.assert_almost_equal(self.x, xx, decimal=10)
+        np.testing.assert_almost_equal(self.y, yy, decimal=10)
+        assert_angles_almost_equal(az, aa, decimal=10)
+        assert_angles_almost_equal(el, ee, decimal=10)
 
     def test_corner_cases(self):
         """SSN projection: test special corner cases."""
@@ -525,10 +527,15 @@ class TestProjectionSSN(unittest.TestCase):
         ae = np.array(projection.plane_to_sphere_ssn(0.0, 0.0, 0.0, -1.0))
         assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
         # Reference point at pole on sphere
-        ae = np.array(projection.plane_to_sphere_ssn(0.0,  np.pi / 2.0, 0.0, 1.0))
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, np.pi / 2.0, 0.0, 1.0))
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
-        ae = np.array(projection.plane_to_sphere_ssn(0.0,  -np.pi / 2.0, 0.0, -1.0))
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, -np.pi / 2.0, 0.0, -1.0))
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
+        # Test valid (x, y) domain
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, 1.0, 0.0, -np.cos(1.0)))
+        assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
+        ae = np.array(projection.plane_to_sphere_ssn(0.0, -1.0, 0.0, np.cos(1.0)))
+        assert_angles_almost_equal(ae, [0.0, -np.pi / 2.0], decimal=12)
         # Points outside allowed domain in plane
         self.assertRaises(ValueError, projection.plane_to_sphere_ssn, 0.0, 0.0, 2.0, 0.0)
         self.assertRaises(ValueError, projection.plane_to_sphere_ssn, 0.0, 0.0, 0.0, 2.0)
