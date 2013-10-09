@@ -72,13 +72,13 @@ class TestCatalogueFilterSort(unittest.TestCase):
         self.assertEqual(cat1, cat, 'Catalogue equality failed')
         self.assertEqual(cat1.targets[0].name, 'Achernar', 'Sorting on name failed')
         cat2 = cat.sort(key='ra', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(str(cat2.targets[0].body.ra), '0:08:53.09', 'Sorting on ra failed')
+        self.assertEqual(cat2.targets[0].name, 'Sirrah', 'Sorting on ra failed') # RA: 0:08:53.09
         cat3 = cat.sort(key='dec', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(str(cat3.targets[0].body.dec), '-60:25:27.3', 'Sorting on dec failed')
+        self.assertEqual(cat3.targets[0].name, 'Agena', 'Sorting on dec failed') # DEC: -60:25:27.3
         cat4 = cat.sort(key='az', timestamp=self.timestamp, antenna=self.antenna, ascending=False)
-        self.assertEqual(str(cat4.targets[0].body.az), '359:25:07.3', 'Sorting on az failed')
+        self.assertEqual(cat4.targets[0].name, 'Polaris', 'Sorting on az failed') # az: 359:25:07.3
         cat5 = cat.sort(key='el', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertTrue(str(cat5.targets[0].body.alt).startswith('-76:13:14'), 'Sorting on el failed')
+        self.assertEqual(cat5.targets[-1].name, 'Zenith', 'Sorting on el failed') # el: 90:00:00.0
         cat.add(self.flux_target)
         cat6 = cat.sort(key='flux', ascending=False, flux_freq_MHz=1.5)
         self.assertTrue('flux' in (cat6.targets[0].name, cat6.targets[-1].name),
