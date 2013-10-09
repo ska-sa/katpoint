@@ -20,45 +20,33 @@ class DelayModel(object):
 
     Parameters
     ----------
-    params : sequence of %d floats, or string, optional
+    params : sequence of floats, or string, optional
         Parameters of full model, in metres (defaults to sequence of zeroes).
         If it is a string, it is interpreted as a whitespace-separated sequence
         of parameters as produced by the :attr:`description` property
-        (ignoring commas).
-    strict : {True, False}, optional
-        If True, only accept exactly %d parameters in *params*. If False, do a
-        Procrustean assignment: select the first %d parameters of *params* or
-        the entire *params*, whichever is smallest, and set the unused parameters
-        to zero (useful to load old versions of the model).
-
-    Raises
-    ------
-    ValueError
-        If the *params* vector has the wrong length and *strict* is True
+        (ignoring commas). The parameters are assigned in Procrustean fashion:
+        select the first %d parameters of *params* or the entire *params*,
+        whichever is smallest, and set the unused parameters to zero
+        (useful to load old versions of the model).
 
     """ % (num_params, num_params, num_params)
-    def __init__(self, params=None, strict=True):
+    def __init__(self, params=None):
         if params is None:
             params = np.zeros(self.num_params)
         elif isinstance(params, basestring):
             params = np.array([float(p.strip(', ')) for p in params.split()])
         params = np.asarray(params)
-        if len(params) != self.num_params:
-            if strict:
-                raise ValueError(("Delay model expects exactly %d parameters, but received %d" +
-                                  " (use 'strict=False' to override)") % (self.num_params, len(params)))
-            else:
-                if len(params) < self.num_params:
-                    padded = np.zeros(self.num_params)
-                    padded[:len(params)] = params
-                    params = padded
-                else:
-                    discarded_actives = len(params[self.num_params:].nonzero()[0])
-                    if discarded_actives:
-                        logger.warning('Delay model received too many parameters ' +
-                                       '(%d instead of %d), and %d non-zero parameters will be discarded' %
-                                       (len(params), self.num_params, discarded_actives))
-                    params = params[:self.num_params]
+        if len(params) < self.num_params:
+            padded = np.zeros(self.num_params)
+            padded[:len(params)] = params
+            params = padded
+        else:
+            discarded_actives = len(params[self.num_params:].nonzero()[0])
+            if discarded_actives:
+                logger.warning('Delay model received too many parameters (%d instead of %d), '
+                               'and %d non-zero parameters will be discarded' %
+                               (len(params), self.num_params, discarded_actives))
+            params = params[:self.num_params]
         self.params = params
 
     def __repr__(self):
