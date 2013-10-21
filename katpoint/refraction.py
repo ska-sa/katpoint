@@ -10,7 +10,7 @@ import numpy as np
 
 from .ephem_extra import rad2deg, deg2rad, is_iterable
 
-logger = logging.getLogger("katpoint.refraction")
+logger = logging.getLogger(__name__)
 
 
 def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
