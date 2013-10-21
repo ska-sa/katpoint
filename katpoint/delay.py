@@ -9,7 +9,7 @@ import logging
 
 import numpy as np
 
-logger = logging.getLogger("katpoint.delay")
+logger = logging.getLogger(__name__)
 
 
 class DelayModel(object):
