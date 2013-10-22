@@ -83,6 +83,23 @@ array of target points and a single reference point, or vice versa.
 
 All coordinates in this module are in radians.
 
+These projections are normally accessed via the :class:`katpoint.Target` object
+by calling its :meth:`katpoint.Target.sphere_to_plane` and
+:meth:`katpoint.Target.plane_to_sphere` methods, e.g.::
+
+  tgt = katpoint.Target('Sun, special')
+  ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
+  tgt.antenna = ant
+  # Map from (ra, dec) coordinates to (l, m) plane with target as phase centre
+  l, m = tgt.sphere_to_plane(ra, dec, projection_type='SIN', coord_system='radec')
+  # Find (az, el) coordinates that scans dish relative to target position
+  az, el = tgt.plane_to_sphere(x, y, projection_type='ARC', coord_system='azel')
+
+Alternatively they can be called directly::
+
+  x, y = katpoint.sphere_to_plane['ARC'](az0, el0, az, el)
+  az, el = katpoint.plane_to_sphere['ARC'](az0, el0, x, y)
+
 .. [1] Greisen, "Non-linear Coordinate Systems in AIPS," AIPS Memo 27, 1993.
 .. [2] Greisen, "Additional Non-linear Coordinates in AIPS," AIPS Memo 46, 1993.
 .. [3] Calabretta, Greisen, "Representations of celestial coordinates in
@@ -124,6 +141,12 @@ def sphere_to_plane_sin(az0, el0, az, el):
     radians. The output (x, y) coordinates are constrained to lie within or on
     the unit circle in the plane.
 
+    This is the standard projection in aperture synthesis radio astronomy as
+    found in the 2-D Fourier imaging equation. The (x, y) coordinates are
+    equivalent to the (l, m) coordinates found in the image plane when the
+    reference point is treated as the phase centre and the celestial longitude
+    and latitude are picked to be right ascension and declination, respectively.
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
 
@@ -141,9 +164,9 @@ def sphere_to_plane_sin(az0, el0, az, el):
     Returns
     -------
     x : float or array
-        Azimuth-like coordinate(s) on plane, in radians
+        Azimuth-like coordinate(s) on plane (equivalent to l), in radians
     y : float or array
-        Elevation-like coordinate(s) on plane, in radians
+        Elevation-like coordinate(s) on plane (equivalent to m), in radians
 
     Raises
     ------
@@ -169,6 +192,12 @@ def plane_to_sphere_sin(az0, el0, x, y):
     or on the unit circle. The target point is constrained to lie within the
     hemisphere centred on the reference point.
 
+    This is the standard deprojection in aperture synthesis radio astronomy as
+    found in the 2-D Fourier imaging equation. The (x, y) coordinates are
+    equivalent to the (l, m) coordinates found in the image plane when the
+    reference point is treated as the phase centre and the celestial longitude
+    and latitude are picked to be right ascension and declination, respectively.
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
 
@@ -179,9 +208,9 @@ def plane_to_sphere_sin(az0, el0, x, y):
     el0 : float or array
         Elevation / declination / latitude of reference point(s), in radians
     x : float or array
-        Azimuth-like coordinate(s) on plane, in radians
+        Azimuth-like coordinate(s) on plane (equivalent to l), in radians
     y : float or array
-        Elevation-like coordinate(s) on plane, in radians
+        Elevation-like coordinate(s) on plane (equivalent to m), in radians
 
     Returns
     -------
@@ -591,6 +620,12 @@ def sphere_to_plane_ssn(az0, el0, az, el):
     than or equal to pi/2 radians. The output (x, y) coordinates are also
     constrained to lie within or on the unit circle in the plane.
 
+    This projection is useful for holography and other beam pattern measurements
+    where a dish moves relative to a fixed beacon but the beam pattern is
+    referenced to the boresight of the moving dish. In this scenario the fixed
+    beacon / source would be the reference point (as observed by the tracking
+    antenna in holography) while the scanning antenna follows the target point.
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
 
@@ -608,9 +643,9 @@ def sphere_to_plane_ssn(az0, el0, az, el):
     Returns
     -------
     x : float or array
-        Azimuth-like coordinate(s) on plane, in radians
+        Azimuth-like coordinate(s) on plane (similar to l), in radians
     y : float or array
-        Elevation-like coordinate(s) on plane, in radians
+        Elevation-like coordinate(s) on plane (similar to m), in radians
 
     Raises
     ------
@@ -641,6 +676,12 @@ def plane_to_sphere_ssn(az0, el0, x, y):
       radii 1 and cos(el0), respectively
     - The target azimuth will be within pi/2 radians of the reference azimuth
 
+    This deprojection is useful for holography and other beam measurements
+    where a dish moves relative to a fixed beacon but the beam pattern is
+    referenced to the boresight of the moving dish. In this scenario the fixed
+    beacon / source would be the reference point (as observed by the tracking
+    antenna in holography) while the scanning antenna follows the target point.
+
     Please read the module documentation for the interpretation of the input
     parameters and return values.
 
@@ -651,9 +692,9 @@ def plane_to_sphere_ssn(az0, el0, x, y):
     el0 : float or array
         Elevation / declination / latitude of reference point(s), in radians
     x : float or array
-        Azimuth-like coordinate(s) on plane, in radians
+        Azimuth-like coordinate(s) on plane (similar to l), in radians
     y : float or array
-        Elevation-like coordinate(s) on plane, in radians
+        Elevation-like coordinate(s) on plane (similar to m), in radians
 
     Returns
     -------
