@@ -458,6 +458,24 @@ class TestProjectionCAR(unittest.TestCase):
         assert_angles_almost_equal(el, ee, decimal=12)
 
 
+def sphere_to_plane_mattieu(targetaz,targetel,scanaz,scanel):
+    #produces direction cosine coordinates from scanning antenna azimuth,elevation coordinates
+    #see _coordinate options.py for derivation
+    ll=np.cos(targetel)*np.sin(targetaz-scanaz)
+    mm=np.cos(targetel)*np.sin(scanel)*np.cos(targetaz-scanaz)-np.cos(scanel)*np.sin(targetel)
+    return ll,mm
+
+def plane_to_sphere_mattieu(targetaz,targetel,ll,mm):
+    scanaz=targetaz-np.arcsin(np.clip(ll/np.cos(targetel),-1.0,1.0))
+    scanel=np.arcsin(np.clip((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.sqrt(np.cos(targetel)**2-ll**2)*mm)/(1.0-ll**2),-1.0,1.0))
+    #alternate equations which gives same result
+    # scanel_alternate1=np.arcsin((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.cos(targetel)*np.cos(targetaz-scanaz)*mm)/(1.0-ll**2))
+    # num=np.cos(targetel)*np.cos(targetaz-scanaz)#or num=np.sqrt(np.cos(targetel)**2-ll**2)
+    # den=np.sin(targetel)**2+num**2
+    # scanel_alternate2=np.arcsin((np.sqrt(((den-mm**2)*(den-num**2)))+num*mm)/den)
+    return scanaz,scanel
+
+
 class TestProjectionSSN(unittest.TestCase):
     """Test swapped orthographic projection."""
     def setUp(self):
@@ -482,6 +500,16 @@ class TestProjectionSSN(unittest.TestCase):
         aa, ee = projection.plane_to_sphere_ssn(self.az0, self.el0, xx, yy)
         np.testing.assert_almost_equal(self.x, xx, decimal=10)
         np.testing.assert_almost_equal(self.y, yy, decimal=10)
+        assert_angles_almost_equal(az, aa, decimal=10)
+        assert_angles_almost_equal(el, ee, decimal=10)
+
+    def test_vs_mattieu(self):
+        """SSN projection: compare against Mattieu's original version."""
+        az, el = projection.plane_to_sphere_ssn(self.az0, self.el0, self.x, self.y)
+        ll, mm = sphere_to_plane_mattieu(self.az0, self.el0, az, el)
+        aa, ee = plane_to_sphere_mattieu(self.az0, self.el0, ll, mm)
+        np.testing.assert_almost_equal(self.x, ll, decimal=10)
+        np.testing.assert_almost_equal(self.y, -mm, decimal=10)
         assert_angles_almost_equal(az, aa, decimal=10)
         assert_angles_almost_equal(el, ee, decimal=10)
 
