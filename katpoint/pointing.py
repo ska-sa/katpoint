@@ -11,7 +11,7 @@ import ephem
 
 from .ephem_extra import rad2deg, deg2rad
 
-logger = logging.getLogger("katpoint.pointing")
+logger = logging.getLogger(__name__)
 
 
 def dynamic_doc(*args):

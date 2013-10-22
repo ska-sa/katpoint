@@ -25,7 +25,7 @@ from .target import Target
 from .timestamp import Timestamp
 from .ephem_extra import rad2deg
 
-logger = logging.getLogger("katpoint.catalogue")
+logger = logging.getLogger(__name__)
 
 specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
 
