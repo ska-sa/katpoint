@@ -20,7 +20,7 @@ class DelayModel(object):
 
     Parameters
     ----------
-    params : sequence of floats, or string, optional
+    params : sequence of up to %d floats, or string, optional
         Parameters of full model, in metres (defaults to sequence of zeroes).
         If it is a string, it is interpreted as a whitespace-separated sequence
         of parameters as produced by the :attr:`description` property
@@ -29,7 +29,7 @@ class DelayModel(object):
         whichever is smallest, and set the unused parameters to zero
         (useful to load old versions of the model).
 
-    """ % (num_params, num_params, num_params)
+    """ % (num_params, num_params)
     def __init__(self, params=None):
         if params is None:
             params = np.zeros(self.num_params)
@@ -91,7 +91,7 @@ class CorrelatorDelays(object):
         self.freq = freq
         self.inputs = None
 
-    def delays(self, t_start, t_next):
+    def delays(self, target, t_start, t_next):
         """"""
         pass
 
