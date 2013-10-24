@@ -839,7 +839,11 @@ def construct_target_params(description):
             raise ValueError("Target description '%s' contains *radec* body with no (ra, dec) coordinates"
                              % description)
         body = ephem.FixedBody()
-        ra, dec = ephem.hours(fields[2]), ephem.degrees(fields[3])
+        try:
+            ra = deg2rad(float(fields[2]))
+        except ValueError:
+            ra = fields[2]
+        ra, dec = ephem.hours(ra), ephem.degrees(fields[3])
         if preferred_name:
             body.name = preferred_name
         else:
@@ -974,7 +978,8 @@ def construct_radec_target(ra, dec):
     Parameters
     ----------
     ra : string or float
-        Right ascension, either in 'H:M:S' string format, or as a float in radians
+        Right ascension, either in 'H:M:S' or decimal degree string format, or
+        as a float in radians
     dec : string or float
         Declination, either in 'D:M:S' string format, or as a float in radians
 
@@ -985,6 +990,12 @@ def construct_radec_target(ra, dec):
 
     """
     body = ephem.FixedBody()
+    # First try to interpret the string as decimal degrees
+    if isinstance(ra, basestring):
+        try:
+            ra = deg2rad(float(ra))
+        except ValueError:
+            pass
     ra, dec = ephem.hours(ra), ephem.degrees(dec)
     body.name = "Ra: %s Dec: %s" % (ra, dec)
     body._epoch = ephem.J2000
