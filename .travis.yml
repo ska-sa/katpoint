@@ -1,3 +1,5 @@
+# After changing this file, check it on:
+#   http://lint.travis-ci.org/
 language: python
 
 python:
@@ -5,9 +7,24 @@ python:
   - 2.6
   - 2.7
 
-install:
+before_install:
+  # Check environment a la the numpy Travis script
+  - uname -a
+  - free -m
+  - df -h
+  - ulimit -a
+  - python -V
+  # Install gfortran and numpy (to get proper f2py), followed by other dependencies
+  - sudo apt-get install -qq gfortran python-numpy
   - pip install -r requirements.txt --use-mirrors
-  - python setup.py install
+  # Build AIPS projection module using f2py
+  - pushd katpoint/test/aips_projection
+  - ./build_module.sh
+  - popd
+
+install:
+  # Check if package is pip-installable while we are at it
+  - pip install .
 
 script:
   - nosetests
