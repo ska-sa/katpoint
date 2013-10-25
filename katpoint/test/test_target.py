@@ -52,7 +52,10 @@ class TestTargetConstruction(unittest.TestCase):
                                 'xephem star, Sadr~20:22:13.7|2.43~40:15:24|-0.93~2.23~2000~0',
                                 'hotbody, 34.0, 45.0']
         self.azel_target = 'azel, 10.0, -10.0'
+        # A floating-point RA is in degrees
         self.radec_target = 'radec, 20.0, -20.0'
+        # A sexagesimal RA string is in hours
+        self.radec_target_rahours = 'radec, 20:00:00, -20:00:00'
         self.gal_target = 'gal, 30.0, -30.0'
         self.tag_target = 'azel J2000 GPS, 40.0, -30.0'
 
@@ -71,8 +74,14 @@ class TestTargetConstruction(unittest.TestCase):
         azel2 = katpoint.construct_azel_target('10:00:00.0', '-10:00:00.0')
         self.assertEqual(azel1, azel2, 'Special azel constructor failed')
         radec1 = katpoint.Target(self.radec_target)
-        radec2 = katpoint.construct_radec_target('20:00:00.0', '-20:00:00.0')
-        self.assertEqual(radec1, radec2, 'Special radec constructor failed')
+        radec2 = katpoint.construct_radec_target('20.0', '-20.0')
+        self.assertEqual(radec1, radec2, 'Special radec constructor (decimal) failed')
+        radec3 = katpoint.Target(self.radec_target_rahours)
+        radec4 = katpoint.construct_radec_target('20:00:00.0', '-20:00:00.0')
+        self.assertEqual(radec3, radec4, 'Special radec constructor (sexagesimal) failed')
+        radec5 = katpoint.construct_radec_target('20:00:00.0', '-00:30:00.0')
+        radec6 = katpoint.construct_radec_target('300.0', '-0.5')
+        self.assertEqual(radec5, radec6, 'Special radec constructor (decimal <-> sexagesimal) failed')
         # Check that description string updates when object is updated
         t1 = katpoint.Target('piet, azel, 20, 30')
         t2 = katpoint.Target('piet | bollie, azel, 20, 30')
@@ -97,8 +106,12 @@ class TestTargetConstruction(unittest.TestCase):
         # body = ephem.FixedBody()
         # body._ra = ra
         # Then body._ra != ra... Possibly due to double vs float? This problem goes all the way to libastro.
-        np.testing.assert_almost_equal(calc_ra, 20.0 * 360 / 24., decimal=4)
+        np.testing.assert_almost_equal(calc_ra, 20.0, decimal=4)
         np.testing.assert_almost_equal(calc_dec, -20.0, decimal=4)
+        radec_rahours = katpoint.Target(self.radec_target_rahours)
+        calc_radec_rahours = radec_rahours.radec()
+        calc_rahours = katpoint.rad2deg(calc_radec_rahours[0])
+        np.testing.assert_almost_equal(calc_rahours, 20.0 * 360.0 / 24.0, decimal=4)
         lb = katpoint.Target(self.gal_target)
         calc_lb = lb.galactic()
         calc_l, calc_b = katpoint.rad2deg(calc_lb[0]), katpoint.rad2deg(calc_lb[1])
