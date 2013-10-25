@@ -981,7 +981,8 @@ def construct_radec_target(ra, dec):
         Right ascension, either in 'H:M:S' or decimal degree string format, or
         as a float in radians
     dec : string or float
-        Declination, either in 'D:M:S' string format, or as a float in radians
+        Declination, either in 'D:M:S' or decimal degree string format, or as
+        a float in radians
 
     Returns
     -------
