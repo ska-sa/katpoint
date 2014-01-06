@@ -22,6 +22,14 @@ def deg2rad(x):
     """Converts degrees to radians (also works for arrays)."""
     return x * (np.pi / 180.0)
 
+def wrap_angle(angle, period=2.0 * np.pi):
+    """Wrap angle into interval centred on zero.
+
+    This wraps the *angle* into the interval -*period* / 2 ... *period* / 2.
+
+    """
+    return (angle + 0.5 * period) % period - 0.5 * period
+
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  StationaryBody
 #--------------------------------------------------------------------------------------------------
