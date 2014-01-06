@@ -158,6 +158,19 @@ class TestTargetCalculations(unittest.TestCase):
         np.testing.assert_almost_equal(v, -9.1043784587765906, decimal=5)
         np.testing.assert_almost_equal(w, 4.7781625336985198e-10, decimal=5)
 
+    def test_separation(self):
+        """Test separation calculation."""
+        sun = katpoint.Target('Sun, special')
+        az, el = sun.azel(self.ts, self.ant1)
+        azel = katpoint.construct_azel_target(az, el)
+        sep = sun.separation(azel, self.ts, self.ant1)
+        self.assertEqual(sep, 0.0, 'Separation between target and itself is bigger than 0.0')
+        sep = azel.separation(sun, self.ts, self.ant1)
+        self.assertEqual(sep, 0.0, 'Separation between target and itself is bigger than 0.0')
+        azel2 = katpoint.construct_azel_target(az, el + 0.01)
+        sep = azel.separation(azel2, self.ts, self.ant1)
+        np.testing.assert_almost_equal(sep, 0.01, decimal=12)
+
     def test_projection(self):
         """Test projection."""
         az, el = katpoint.deg2rad(50.0), katpoint.deg2rad(80.0)
