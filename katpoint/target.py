@@ -669,14 +669,17 @@ class Target(object):
         separation : :class:`ephem.Angle` object, or array of shape of *timestamp*
             Angular separation between the targets, in radians
 
+        Notes
+        -----
+        This calculates the azimuth and elevation of both targets at the given
+        time and finds the angular distance between the two sets of coordinates.
+
         """
         # Get a common timestamp and antenna for both targets
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         def _scalar_separation(t):
             """Calculate angular separation for a single time instant."""
-            # Work in apparent (ra, dec), as this is the most reliable common coordinate frame in ephem
-            return ephem.separation(self.apparent_radec(t, antenna),
-                                    other_target.apparent_radec(t, antenna))
+            return ephem.separation(self.azel(t, antenna), other_target.azel(t, antenna))
         if is_iterable(timestamp):
             return np.array([_scalar_separation(t) for t in timestamp])
         else:
