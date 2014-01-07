@@ -22,7 +22,7 @@ from .flux import FluxDensityModel
 
 from .catalogue import Catalogue, specials, _catalogue_completer
 
-from .ephem_extra import lightspeed, rad2deg, deg2rad, is_iterable
+from .ephem_extra import lightspeed, rad2deg, deg2rad, wrap_angle, is_iterable
 
 from .conversion import lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu, \
                         azel_to_enu, enu_to_azel, hadec_to_enu, enu_to_xyz
