@@ -85,10 +85,10 @@ class DelayModel(object):
 
 class CorrelatorDelays(object):
     """Correlator delay model."""
-    def __init__(self, ants, ref_ant, freq):
+    def __init__(self, ants, ref_ant, sky_centre_freq):
         self.ants = ants
         self.ref_ant = ref_ant
-        self.freq = freq
+        self.sky_centre_freq = sky_centre_freq
         self.inputs = None
 
     def delays(self, target, t_start, t_next):
