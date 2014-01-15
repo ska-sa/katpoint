@@ -19,7 +19,7 @@ class TestModel(unittest.TestCase):
         params.append(katpoint.Parameter('CAB_V', 'deg', 'vertical', value=20.3))
         return params
 
-    def test_model_save_load(self):
+    def test_construct_save_load(self):
         """Test construction / save / load of generic model."""
         m = katpoint.Model(self.new_params())
         m.header['date'] = '2014-01-15'
@@ -47,12 +47,21 @@ class TestModel(unittest.TestCase):
         print m4
         self.assertNotEqual(m, m4, 'Model should not be equal to an empty one')
 
-    def test_model_dict(self):
+    def test_dict_interface(self):
         """Test dict interface of generic model."""
         params = self.new_params()
         names = [p.name for p in params]
+        values = [p.value for p in params]
         m = katpoint.Model(params)
         self.assertEqual(len(m), 6, 'Unexpected model length')
         self.assertEqual(m.keys(), names, 'Parameter names do not match')
+        self.assertEqual(m.values(), values, 'Parameter values do not match')
         m['NIAO'] = 6789.0
         self.assertEqual(m['NIAO'], 6789.0, 'Parameter setting via dict interface failed')
+
+    def test_writable_docstring(self):
+        """Check that model class docstring is writable."""
+        params = self.new_params()
+        m = katpoint.Model(params)
+        katpoint.Model.__doc__ = 'Hooray'
+        self.assertEqual(katpoint.Model.__doc__, 'Hooray', 'Class docstring not writable')
