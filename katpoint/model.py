@@ -6,13 +6,16 @@ saving and display of parameters.
 """
 
 import ConfigParser
-
 try:
     # Python 2.7 and above have builtin support
     from collections import OrderedDict
 except ImportError:
     # Alternative for Python 2.4, 2.5, 2.6, pypy from http://code.activestate.com/recipes/576693/
     from .ordereddict import OrderedDict
+
+import numpy as np
+
+from .ephem_extra import is_iterable
 
 
 class Parameter(object):
@@ -124,25 +127,49 @@ class Model(object):
         return self.params.keys()
 
     def values(self):
-        """List of parameter values in the expected order."""
+        """List of parameter values in the expected order ('tolist')."""
         return [p.value for p in self]
+
+    def fromlist(self, floats):
+        """Load model from sequence of floats."""
+        self.header = {}
+        params = [p for p in self]
+        min_len = min(len(params), len(floats))
+        for param, value in zip(params[:min_len], floats[:min_len]):
+            param.value = value
+        for param in params[min_len:]:
+            param.value = 0.0
 
     @property
     def description(self):
-        """Compact string representation of model, sufficient to reconstruct it."""
+        """Compact string representation, sufficient to reconstruct model ('tostring')."""
         return ', '.join(p.value_str for p in self)
 
-    def loads(self, description):
+    def fromstring(self, description):
         """Load model from description string."""
         self.header = {}
         # Split string either on commas or whitespace
         param_vals = [p.strip() for p in description.split(',')] \
                      if ',' in description else description.split()
-        n = min(len(param_vals), len(self))
-        for param, param_val in zip([p for p in self][:n], param_vals[:n]):
+        params = [p for p in self]
+        min_len = min(len(params), len(param_vals))
+        for param, param_val in zip(params[:min_len], param_vals[:min_len]):
             param.value_str = param_val
+        for param in params[min_len:]:
+            param.value = 0.0
 
-    def load(self, file_like):
+    def tofile(self, file_like):
+        """Save model to config file."""
+        cfg = ConfigParser.SafeConfigParser()
+        cfg.add_section('header')
+        for key, val in self.header.items():
+            cfg.set('header', key, str(val))
+        cfg.add_section('params')
+        for param_str in self.param_strs():
+            cfg.set('params', param_str[0], '%s ; %s (%s)' % param_str[1:])
+        cfg.write(file_like)
+
+    def fromfile(self, file_like):
         """Load model from config file."""
         defaults = dict((p.name, '0.0') for p in self)
         cfg = ConfigParser.SafeConfigParser(defaults)
@@ -163,13 +190,26 @@ class Model(object):
         for param in self:
             param.value_str = cfg.get('params', param.name)
 
-    def save(self, file_like):
-        """Save model to config file."""
-        cfg = ConfigParser.SafeConfigParser()
-        cfg.add_section('header')
-        for key, val in self.header.items():
-            cfg.set('header', key, str(val))
-        cfg.add_section('params')
-        for param_str in self.param_strs():
-            cfg.set('params', param_str[0], '%s ; %s (%s)' % param_str[1:])
-        cfg.write(file_like)
+    def set(self, model=None):
+        """Load parameter values from the appropriate source.
+
+        Parameters
+        ----------
+        model : file-like object, sequence of floats, or string, optional
+            Model specification. If this is a file-like object, load the model
+            from it. If this is a sequence of floats, accept it directly as the
+            model parameters (defaults to sequence of zeroes). If it is a string,
+            interpret it as a comma-separated (or whitespace-separated) sequence
+            of parameters in their string form (i.e. a description string).
+
+        """
+        if isinstance(model, basestring):
+            self.fromstring(model)
+        else:
+            array = np.atleast_1d(model)
+            if array.dtype.kind in 'iuf' and array.ndim == 1:
+                self.fromlist(model)
+            elif model is not None:
+                self.fromfile(model)
+            else:
+                self.fromlist([])
