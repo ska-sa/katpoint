@@ -7,6 +7,13 @@ saving and display of parameters.
 
 import ConfigParser
 
+try:
+    # Python 2.7 and above have builtin support
+    from collections import OrderedDict
+except ImportError:
+    # Alternative for Python 2.4, 2.5, 2.6, pypy from http://code.activestate.com/recipes/576693/
+    from .ordereddict import OrderedDict
+
 
 class Parameter(object):
     """Generic model parameter."""
@@ -33,6 +40,7 @@ class Parameter(object):
 
 
 class BadModelFile(Exception):
+    """Unable to load model from config file (unrecognised format)."""
     pass
 
 
@@ -47,28 +55,34 @@ class Model(object):
     """
     def __init__(self, params):
         self.header = {}
-        self.params = params
-
-    def param_strs(self):
-        name_len = max([len(param.name) for param in self.params])
-        value_len = max([len(param.value_str) for param in self.params])
-        units_len = max([len(param.units) for param in self.params])
-        return [(p.name.ljust(name_len), p.value_str.ljust(value_len),
-                 p.units.ljust(units_len), p.doc) for p in self.params if p.value]
+        self.params = OrderedDict((p.name, p) for p in params)
 
     def __len__(self):
         """Number of parameters in full model."""
         return len(self.params)
 
+    def __iter__(self):
+        """Iterate over parameter objects."""
+        return self.params.itervalues()
+
+    def param_strs(self):
+        """Justified (name, value, units, doc) strings for active parameters."""
+        name_len = max(len(p.name) for p in self)
+        value_len = max(len(p.value_str) for p in self.params.itervalues())
+        units_len = max(len(p.units) for p in self.params.itervalues())
+        return [(p.name.ljust(name_len), p.value_str.ljust(value_len),
+                 p.units.ljust(units_len), p.doc)
+                for p in self.params.itervalues() if p.value]
+
     def __repr__(self):
         """Short human-friendly string representation of model object."""
-        num_active = len([p for p in self.params if p.value])
+        num_active = len([p for p in self if p.value])
         return "<katpoint.%s active_params=%d/%d at 0x%x>" % \
                (self.__class__.__name__, num_active, len(self), id(self))
 
     def __str__(self):
         """Verbose human-friendly string representation of model object."""
-        num_active = len([p for p in self.params if p.value])
+        num_active = len([p for p in self if p.value])
         summary = "%s has %d parameters with %d active (non-zero)" % \
                   (self.__class__.__name__, len(self), num_active)
         if num_active == 0:
@@ -78,16 +92,29 @@ class Model(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return self.description == (other.description if isinstance(other, self.__class__) else other)
+        return self.description == \
+               (other.description if isinstance(other, self.__class__) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
         return not (self == other)
 
+    def __getitem__(self, key):
+        """Access parameter value by name."""
+        return self.params[key].value
+
+    def __setitem__(self, key, value):
+        """Modify parameter value by name."""
+        self.params[key].value = value
+
+    def keys(self):
+        """List of parameter names in the expected order."""
+        return self.params.keys()
+
     @property
     def description(self):
         """Compact string representation of model, sufficient to reconstruct it."""
-        return ', '.join(p.value_str for p in self.params)
+        return ', '.join(p.value_str for p in self)
 
     def loads(self, description):
         """Load model from description string."""
@@ -96,12 +123,12 @@ class Model(object):
         param_vals = [p.strip() for p in description.split(',')] \
                      if ',' in description else description.split()
         n = min(len(param_vals), len(self))
-        for param, param_val in zip(self.params[:n], param_vals[:n]):
+        for param, param_val in zip([p for p in self][:n], param_vals[:n]):
             param.value_str = param_val
 
     def load(self, file_like):
         """Load model from config file."""
-        defaults = dict([(param.name, '0.0') for param in self.params])
+        defaults = dict((p.name, '0.0') for p in self)
         cfg = ConfigParser.SafeConfigParser(defaults)
         try:
             cfg.readfp(file_like)
@@ -117,7 +144,7 @@ class Model(object):
         self.header = dict(cfg.items('header'))
         for param in defaults:
             self.header.pop(param.lower())
-        for param in self.params:
+        for param in self:
             param.value_str = cfg.get('params', param.name)
 
     def save(self, file_like):
