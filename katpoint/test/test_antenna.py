@@ -43,7 +43,7 @@ class TestAntennaConstruction(unittest.TestCase):
         self.assertNotEqual(a1, a2, 'Antennas should be inequal')
         a1.name = 'FF2'
         a1.diameter = 13.0
-        a1.pointing_model = katpoint.PointingModel('0.1', strict=False)
+        a1.pointing_model = katpoint.PointingModel('0.1')
         a1.beamwidth = 1.22
         self.assertEqual(a1.description, a2.description, 'Antenna description string not updated')
         self.assertEqual(a1, a2.description, 'Antenna not equal to description string')

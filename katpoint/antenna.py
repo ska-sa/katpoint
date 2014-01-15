@@ -158,7 +158,7 @@ class Antenna(object):
         if isinstance(pointing_model, PointingModel):
             self.pointing_model = pointing_model
         else:
-            self.pointing_model = PointingModel(pointing_model, strict=False)
+            self.pointing_model = PointingModel(pointing_model)
         self.beamwidth = float(beamwidth)
 
         # Set up reference observer first

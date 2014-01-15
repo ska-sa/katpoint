@@ -9,24 +9,14 @@ import logging
 import numpy as np
 import ephem
 
+from .model import Parameter, Model
 from .ephem_extra import rad2deg, deg2rad
 
 logger = logging.getLogger(__name__)
 
 
-def dynamic_doc(*args):
-    """Decorator that updates a function docstring to allow string formatting."""
-    def doc_updater(func):
-        func.__doc__ = func.__doc__ % args
-        return func
-    return doc_updater
-
-
-class PointingModel(object):
-    # Number of parameters in full pointing model
-    num_params = 22
-
-    __doc__ = """Correct pointing using model of non-ideal antenna mount.
+class PointingModel(Model):
+    """Correct pointing using model of non-ideal antenna mount.
 
     The pointing model is the one found in the VLBI Field System and has the
     standard terms found in most pointing models, including the DSN and TPOINT
@@ -39,125 +29,57 @@ class PointingModel(object):
 
     Parameters
     ----------
-    params : sequence of %d floats, or string, optional
-        Parameters of full model, in radians (defaults to sequence of zeroes).
-        If it is a string, it is interpreted as a comma-separated (or whitespace-
-        separated) sequence of parameters, in *degrees*, as produced by the
-        :attr:`description` property. The string form is in degrees, as this
-        will be stored in configuration files and is therefore considered to be
-        user-facing.
-    strict : {True, False}, optional
-        If True, only accept exactly %d parameters in *params*. If False, do a
-        Procrustean assignment: select the first %d parameters of *params* or
-        the entire *params*, whichever is smallest, and set the unused parameters
-        to zero (useful to load old versions of the model).
+    model : file-like object, sequence of %d floats, or string, optional
+        Model specification. If this is a file-like object, load the model
+        from it. If this is a sequence of floats, accept it directly as the
+        model parameters (defaults to sequence of zeroes). If it is a string,
+        interpret it as a comma-separated (or whitespace-separated) sequence
+        of parameters in their string form (i.e. a description string).
 
-    Raises
-    ------
-    ValueError
-        If the *params* vector has the wrong length and *strict* is True
-
-    """ % (num_params, num_params, num_params, num_params)
-    def __init__(self, params=None, strict=True):
-        if params is None:
-            params = np.zeros(self.num_params)
-        elif isinstance(params, basestring):
-            params = np.array([ephem.degrees(p.strip(', ')) for p in params.split()])
-            # Fix P9 and P12, which are scale factors (not angles) and therefore should not be converted to rads
-            if len(params) >= 9:
-                params[8] = rad2deg(params[8])
-            if len(params) >= 12:
-                params[11] = rad2deg(params[11])
-        params = np.asarray(params)
-        if len(params) != self.num_params:
-            if strict:
-                raise ValueError(("Pointing model expects exactly %d parameters, but received %d" +
-                                  " (use 'strict=False' to override)") % (self.num_params, len(params)))
-            else:
-                if len(params) < self.num_params:
-                    padded = np.zeros(self.num_params)
-                    padded[:len(params)] = params
-                    params = padded
-                else:
-                    discarded_actives = len(params[self.num_params:].nonzero()[0])
-                    if discarded_actives > 0:
-                        logger.warning('Pointing model received too many parameters ' +
-                                       '(%d instead of %d), and %d non-zero parameters will be discarded' %
-                                       (len(params), self.num_params, discarded_actives))
-                    params = params[:self.num_params]
-        self.params = params
-
-    def param_str(self, param, scale_format='%.9g'):
-        """Human-friendly string representation of a specific parameter value.
-
-        Parameters
-        ----------
-        param : integer
-            Index of parameter (starts at **1** and corresponds to P-number)
-        scale_format : string, optional
-            Format string for P9 and P12, which are scale factors and not angles
-
-        Returns
-        -------
-        param_str : string
-            String representation of parameter
-
-        """
-        if self.params[param - 1] == 0.0:
-            return '0'
-        elif param in [9, 12]:
-            return scale_format % self.params[param - 1]
-        else:
-            return str(ephem.degrees(self.params[param - 1]).znorm)
-
-    def __repr__(self):
-        """Short human-friendly string representation of pointing model object."""
-        return "<katpoint.PointingModel active_params=%d/%d at 0x%x>" % \
-               (len(self.params.nonzero()[0]), self.num_params, id(self))
-
-    def __str__(self):
-        """Verbose human-friendly string representation of pointing model object."""
-        num_active = len(self.params.nonzero()[0])
-        summary = "Pointing model has %d parameters with %d active (non-zero)" % (self.num_params, num_active)
-        if num_active == 0:
-            return summary
-        descr = ['P1  = %12s deg [-IA] (az offset = encoder bias - tilt around)',
-                 'P2  = %12s deg (az gravitational sag, should be 0.0)',
-                 'P3  = %12s deg [-NPAE] (left-right axis skew = non-perpendicularity of az/el axes)',
-                 'P4  = %12s deg [CA] (az box offset / collimation error = RF-axis misalignment)',
-                 'P5  = %12s deg [AN] (tilt out = az ring tilted towards north)',
-                 'P6  = %12s deg [-AW] (tilt over = az ring tilted towards east)',
-                 'P7  = %12s deg [IE] (el offset = encoder bias - forward axis skew - el box offset)',
-                 'P8  = %12s deg [ECEC/-TF] (gravity sag / Hooke law flexure / el centering error)',
-                 'P9  = %12s     [PEE1] (el excess scale factor)',
-                 'P10 = %12s deg (ad hoc cos(el) term in delta_el, redundant with P8)',
-                 'P11 = %12s deg [ECES] (asymmetric sag / el centering error)',
-                 'P12 = %12s     [-PAA1] (az excess scale factor)',
-                 'P13 = %12s deg [ACEC] (az centering error)',
-                 'P14 = %12s deg [-ACES] (az centering error)',
-                 'P15 = %12s deg [HECA2] (elevation nod twice per az revolution)',
-                 'P16 = %12s deg [-HESA2] (elevation nod twice per az revolution)',
-                 'P17 = %12s deg [-HACA2] (az encoder tilt)',
-                 'P18 = %12s deg [HASA2] (az encoder tilt)',
-                 'P19 = %12s deg [HECE8] (high-order distortions in el encoder scale)',
-                 'P20 = %12s deg [HESE8] (high-order distortions in el encoder scale)',
-                 'P21 = %12s deg [-HECA] (elevation nod once per az revolution)',
-                 'P22 = %12s deg [HESA] (elevation nod once per az revolution)']
-        param_strs = [descr[p] % self.param_str(p + 1) for p in xrange(self.num_params) if self.params[p] != 0.0]
-        return summary + ':\n' + '\n'.join(param_strs)
-
-    def __eq__(self, other):
-        """Equality comparison operator."""
-        return self.description == (other.description if isinstance(other, PointingModel) else other)
-
-    def __ne__(self, other):
-        """Inequality comparison operator."""
-        return not (self == other)
-
-    @property
-    def description(self):
-        """String representation of pointing model, sufficient to reconstruct it."""
-        return ', '.join([self.param_str(p + 1) for p in xrange(self.num_params)])
+    """
+    def __init__(self, model=None):
+        # There are two main types of parameter: angles and scale factors
+        angle_to_string = lambda a: str(ephem.degrees(a).znorm) if a else '0'
+        def angle_param(name, doc):
+            """Create angle-valued parameter."""
+            return Parameter(name, 'deg', doc, from_str=ephem.degrees,
+                             to_str=angle_to_string)
+        def scale_param(name, doc):
+            """Create scale-valued parameter."""
+            return Parameter(name, '', doc,
+                             to_str=lambda s: ('%.9g' % (s,)) if s else '0')
+        # Instantiate the relevant model parameters and register with base class
+        params = []
+        params.append(angle_param('P1', 'az offset = encoder bias - tilt around [tpoint -IA]'))
+        params.append(angle_param('P2', 'az gravitational sag, should be 0.0'))
+        params.append(angle_param('P3', 'left-right axis skew = non-perpendicularity of az/el axes [tpoint -NPAE]'))
+        params.append(angle_param('P4', 'az box offset / collimation error = RF-axis misalignment [tpoint CA]'))
+        params.append(angle_param('P5', 'tilt out = az ring tilted towards north [tpoint AN]'))
+        params.append(angle_param('P6', 'tilt over = az ring tilted towards east [tpoint -AW]'))
+        params.append(angle_param('P7', 'el offset = encoder bias - forward axis skew - el box offset [tpoint IE]'))
+        params.append(angle_param('P8', 'gravity sag / Hooke law flexure / el centering error [tpoint ECEC/-TF]'))
+        params.append(scale_param('P9', 'el excess scale factor [tpoint PEE1]'))
+        params.append(angle_param('P10', 'ad hoc cos(el) term in delta_el, redundant with P8'))
+        params.append(angle_param('P11', 'asymmetric sag / el centering error [tpoint ECES]'))
+        params.append(scale_param('P12', 'az excess scale factor [tpoint -PAA1]'))
+        params.append(angle_param('P13', 'az centering error [tpoint ACEC]'))
+        params.append(angle_param('P14', 'az centering error [tpoint -ACES]'))
+        params.append(angle_param('P15', 'elevation nod twice per az revolution [tpoint HECA2]'))
+        params.append(angle_param('P16', 'elevation nod twice per az revolution [tpoint -HESA2]'))
+        params.append(angle_param('P17', 'az encoder tilt [tpoint -HACA2]'))
+        params.append(angle_param('P18', 'az encoder tilt [tpoint HASA2]'))
+        params.append(angle_param('P19', 'high-order distortions in el encoder scale [tpoint HECE8]'))
+        params.append(angle_param('P20', 'high-order distortions in el encoder scale [tpoint HESE8]'))
+        params.append(angle_param('P21', 'elevation nod once per az revolution [tpoint -HECA]'))
+        params.append(angle_param('P22', 'elevation nod once per az revolution [tpoint HESA]'))
+        Model.__init__(self, params)
+        self.set(model)
+        # Fix docstrings to contain the number of parameters
+        if '%d' in self.__class__.__doc__:
+            self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
+        if '%d' in self.__class__.fit.im_func.__doc__:
+            self.__class__.fit.im_func.__doc__ = self.__class__.fit.im_func.__doc__ % \
+                                                 (len(self), len(self))
 
     # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
@@ -202,7 +124,8 @@ class PointingModel(object):
         """
         # Unpack parameters to make the code correspond to the maths
         P1, P2, P3, P4, P5, P6, P7, P8, \
-        P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22 = self.params
+        P9, P10, P11, P12, P13, P14, P15, \
+        P16, P17, P18, P19, P20, P21, P22 = self.values()
         # Compute each trig term only once and store it
         sin_az, cos_az, sin_2az, cos_2az = np.sin(az), np.cos(az), np.sin(2 * az), np.cos(2 * az)
         sin_el, cos_el, sin_8el, cos_8el = np.sin(el), np.cos(el), np.sin(8 * el), np.cos(8 * el)
@@ -261,7 +184,8 @@ class PointingModel(object):
         """
         # Unpack parameters to make the code correspond to the maths
         P1, P2, P3, P4, P5, P6, P7, P8, \
-        P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22 = self.params
+        P9, P10, P11, P12, P13, P14, P15, \
+        P16, P17, P18, P19, P20, P21, P22 = self.values()
         # Compute each trig term only once and store it
         sin_az, cos_az, sin_2az, cos_2az = np.sin(az), np.cos(az), np.sin(2 * az), np.cos(2 * az)
         sin_el, cos_el, sin_8el, cos_8el = np.sin(el), np.cos(el), np.sin(8 * el), np.cos(8 * el)
@@ -302,7 +226,7 @@ class PointingModel(object):
         # Maximum difference between input az/el and pointing-corrected version of final output az/el
         tolerance = deg2rad(0.01 / 3600)
         # Initial guess of uncorrected az/el is the corrected az/el minus fixed offsets
-        az, el = pointed_az - self.params[0], pointed_el - self.params[6]
+        az, el = pointed_az - self['P1'], pointed_el - self['P7']
         # Solve F(az, el) = apply(az, el) - (pointed_az, pointed_el) = 0 via Newton's method, should converge quickly
         for iteration in xrange(30):
             # Set up linear system J dx = -F (or A x = b), where J is Jacobian matrix of apply()
@@ -326,7 +250,6 @@ class PointingModel(object):
                            (iteration + 1, rad2deg(max_error) * 3600., max_az, max_el))
         return az, el
 
-    @dynamic_doc(num_params, num_params)
     def fit(self, az, el, delta_az, delta_el, sigma_daz=None, sigma_del=None, enabled_params=None):
         """Fit pointing model parameters to observed offsets.
 
@@ -386,8 +309,8 @@ class PointingModel(object):
                'Input parameters should all have the same shape'
 
         # Blank out the existing model
-        self.params[:] = 0.0
-        sigma_params = np.zeros(len(self.params))
+        self.set()
+        sigma_params = np.zeros(len(self))
 
         # Handle parameter enabling
         if enabled_params is None:
@@ -407,7 +330,7 @@ class PointingModel(object):
         enabled_params = np.array(list(enabled_params))
         # If no parameters are enabled, a zero model is returned
         if len(enabled_params) == 0:
-            return self.params, sigma_params
+            return np.array(self.values()), sigma_params
 
         # Number of active parameters
         M = len(enabled_params)
@@ -416,19 +339,22 @@ class PointingModel(object):
         N = 2 * len(az)
         # Construct design matrix, containing weighted basis functions
         A = np.zeros((N, M))
+        param_vector = np.zeros(len(self))
         for m, param in enumerate(enabled_params):
             # Create parameter vector that will select a single column of design matrix
-            self.params[:] = 0.0
-            self.params[param - 1] = 1.0
+            param_vector[:] = 0.0
+            param_vector[param - 1] = 1.0
+            self.fromlist(param_vector)
             basis_az, basis_el = self.offset(az, el)
             A[:, m] = np.hstack((basis_az * cos_el / sigma_daz, basis_el / sigma_del))
         # Measurement vector, containing weighted observed offsets
         b = np.hstack((delta_az * cos_el / sigma_daz, delta_el / sigma_del))
         # Solve linear least-squares problem using SVD (see NRinC, 2nd ed, Eq. 15.4.17)
         U, s, Vt = np.linalg.svd(A, full_matrices=False)
-        self.params[enabled_params - 1] = np.dot(Vt.T, np.dot(U.T, b) / s)
+        param_vector[enabled_params - 1] = np.dot(Vt.T, np.dot(U.T, b) / s)
+        self.fromlist(param_vector)
         # Also obtain standard errors of parameters (see NRinC, 2nd ed, Eq. 15.4.19)
         sigma_params[enabled_params - 1] = np.sqrt(np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1))
 #        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f' % (N, M, s[0] / s[-1]))
 
-        return self.params, sigma_params
+        return param_vector, sigma_params
