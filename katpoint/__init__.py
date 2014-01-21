@@ -29,6 +29,8 @@ from .conversion import lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu, \
 
 from .projection import sphere_to_plane, plane_to_sphere
 
+from .model import Parameter, Model, BadModelFile
+
 from .pointing import PointingModel
 
 from .refraction import RefractionCorrection

@@ -22,27 +22,27 @@ class TestPointingModel(unittest.TestCase):
         self.el = mesh_el.ravel()
         # Generate random parameter values with this spread
         self.param_stdev = katpoint.deg2rad(20. / 60.)
+        self.num_params = len(katpoint.PointingModel())
 
     def test_pointing_model_load_save(self):
         """Test construction / load / save of pointing model."""
-        params = katpoint.deg2rad(np.random.randn(katpoint.PointingModel.num_params + 1))
-        self.assertRaises(ValueError, katpoint.PointingModel, params)
+        params = katpoint.deg2rad(np.random.randn(self.num_params + 1))
         pm = katpoint.PointingModel(params[:-1])
         print repr(pm), pm
-        pm2 = katpoint.PointingModel(params[:-2], strict=False)
-        self.assertEqual(pm2.params[-1], 0.0, 'Unspecified pointing model params not zeroed')
-        pm3 = katpoint.PointingModel(params, strict=False)
-        self.assertEqual(pm3.params[-1], params[-2], 'Superfluous pointing model params not handled correctly')
+        pm2 = katpoint.PointingModel(params[:-2])
+        self.assertEqual(pm2.values()[-1], 0.0, 'Unspecified pointing model params not zeroed')
+        pm3 = katpoint.PointingModel(params)
+        self.assertEqual(pm3.values()[-1], params[-2], 'Superfluous pointing model params not handled correctly')
         pm4 = katpoint.PointingModel(pm.description)
         self.assertEqual(pm4.description, pm.description, 'Saving pointing model to string and loading it again failed')
         self.assertEqual(pm4, pm, 'Pointing models should be equal')
         self.assertNotEqual(pm2, pm, 'Pointing models should be inequal')
-        np.testing.assert_almost_equal(pm4.params, pm.params, decimal=6)
+        np.testing.assert_almost_equal(pm4.values(), pm.values(), decimal=6)
 
     def test_pointing_closure(self):
         """Test closure between pointing correction and its reverse operation."""
         # Generate random pointing model
-        params = self.param_stdev * np.random.randn(katpoint.PointingModel.num_params)
+        params = self.param_stdev * np.random.randn(self.num_params)
         pm = katpoint.PointingModel(params)
         # Test closure on (az, el) grid
         pointed_az, pointed_el = pm.apply(self.az, self.el)
@@ -53,13 +53,16 @@ class TestPointingModel(unittest.TestCase):
     def test_pointing_fit(self):
         """Test fitting of pointing model."""
         # Generate random pointing model and corresponding offsets on (az, el) grid
-        params = self.param_stdev * np.random.randn(katpoint.PointingModel.num_params)
+        params = self.param_stdev * np.random.randn(self.num_params)
         params[1] = params[9] = 0.0
         pm = katpoint.PointingModel(params.copy())
         delta_az, delta_el = pm.offset(self.az, self.el)
-        enabled_params = (np.arange(katpoint.PointingModel.num_params) + 1).tolist()
-        enabled_params.remove(2)
-        enabled_params.remove(10)
+        enabled_params = (np.arange(self.num_params) + 1).tolist()
+        # Comment out these removes, thereby testing more code paths in PointingModel
+        # enabled_params.remove(2)
+        # enabled_params.remove(10)
         # pylint: disable-msg=W0612
+        fitted_params, sigma_params = pm.fit(self.az, self.el, delta_az, delta_el, enabled_params=[])
+        np.testing.assert_equal(fitted_params, np.zeros(self.num_params))
         fitted_params, sigma_params = pm.fit(self.az, self.el, delta_az, delta_el, enabled_params=enabled_params)
         np.testing.assert_almost_equal(fitted_params, params, decimal=9)
