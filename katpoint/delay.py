@@ -1,7 +1,8 @@
-"""Delay model.
+"""Delay model and correction.
 
-This implements the basic delay model used to calculate the delay contribution
-from each antenna.
+This implements the basic delay model used to calculate the delay
+contribution from each antenna, as well as a class that performs
+delay correction for a correlator.
 
 """
 
@@ -60,16 +61,16 @@ class DelayModel(Model):
         self.fromlist(delays * self._speeds)
 
 
-class CorrelatorDelays(object):
+class DelayCorrection(object):
     """Calculate delay corrections for a set of correlator inputs / antennas."""
     def __init__(self, ants, ref_ant, sky_centre_freq):
-        self.ants = ants
+        self.ants = list(ants)
         self.ref_ant = ref_ant
         self.sky_centre_freq = sky_centre_freq
         self.inputs = [ant.name + pol for ant in ants for pol in ('h', 'v')]
         self._params = np.array([ant.delay_model.delay_params for ant in ants])
         # With no antennas, let params still have correct shape
-        if not self._params:
+        if not self.ants:
             self._params = np.empty((0, len(DelayModel())))
         self._cache = {}
         self.max_delay = self._calculate_max_delay()
@@ -80,7 +81,7 @@ class CorrelatorDelays(object):
         max_delay_per_ant += self._params[:, 3]
         max_delay_per_ant += self._params[:, 4:6].max(axis=1)
         # Add a 1% safety margin to guarantee positive delay corrections
-        return 1.01 * max(max_delay_per_ant) if max_delay_per_ant else 0.0
+        return 1.01 * max(max_delay_per_ant) if self.ants else 0.0
 
     def _calculate_delays(self, target, timestamp):
         """Calculate delays for all inputs / antennas for a given target."""

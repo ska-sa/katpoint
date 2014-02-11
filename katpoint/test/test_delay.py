@@ -28,7 +28,16 @@ class TestDelayModel(unittest.TestCase):
         m3.fromdelays(params)
         self.assertEqual(m, m3, 'Converting delay model to delay parameters and loading it again failed')
 
-class TestCorrelatorDelays(unittest.TestCase):
-    """Test correlator delay model."""
-    def test_construct(self):
-        pass
+class TestDelayCorrection(unittest.TestCase):
+    """Test correlator delay corrections."""
+    def setUp(self):
+        self.target = katpoint.construct_azel_target('45:00:00.0', '75:00:00.0')
+        self.ant1 = katpoint.Antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0 0.0 0.0')
+        self.ant2 = katpoint.Antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0 -10.0 0.0')
+        self.ant3 = katpoint.Antenna('A3, -31.0, 18.0, 0.0, 12.0, 5.0 10.0 3.0')
+        self.ts = katpoint.Timestamp('2013-08-14 08:25')
+
+    def test_correction(self):
+        delays = katpoint.DelayCorrection([self.ant2, self.ant3], self.ant1, 1.285e9)
+        delay0, phase0 = delays.corrections(self.target, self.ts)
+        delay1, phase1 = delays.corrections(self.target, self.ts, self.ts + 1.0)

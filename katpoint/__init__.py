@@ -24,7 +24,7 @@ from .projection import sphere_to_plane, plane_to_sphere
 from .model import Parameter, Model, BadModelFile
 from .pointing import PointingModel
 from .refraction import RefractionCorrection
-from .delay import DelayModel
+from .delay import DelayModel, DelayCorrection
 
 # Hide submodules in module namespace, to avoid confusion with corresponding class names
 # If the module is reloaded, this will fail - ignore the resulting NameError
