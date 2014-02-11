@@ -27,6 +27,11 @@ logger = logging.getLogger(__name__)
 class DelayModel(Model):
     """Model of the delay contribution from a single antenna.
 
+    This object is purely used as a repository for model parameters, allowing
+    easy construction, inspection and saving of the delay model. The actual
+    calculations happen in :class:`DelayCorrection`, which is more efficient
+    as it handles multiple antenna delays simultaneously.
+
     Parameters
     ----------
     model : file-like object, sequence of floats, or string, optional
@@ -34,7 +39,8 @@ class DelayModel(Model):
         from it. If this is a sequence of floats, accept it directly as the
         model parameters (defaults to sequence of zeroes). If it is a string,
         interpret it as a comma-separated (or whitespace-separated) sequence
-        of parameters in their string form (i.e. a description string).
+        of parameters in their string form (i.e. a description string). The
+        default is an empty model.
 
     """
     def __init__(self, model=None):
@@ -57,13 +63,50 @@ class DelayModel(Model):
         return np.array(self.values()) / self._speeds
 
     def fromdelays(self, delays):
-        """Update model from a sequence of delay parameters."""
+        """Update model from a sequence of delay parameters.
+
+        Parameters
+        ----------
+        delays : sequence of floats
+            Model parameters in delay form (i.e. in seconds)
+
+        """
         self.fromlist(delays * self._speeds)
 
 
 class DelayCorrection(object):
-    """Calculate delay corrections for a set of correlator inputs / antennas."""
-    def __init__(self, ants, ref_ant, sky_centre_freq):
+    """Calculate delay corrections for a set of correlator inputs / antennas.
+
+    This uses delay models from multiple antennas connected to a correlator to
+    produce delay and phase corrections for a given target and timestamp, for
+    all correlator inputs at once. The delay corrections are guaranteed to be
+    strictly positive. Each antenna is assumed to have two polarisations (H
+    and V), resulting in two correlator inputs per antenna.
+
+    Parameters
+    ----------
+    ants : sequence of *M* :class:`Antenna` objects
+        Sequence of antennas forming an array and connected to correlator
+    ref_ant : :class:`Antenna` object
+        Reference antenna for the array
+    sky_centre_freq : float, optional
+        RF centre frequency that serves as reference for fringe phase
+
+    Attributes
+    ----------
+    inputs : list of *2M* strings
+        List of correlator input names (typically 2 per antenna), aligned with
+        calculated delays
+    max_delay : float
+        Maximum absolute delay achievable in array, in seconds, used to ensure
+        strictly positive delay corrections
+
+    """
+
+    # Maximum size for delay cache
+    CACHE_SIZE = 1000
+
+    def __init__(self, ants, ref_ant, sky_centre_freq=0.0):
         self.ants = list(ants)
         self.ref_ant = ref_ant
         self.sky_centre_freq = sky_centre_freq
@@ -76,7 +119,7 @@ class DelayCorrection(object):
         self.max_delay = self._calculate_max_delay()
 
     def _calculate_max_delay(self):
-        """The maximum (absolute) delay achievable in the array in seconds."""
+        """The maximum (absolute) delay achievable in the array, in seconds."""
         max_delay_per_ant = np.linalg.norm(self._params[:, :3], axis=1)
         max_delay_per_ant += self._params[:, 3]
         max_delay_per_ant += self._params[:, 4:6].max(axis=1)
@@ -84,7 +127,21 @@ class DelayCorrection(object):
         return 1.01 * max(max_delay_per_ant) if self.ants else 0.0
 
     def _calculate_delays(self, target, timestamp):
-        """Calculate delays for all inputs / antennas for a given target."""
+        """Calculate delays for all inputs / antennas for a given target.
+
+        Parameters
+        ----------
+        target : :class:`Target` object
+            Target providing direction for geometric delays
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp in UTC seconds since Unix epoch
+
+        Returns
+        -------
+        delays : sequence of *2M* floats
+            Delays (one per correlator input) in seconds
+
+        """
         az, el = target.azel(timestamp, self.ref_ant)
         targetdir = np.array(azel_to_enu(az, el))
         cos_el = np.cos(el)
@@ -93,15 +150,61 @@ class DelayCorrection(object):
         return np.dot(self._params, design_mat.T).ravel()
 
     def _cached_delays(self, target, timestamp):
-        """Try to load delays from cache, else calculate it."""
+        """Try to load delays from cache, else calculate it.
+
+        This uses the timestamp to look up previously calculated delays in
+        a cache. If not found, calculate the delays and store it in the
+        cache instead. Each cache value is used only once. Clean out the
+        oldest timestamp if cache is full.
+
+        See :meth:`_calculate_delays` for parameter and return lists,
+        as these two methods can be used interchangeably.
+
+        """
         delays = self._cache.pop(timestamp, None)
         if delays is None:
             delays = self._calculate_delays(target, timestamp)
+            # Clean out the oldest timestamp if cache is full
+            while len(self._cache) >= DelayCorrection.CACHE_SIZE:
+                self._cache.pop(min(self._cache.keys()))
             self._cache[timestamp] = delays
         return delays
 
-    def corrections(self, target, timestamp, next_timestamp=None):
-        """Delay and phase corrections for a given target and timestamp."""
+    def corrections(self, target, timestamp=None, next_timestamp=None):
+        """Delay and phase corrections for a given target and timestamp.
+
+        Calculate delay and phase corrections for the direction towards
+        *target* at *timestamp*. If the timestamp of the next delay
+        calculation is provided, it is used to calculate a delay rate
+        that can be used for linear interpolation in the period up to
+        the next update. Both delay (aka phase slope) and phase (aka
+        phase offset or fringe phase) corrections are provided, and
+        optionally their derivatives with respect to time (delay rate
+        and fringe rate).
+
+        Parameters
+        ----------
+        target : :class:`Target` object
+            Target providing direction for geometric delays
+        timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp in UTC seconds since Unix epoch when delays are
+            evaluated (default is now)
+        next_timestamp : :class:`Timestamp` object or equivalent, optional
+            Timestamp when next delay will be evaluated, used to determine
+            a slope for linear interpolation (default is no slope)
+
+        Returns
+        -------
+        delays : dict mapping strings to sequences of floats
+            Dict mapping correlator input name to delay correction,
+            which consists of a delay value (in seconds) and optionally
+            a delay rate value (in seconds per second)
+        phases : dict mapping strings to sequences of floats
+            Dict mapping correlator input name to phase correction,
+            which consists of a fringe phase value (in radians) and
+            optionally a fringe rate value (in radians per second)
+
+        """
         delays = self._cached_delays(target, timestamp)
         omega_centre = 2.0 * np.pi * self.sky_centre_freq
         delay_corrections = self.max_delay - delays

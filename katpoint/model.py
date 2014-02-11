@@ -204,7 +204,8 @@ class Model(object):
             from it. If this is a sequence of floats, accept it directly as the
             model parameters (defaults to sequence of zeroes). If it is a string,
             interpret it as a comma-separated (or whitespace-separated) sequence
-            of parameters in their string form (i.e. a description string).
+            of parameters in their string form (i.e. a description string). The
+            default is an empty model.
 
         """
         if isinstance(model, basestring):
