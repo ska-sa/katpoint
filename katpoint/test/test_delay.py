@@ -3,6 +3,8 @@
 import unittest
 import StringIO
 
+import numpy as np
+
 import katpoint
 
 
@@ -28,10 +30,12 @@ class TestDelayModel(unittest.TestCase):
         m3.fromdelays(params)
         self.assertEqual(m, m3, 'Converting delay model to delay parameters and loading it again failed')
 
+
 class TestDelayCorrection(unittest.TestCase):
     """Test correlator delay corrections."""
     def setUp(self):
-        self.target = katpoint.construct_azel_target('45:00:00.0', '75:00:00.0')
+        self.target1 = katpoint.construct_azel_target('45:00:00.0', '75:00:00.0')
+        self.target2 = katpoint.Target('Sun, special')
         self.ant1 = katpoint.Antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0 0.0 0.0')
         self.ant2 = katpoint.Antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0 -10.0 0.0')
         self.ant3 = katpoint.Antenna('A3, -31.0, 18.0, 0.0, 12.0, 5.0 10.0 3.0')
@@ -39,5 +43,18 @@ class TestDelayCorrection(unittest.TestCase):
 
     def test_correction(self):
         delays = katpoint.DelayCorrection([self.ant2, self.ant3], self.ant1, 1.285e9)
-        delay0, phase0 = delays.corrections(self.target, self.ts)
-        delay1, phase1 = delays.corrections(self.target, self.ts, self.ts + 1.0)
+        delay0, phase0 = delays.corrections(self.target1, self.ts)
+        delay1, phase1 = delays.corrections(self.target1, self.ts, self.ts + 1.0)
+        # This target is special - direction perpendicular to baseline (and stationary)
+        self.assertEqual(delay0['A2h'], delays.max_delay, 'Delay for ant2h should be zero')
+        self.assertEqual(delay0['A2v'], delays.max_delay, 'Delay for ant2v should be zero')
+        self.assertEqual(delay1['A2h'][0], delays.max_delay, 'Delay for ant2h should be zero')
+        self.assertEqual(delay1['A2v'][0], delays.max_delay, 'Delay for ant2v should be zero')
+        self.assertEqual(delay1['A2h'][1], 0.0, 'Delay rate for ant2h should be zero')
+        self.assertEqual(delay1['A2v'][1], 0.0, 'Delay rate for ant2v should be zero')
+        # Compare to target geometric delay calculations
+        delay0, phase0 = delays.corrections(self.target2, self.ts)
+        delay1, phase1 = delays.corrections(self.target2, self.ts - 0.5, self.ts + 0.5)
+        tgt_delay, tgt_delay_rate = self.target2.geometric_delay(self.ant2, self.ts, self.ant1)
+        np.testing.assert_almost_equal(delay0['A2h'], delays.max_delay - tgt_delay, decimal=15)
+        np.testing.assert_almost_equal(delay1['A2h'][1], -tgt_delay_rate, decimal=13)
