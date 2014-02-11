@@ -76,6 +76,10 @@ class Model(object):
         """Number of parameters in full model."""
         return len(self.params)
 
+    def __nonzero__(self):
+        """True if model contains any active / non-zero parameters."""
+        return any(self.values())
+
     def __iter__(self):
         """Iterate over parameter objects."""
         return self.params.itervalues()

@@ -13,6 +13,7 @@ from .timestamp import Timestamp
 from .ephem_extra import is_iterable
 from .conversion import enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
 from .pointing import PointingModel
+from .delay import DelayModel
 
 #--------------------------------------------------------------------------------------------------
 #--- CLASS :  Antenna
@@ -26,8 +27,9 @@ class Antenna(object):
     It has two variants: a stand-alone single dish, or an antenna that is part
     of an array. The first variant is initialised with the antenna location in
     WGS84 (lat-long-alt) form, while the second variant is initialised with the
-    array reference location in WGS84 form and an ENU (east-north-up) offset for
-    the specific antenna.
+    array reference location in WGS84 form and an ENU (east-north-up) offset
+    for the specific antenna which also doubles as the first part of a broader
+    delay model for the antenna.
 
     Additionally, a diameter, a pointing model and a beamwidth factor may be
     specified. These parameters are collected for convenience, and the pointing
@@ -37,14 +39,15 @@ class Antenna(object):
     described by its *description string*, which has the following format::
 
      name, latitude (D:M:S), longitude (D:M:S), altitude (m), diameter (m),
-     east-north-up offset (m), pointing model, beamwidth
+     east-north-up offset (m) / delay model, pointing model, beamwidth
 
     A stand-alone dish has the antenna location as lat-long-alt and the ENU
-    offset as an empty string, while an antenna that is part of an array has the
-    array reference location as lat-long-alt and the ENU offset as a
-    space-separated string of 3 numbers. The pointing model is a space-separated
-    string of model parameters (or empty string if there is no pointing model).
-    The beamwidth is a single floating-point number.
+    offset as an empty string, while an antenna that is part of an array has
+    the array reference location as lat-long-alt and the ENU offset as a
+    space-separated string of 3 numbers (followed by any additional delay model
+    terms). The pointing model is a space-separated string of model parameters
+    (or empty string if there is no pointing model). The beamwidth is a single
+    floating-point number.
 
     Any empty fields at the end of the description string may be omitted, as
     they will be replaced by defaults. The first four fields are required.
@@ -65,43 +68,47 @@ class Antenna(object):
     name : string
         Name of antenna, or full description string
     latitude : string or float, optional
-        Geodetic latitude, either in 'D:M:S' string format or a float in radians
+        Geodetic latitude, either in 'D:M:S' string format or float in radians
     longitude : string or float, optional
         Longitude, either in 'D:M:S' string format or a float in radians
     altitude : string or float, optional
         Altitude above WGS84 geoid, in metres
     diameter : string or float, optional
         Dish diameter, in metres
-    offset : string, or sequence of 3 floats, optional
-        East-North-Up offset from WGS84 reference position, in metres. In string
-        form it should contain 3 space-separated numbers.
-    pointing_model : :class:`PointingModel` object, or float seq / string, optional
-        Pointing model for antenna, either as a direct object, or a string or
-        sequence of float parameters from which the :class:`PointingModel` object
-        can be instantiated
+    delay_model : :class:`DelayModel` object or equivalent, optional
+        Delay model for antenna, either as a direct object, a file-like object
+        representing a parameter file, or a string or sequence of float params.
+        The first three parameters form an East-North-Up offset from WGS84
+        reference position, in metres.
+    pointing_model : :class:`PointingModel` object or equivalent, optional
+        Pointing model for antenna, either as a direct object, a file-like
+        object representing a parameter file, or a string or sequence of
+        float parameters from which the :class:`PointingModel` object can
+        be instantiated
     beamwidth : string or float, optional
         Full width at half maximum (FWHM) average beamwidth, as a multiple of
         lambda / D (wavelength / dish diameter). This depends on the dish
         illumination pattern, and ranges from 1.03 for a uniformly illuminated
-        circular dish to 1.22 for a Gaussian-tapered circular dish (the default).
+        circular dish to 1.22 for a Gaussian-tapered circular dish (the
+        default).
 
     Arguments
     ---------
     position_enu : tuple of 3 floats
         East-North-Up offset from WGS84 reference position, in metres
     position_wgs84 : tuple of 3 floats
-        WGS84 position of antenna (latitude and longitude in radians, and altitude
-        in metres)
+        WGS84 position of antenna (latitude and longitude in radians, and
+        altitude in metres)
     position_ecef : tuple of 3 floats
         ECEF (Earth-centred Earth-fixed) position of antenna (in metres)
     ref_position_wgs84 : tuple of 3 floats
-        WGS84 reference position (latitude and longitude in radians, and altitude
-        in metres)
+        WGS84 reference position (latitude and longitude in radians, and
+        altitude in metres)
     observer : :class:`ephem.Observer` object
         Underlying object used for pointing calculations
     ref_observer : :class:`ephem.Observer` object
-        Array reference location for antenna in an array (same as *observer* for
-        a stand-alone antenna)
+        Array reference location for antenna in an array (same as *observer*
+        for a stand-alone antenna)
 
     Raises
     ------
@@ -112,8 +119,9 @@ class Antenna(object):
     -----
     The :class:`ephem.Observer` objects are abused for their ability to convert
     latitude and longitude to and from string representations via
-    :class:`ephem.Angle`. The only reason for the existence of *ref_observer* is
-    that it is a nice container for the reference latitude, longitude and altitude.
+    :class:`ephem.Angle`. The only reason for the existence of *ref_observer*
+    is that it is a nice container for the reference latitude, longitude and
+    altitude.
 
     It is a bad idea to edit the coordinates of the antenna in-place, as the
     various position tuples will not be updated - reconstruct a new antenna
@@ -121,7 +129,8 @@ class Antenna(object):
 
     """
     def __init__(self, name, latitude=None, longitude=None, altitude=None,
-                 diameter=0.0, offset=None, pointing_model=None, beamwidth=1.22):
+                 diameter=0.0, delay_model=None, pointing_model=None,
+                 beamwidth=1.22):
         # The presence of a comma indicates that a description string is passed in - parse this string into parameters
         if name.find(',') >= 0:
             try:
@@ -141,7 +150,7 @@ class Antenna(object):
             # Extract optional fields
             try:
                 diameter = fields.pop(4)
-                offset = fields.pop(4)
+                delay_model = fields.pop(4)
                 pointing_model = fields.pop(4)
                 beamwidth = fields.pop(4)
             except IndexError:
@@ -149,12 +158,8 @@ class Antenna(object):
 
         self.name = name
         self.diameter = float(diameter)
-        # Parse offset string to tuple of 3 floats
-        if isinstance(offset, basestring):
-            if len(offset.strip()) > 0:
-                offset = tuple([float(off.strip()) for off in offset.split(' ')])
-            else:
-                offset = None
+        self.delay_model = delay_model if isinstance(delay_model, DelayModel) \
+                           else DelayModel(delay_model)
         if isinstance(pointing_model, PointingModel):
             self.pointing_model = pointing_model
         else:
@@ -172,11 +177,9 @@ class Antenna(object):
         self.ref_observer.pressure = 0.0
         self.ref_position_wgs84 = self.ref_observer.lat, self.ref_observer.long, self.ref_observer.elevation
 
-        if offset is not None:
-            self.position_enu = tuple(offset)
-            if len(self.position_enu) != 3:
-                raise ValueError('ENU offset %s should have 3 components, has %d instead' %
-                                 (self.position_enu, len(self.position_enu)))
+        if self.delay_model:
+            dm = self.delay_model
+            self.position_enu = (dm['POS_E'], dm['POS_N'], dm['POS_U'])
             # Convert ENU offset to ECEF coordinates of antenna, and then to WGS84 coordinates
             self.position_ecef = enu_to_ecef(self.ref_observer.lat, self.ref_observer.long,
                                              self.ref_observer.elevation, *self.position_enu)
@@ -221,15 +224,18 @@ class Antenna(object):
         """Complete string representation of antenna object, sufficient to reconstruct it."""
         # These fields are used to build up the antenna description string
         fields = [self.name]
-        if np.any(self.position_enu):
+        if self.delay_model:
+            params = self.delay_model.description.split(', ')
+            while (len(params) > 0) and (params[-1] in ('0', '0.0')):
+                params.pop()
             fields += [str(coord) for coord in self.ref_position_wgs84]
-            fields += [str(self.diameter), ' '.join([str(coord) for coord in self.position_enu])]
+            fields += [str(self.diameter), ' '.join(params)]
         else:
             fields += [str(coord) for coord in self.position_wgs84]
             fields += [str(self.diameter), '']
         # Add compact version of pointing model and beamwidth factor to description string
         params = self.pointing_model.description.split(', ')
-        while (len(params) > 0) and (params[-1] == '0'):
+        while (len(params) > 0) and (params[-1] in ('0', '0.0')):
             params.pop()
         fields += [' '.join(params), str(self.beamwidth)]
         return ', '.join(fields)
