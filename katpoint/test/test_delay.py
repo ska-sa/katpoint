@@ -7,7 +7,7 @@ import katpoint
 
 
 class TestDelayModel(unittest.TestCase):
-    """Test delay model."""
+    """Test antenna delay model."""
     def test_construct_save_load(self):
         """Test construction / save / load of delay model."""
         m = katpoint.DelayModel('1.0, -2.0, -3.0, 4.123, 5.0, 6.0')
@@ -23,3 +23,12 @@ class TestDelayModel(unittest.TestCase):
         m2 = katpoint.DelayModel()
         m2.fromfile(cfg_file)
         self.assertEqual(m, m2, 'Saving delay model to file and loading it again failed')
+        params = m.delay_params
+        m3 = katpoint.DelayModel()
+        m3.fromdelays(params)
+        self.assertEqual(m, m3, 'Converting delay model to delay parameters and loading it again failed')
+
+class TestCorrelatorDelays(unittest.TestCase):
+    """Test correlator delay model."""
+    def test_construct(self):
+        pass
