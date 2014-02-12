@@ -60,6 +60,10 @@ class TestDelayCorrection(unittest.TestCase):
         tgt_delay, tgt_delay_rate = self.target2.geometric_delay(self.ant2, self.ts, self.ant1)
         np.testing.assert_almost_equal(delay0['A2h'], max_delay - tgt_delay, decimal=15)
         np.testing.assert_almost_equal(delay1['A2h'][1], -tgt_delay_rate, decimal=13)
+        # Test vector version
+        delay2, phase2 = self.delays.corrections(self.target2, (self.ts - 0.5, self.ts + 0.5))
+        np.testing.assert_equal(delay2['A2h'][0], delay1['A2h'])
+        np.testing.assert_equal(phase2['A2h'][0], phase1['A2h'])
 
     def test_delay_cache(self):
         """Test delay correction cache limit."""

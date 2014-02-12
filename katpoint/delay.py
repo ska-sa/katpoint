@@ -12,7 +12,7 @@ import numpy as np
 
 from .model import Parameter, Model
 from .conversion import azel_to_enu
-from .ephem_extra import lightspeed
+from .ephem_extra import lightspeed, is_iterable
 
 # Speed of EM wave in fixed path (typically due to cables / electronics).
 # This number is not critical - only meant to convert delays to "nice" lengths.
@@ -171,52 +171,79 @@ class DelayCorrection(object):
         return delays
 
     def corrections(self, target, timestamp=None, next_timestamp=None):
-        """Delay and phase corrections for a given target and timestamp.
+        """Delay and phase corrections for a given target and timestamp(s).
 
         Calculate delay and phase corrections for the direction towards
         *target* at *timestamp*. If the timestamp of the next delay
-        calculation is provided, it is used to calculate a delay rate
-        that can be used for linear interpolation in the period up to
-        the next update. Both delay (aka phase slope) and phase (aka
-        phase offset or fringe phase) corrections are provided, and
-        optionally their derivatives with respect to time (delay rate
-        and fringe rate).
+        calculation is provided, it is used to calculate a delay rate that can
+        be used for linear interpolation in the period up to the next update.
+        This process is repeated if a sequence of timestamps is given. Both
+        delay (aka phase slope) and phase (aka phase offset or fringe phase)
+        corrections are provided, and optionally their derivatives with
+        respect to time (delay rate and fringe rate, respectively).
 
         Parameters
         ----------
         target : :class:`Target` object
             Target providing direction for geometric delays
-        timestamp : :class:`Timestamp` object or equivalent, optional
-            Timestamp in UTC seconds since Unix epoch when delays are
-            evaluated (default is now)
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch when delays are
+            evaluated (default is now). If more than one timestamp is given,
+            the corrections will include slopes to be used for linear
+            interpolation between the times
         next_timestamp : :class:`Timestamp` object or equivalent, optional
             Timestamp when next delay will be evaluated, used to determine
-            a slope for linear interpolation (default is no slope)
+            a slope for linear interpolation (default is no slope). This is
+            ignored if *timestamp* is a sequence.
 
         Returns
         -------
-        delays : dict mapping strings to sequences of floats
+        delays : dict mapping string to float or array of floats 
             Dict mapping correlator input name to delay correction,
             which consists of a delay value (in seconds) and optionally
-            a delay rate value (in seconds per second)
-        phases : dict mapping strings to sequences of floats
-            Dict mapping correlator input name to phase correction,
-            which consists of a fringe phase value (in radians) and
-            optionally a fringe rate value (in radians per second)
+            a delay rate value (in seconds per second). If a sequence
+            of *T* timestamps are provided, each input maps to an array
+            of shape (*T*, 2).
+        phases : dict mapping string to float or array of floats
+            Dict mapping correlator input name to phase correction, which
+            consists of a fringe phase value (in radians) and optionally a
+            fringe rate value (in radians per second). If a sequence of *T*
+            timestamps are provided, each input maps to an array of shape
+            (*T*, 2).
 
         """
-        delays = self._cached_delays(target, timestamp)
+        if is_iterable(timestamp):
+            # Append one more timestamp to get a slope for the last timestamp
+            last_step = timestamp[-1] - timestamp[-2]
+            all_times = np.r_[timestamp, [timestamp[-1] + last_step]]
+            next_timestamp = all_times[1:]
+            # Don't use cache, as the next_times are included in all_delays
+            all_delays = np.array([self._calculate_delays(target, t)
+                                   for t in all_times]).T
+            delays, next_delays = all_delays[:, :-1], all_delays[:, 1:]
+        else:
+            # Use cache for a single timestamp
+            delays = self._cached_delays(target, timestamp)
         omega_centre = 2.0 * np.pi * self.sky_centre_freq
         delay_corrections = self.max_delay - delays
         phase_corrections = - omega_centre * delays
-        if not next_timestamp:
+        if next_timestamp is None:
             return dict(zip(self.inputs, delay_corrections)), \
                    dict(zip(self.inputs, phase_corrections))
         step = next_timestamp - timestamp
-        next_delays = self._cached_delays(target, next_timestamp)
+        # We still have to get next_delays in the single timestamp case
+        if not is_iterable(next_timestamp):
+            next_delays = self._cached_delays(target, next_timestamp)
         next_delay_corrections = self.max_delay - next_delays
         delay_slopes = (next_delay_corrections - delay_corrections) / step
         next_phase_corrections = - omega_centre * next_delays
         phase_slopes = (next_phase_corrections - phase_corrections) / step
-        return dict(zip(self.inputs, np.c_[delay_corrections, delay_slopes])), \
-               dict(zip(self.inputs, np.c_[phase_corrections, phase_slopes]))
+        # This construction works for both the scalar and vector cases.
+        # The squeeze() gets rid of an extra singleton in the scalar case.
+        # It is safe to squeeze as the other two dimensions involved will
+        # never be singletons (number of inputs >= 2 even for 1 antenna, and
+        # number of polynomial terms is 2 by design).
+        delay_polys = np.dstack((delay_corrections, delay_slopes)).squeeze()
+        phase_polys = np.dstack((phase_corrections, phase_slopes)).squeeze()
+        return dict(zip(self.inputs, delay_polys)), \
+               dict(zip(self.inputs, phase_polys))
