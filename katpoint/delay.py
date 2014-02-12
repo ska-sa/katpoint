@@ -83,6 +83,12 @@ class DelayCorrection(object):
     strictly positive. Each antenna is assumed to have two polarisations (H
     and V), resulting in two correlator inputs per antenna.
 
+    For now, the reference antenna position must match the reference positions
+    of each antenna in the array, so that the ENU offset in each antenna's
+    delay model directly represent the baseline between that antenna and the
+    reference antenna. This should be fine as this is the standard case, but
+    may cause problems for e.g. VLBI with a geocentric reference antenna.
+
     Parameters
     ----------
     ants : sequence of *M* :class:`Antenna` objects
@@ -101,6 +107,11 @@ class DelayCorrection(object):
         Maximum absolute delay achievable in array, in seconds, used to ensure
         strictly positive delay corrections
 
+    Raises
+    ------
+    ValueError
+        If all antennas do not share the same reference position as ref_ant
+
     """
 
     # Maximum size for delay cache
@@ -109,6 +120,13 @@ class DelayCorrection(object):
     def __init__(self, ants, ref_ant, sky_centre_freq=0.0):
         self.ants = list(ants)
         self.ref_ant = ref_ant
+        if any([ant.ref_position_wgs84 != ref_ant.position_wgs84
+                for ant in self.ants + [ref_ant]]):
+            msg = "Antennas '%s' do not all share the same reference " \
+                  "position of the reference antenna %r" % (
+                  "', '".join(ant.description for ant in self.ants),
+                  self.ref_ant.description)
+            raise ValueError(msg)
         self.sky_centre_freq = sky_centre_freq
         self.inputs = [ant.name + pol for ant in ants for pol in ('h', 'v')]
         self._params = np.array([ant.delay_model.delay_params for ant in ants])

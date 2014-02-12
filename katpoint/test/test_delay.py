@@ -44,6 +44,7 @@ class TestDelayCorrection(unittest.TestCase):
 
     def test_correction(self):
         """Test delay correction."""
+        self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2], self.ant3)
         max_delay = self.delays.max_delay
         delay0, phase0 = self.delays.corrections(self.target1, self.ts)
         delay1, phase1 = self.delays.corrections(self.target1, self.ts, self.ts + 1.0)
