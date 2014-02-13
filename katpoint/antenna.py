@@ -224,20 +224,12 @@ class Antenna(object):
         """Complete string representation of antenna object, sufficient to reconstruct it."""
         # These fields are used to build up the antenna description string
         fields = [self.name]
-        if self.delay_model:
-            params = self.delay_model.description.split(', ')
-            while (len(params) > 0) and (params[-1] in ('0', '0.0')):
-                params.pop()
-            fields += [str(coord) for coord in self.ref_position_wgs84]
-            fields += [str(self.diameter), ' '.join(params)]
-        else:
-            fields += [str(coord) for coord in self.position_wgs84]
-            fields += [str(self.diameter), '']
-        # Add compact version of pointing model and beamwidth factor to description string
-        params = self.pointing_model.description.split(', ')
-        while (len(params) > 0) and (params[-1] in ('0', '0.0')):
-            params.pop()
-        fields += [' '.join(params), str(self.beamwidth)]
+        pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
+        fields += [str(coord) for coord in pos]
+        fields += [str(self.diameter)]
+        fields += [self.delay_model.description]
+        fields += [self.pointing_model.description]
+        fields += [str(self.beamwidth)]
         return ', '.join(fields)
 
     def format_katcp(self):

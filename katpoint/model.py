@@ -33,7 +33,7 @@ class Parameter(object):
     def __nonzero__(self):
         """True if parameter is active, i.e. its value differs from default."""
         # Do explicit cast to bool as value can be a NumPy type, resulting in
-        # a np.bool_ type for the expression (not allowed for __nonzero__)
+        # an np.bool_ type for the expression (not allowed for __nonzero__)
         return bool(self.value != self.default_value)
 
     @property
@@ -155,12 +155,14 @@ class Model(object):
     @property
     def description(self):
         """Compact string representation, sufficient to reconstruct model ('tostring')."""
-        return ', '.join(p.value_str for p in self)
+        active = np.nonzero([bool(p) for p in self])[0]
+        last_active = active[-1] if len(active) else -1
+        return ' '.join([p.value_str for p in self][:last_active + 1])
 
     def fromstring(self, description):
         """Load model from description string."""
         self.header = {}
-        # Split string either on commas or whitespace
+        # Split string either on commas or whitespace, for good measure
         param_vals = [p.strip() for p in description.split(',')] \
                      if ',' in description else description.split()
         params = [p for p in self]
