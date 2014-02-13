@@ -23,7 +23,7 @@ class Parameter(object):
     def __init__(self, name, units, doc, from_str=float, to_str=str, value=0.0):
         self.name = name
         self.units = units
-        self.doc = doc
+        self.__doc__ = doc
         self._from_str = from_str
         self._to_str = to_str
         self.value = value
@@ -90,7 +90,7 @@ class Model(object):
         value_len = max(len(p.value_str) for p in self.params.itervalues())
         units_len = max(len(p.units) for p in self.params.itervalues())
         return [(p.name.ljust(name_len), p.value_str.ljust(value_len),
-                 p.units.ljust(units_len), p.doc)
+                 p.units.ljust(units_len), p.__doc__)
                 for p in self.params.itervalues() if p.value]
 
     def __repr__(self):
