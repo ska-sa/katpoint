@@ -209,16 +209,23 @@ class Model(object):
 
         Parameters
         ----------
-        model : file-like object, sequence of floats, or string, optional
-            Model specification. If this is a file-like object, load the model
-            from it. If this is a sequence of floats, accept it directly as the
-            model parameters (defaults to sequence of zeroes). If it is a string,
-            interpret it as a comma-separated (or whitespace-separated) sequence
-            of parameters in their string form (i.e. a description string). The
-            default is an empty model.
+        model : file-like or model object, sequence of floats, or string, optional
+            Model specification. If this is a file-like or model object, load
+            the model from it. If this is a sequence of floats, accept it
+            directly as the model parameters (defaults to sequence of zeroes).
+            If it is a string, interpret it as a comma-separated (or whitespace-
+            separated) sequence of parameters in their string form (i.e. a
+            description string). The default is an empty model.
 
         """
-        if isinstance(model, basestring):
+        if isinstance(model, Model):
+            if not isinstance(model, type(self)):
+                raise BadModelFile('Cannot construct a %r from a %r' %
+                                   (self.__class__.__name__,
+                                    model.__class__.__name__))
+            self.fromlist(model.values())
+            self.header = dict(model.header)
+        elif isinstance(model, basestring):
             self.fromstring(model)
         else:
             array = np.atleast_1d(model)

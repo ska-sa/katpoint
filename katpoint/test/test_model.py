@@ -60,6 +60,13 @@ class TestModel(unittest.TestCase):
         m6 = katpoint.Model(self.new_params())
         m6.set()
         self.assertEqual(m6, m5, 'Setting empty model failed')
+        m7 = katpoint.Model(self.new_params())
+        m7.set(m)
+        self.assertEqual(m, m7, 'Construction from model object failed')
+        class OtherModel(katpoint.Model):
+            pass
+        m8 = OtherModel(self.new_params())
+        self.assertRaises(katpoint.BadModelFile, m8.set, m)
 
     def test_dict_interface(self):
         """Test dict interface of generic model."""

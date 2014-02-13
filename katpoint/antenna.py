@@ -158,12 +158,8 @@ class Antenna(object):
 
         self.name = name
         self.diameter = float(diameter)
-        self.delay_model = delay_model if isinstance(delay_model, DelayModel) \
-                           else DelayModel(delay_model)
-        if isinstance(pointing_model, PointingModel):
-            self.pointing_model = pointing_model
-        else:
-            self.pointing_model = PointingModel(pointing_model)
+        self.delay_model = DelayModel(delay_model)
+        self.pointing_model = PointingModel(pointing_model)
         self.beamwidth = float(beamwidth)
 
         # Set up reference observer first
