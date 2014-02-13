@@ -20,13 +20,21 @@ from .ephem_extra import is_iterable
 
 class Parameter(object):
     """Generic model parameter."""
-    def __init__(self, name, units, doc, from_str=float, to_str=str, value=0.0):
+    def __init__(self, name, units, doc, from_str=float, to_str=str,
+                 value=None, default_value=0.0):
         self.name = name
         self.units = units
         self.__doc__ = doc
         self._from_str = from_str
         self._to_str = to_str
-        self.value = value
+        self.value = value if value is not None else default_value
+        self.default_value = default_value
+
+    def __nonzero__(self):
+        """True if parameter is active, i.e. its value differs from default."""
+        # Do explicit cast to bool as value can be a NumPy type, resulting in
+        # a np.bool_ type for the expression (not allowed for __nonzero__)
+        return bool(self.value != self.default_value)
 
     @property
     def value_str(self):
@@ -77,8 +85,8 @@ class Model(object):
         return len(self.params)
 
     def __nonzero__(self):
-        """True if model contains any active / non-zero parameters."""
-        return any(self.values())
+        """True if model contains any active parameters."""
+        return any(p for p in self)
 
     def __iter__(self):
         """Iterate over parameter objects."""
@@ -91,18 +99,18 @@ class Model(object):
         units_len = max(len(p.units) for p in self.params.itervalues())
         return [(p.name.ljust(name_len), p.value_str.ljust(value_len),
                  p.units.ljust(units_len), p.__doc__)
-                for p in self.params.itervalues() if p.value]
+                for p in self.params.itervalues() if p]
 
     def __repr__(self):
         """Short human-friendly string representation of model object."""
-        num_active = len([p for p in self if p.value])
+        num_active = len([p for p in self if p])
         return "<katpoint.%s active_params=%d/%d at 0x%x>" % \
                (self.__class__.__name__, num_active, len(self), id(self))
 
     def __str__(self):
         """Verbose human-friendly string representation of model object."""
-        num_active = len([p for p in self if p.value])
-        summary = "%s has %d parameters with %d active (non-zero)" % \
+        num_active = len([p for p in self if p])
+        summary = "%s has %d parameters with %d active (non-default)" % \
                   (self.__class__.__name__, len(self), num_active)
         if num_active == 0:
             return summary
@@ -142,7 +150,7 @@ class Model(object):
         for param, value in zip(params[:min_len], floats[:min_len]):
             param.value = value
         for param in params[min_len:]:
-            param.value = 0.0
+            param.value = param.default_value
 
     @property
     def description(self):
@@ -160,7 +168,7 @@ class Model(object):
         for param, param_val in zip(params[:min_len], param_vals[:min_len]):
             param.value_str = param_val
         for param in params[min_len:]:
-            param.value = 0.0
+            param.value = param.default_value
 
     def tofile(self, file_like):
         """Save model to config file."""
@@ -175,7 +183,7 @@ class Model(object):
 
     def fromfile(self, file_like):
         """Load model from config file."""
-        defaults = dict((p.name, '0.0') for p in self)
+        defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
         cfg = ConfigParser.SafeConfigParser(defaults)
         try:
             cfg.readfp(file_like)
