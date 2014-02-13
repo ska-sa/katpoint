@@ -13,6 +13,7 @@ import test_flux
 import test_conversion
 import test_pointing
 import test_refraction
+import test_delay
 
 # Enable verbose logging to stdout for katpoint module - see output via nosetests -s flag
 logger = logging.getLogger("katpoint")
@@ -34,6 +35,7 @@ def suite():
     testsuite.addTests(loader.loadTestsFromModule(test_conversion))
     testsuite.addTests(loader.loadTestsFromModule(test_pointing))
     testsuite.addTests(loader.loadTestsFromModule(test_refraction))
+    testsuite.addTests(loader.loadTestsFromModule(test_delay))
     return testsuite
 
 if __name__ == '__main__':

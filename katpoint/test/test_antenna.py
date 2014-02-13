@@ -14,13 +14,18 @@ def assert_angles_almost_equal(x, y, decimal):
 class TestAntennaConstruction(unittest.TestCase):
     """Test construction of antennas from strings and vice versa."""
     def setUp(self):
-        self.valid_antennas = ['XDM, -25:53:23.0, 27:41:03.0, 1406.1086, 15.0',
-                               'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7 0.0',
-                               'FF2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 86.2 25.5 0.0, ' +
-                               '-0:06:39.6 0 0 0 0 0 0:09:48.9, 1.16']
-        self.invalid_antennas = ['XDM, -25:53:23.05075, 27:41:03.0',
-                                 'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7',
-                                 'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4, -8.7, 0.0']
+        self.valid_antennas = [
+            'XDM, -25:53:23.0, 27:41:03.0, 1406.1086, 15.0',
+            'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7 0.0',
+            'FF2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 86.2 25.5 0.0, '
+                  '-0:06:39.6 0 0 0 0 0 0:09:48.9, 1.16'
+            ]
+        self.invalid_antennas = [
+            'XDM, -25:53:23.05075, 27:41:03.0',
+            # Delay model can now have any number of terms (not 3 minimum)
+#           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7',
+#           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4, -8.7, 0.0'
+            ]
         self.timestamp = '2009/07/07 08:36:20'
 
     def test_construct_antenna(self):
