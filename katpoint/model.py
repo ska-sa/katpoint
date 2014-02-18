@@ -19,12 +19,40 @@ from .ephem_extra import is_iterable
 
 
 class Parameter(object):
-    """Generic model parameter."""
+    """Generic model parameter.
+
+    This represents a single model parameter, bundling together its attributes
+    and enabling it to be read from a string and output to a string by getting
+    and setting the :attr:`value_str` property.
+
+    Parameters
+    ----------
+    name : string
+        Parameter name
+    units : string
+        Physical unit of parameter value
+    doc : string
+        Documentation string describing parameter
+    from_str : function, signature float = f(string), optional
+        Conversion function to extract parameter from string
+    to_str : function, signature string = f(float), optional
+        Conversion function to express parameter as string
+    value : float, optional
+        Parameter value (*default_value* by default, of course)
+    default_value : float, optional
+        Parameter default value
+
+    Attributes
+    ----------
+    value_str
+
+    """
     def __init__(self, name, units, doc, from_str=float, to_str=str,
                  value=None, default_value=0.0):
         self.name = name
         self.units = units
         self.__doc__ = doc
+        # These functions are underscored to encourage use of value_str instead
         self._from_str = from_str
         self._to_str = to_str
         self.value = value if value is not None else default_value
@@ -32,13 +60,13 @@ class Parameter(object):
 
     def __nonzero__(self):
         """True if parameter is active, i.e. its value differs from default."""
-        # Do explicit cast to bool as value can be a NumPy type, resulting in
+        # Do explicit cast to bool, as value can be a NumPy type, resulting in
         # an np.bool_ type for the expression (not allowed for __nonzero__)
         return bool(self.value != self.default_value)
 
     @property
     def value_str(self):
-        """String form of parameter value."""
+        """String form of parameter value used to convert it to/from a string."""
         return self._to_str(self.value)
     @value_str.setter
     def value_str(self, valstr):
@@ -70,6 +98,19 @@ class Model(object):
 
     __doc__ = """Base class for models (e.g. pointing and delay models).
 
+    The base class handles the construction / loading, saving, display and
+    comparison of models. A Model consists of a sequence of Parameters and
+    an optional header dict. A number of these parameters may be *active*,
+    i.e. not equal to their default values.
+
+    Models can be constructed from description strings (:meth:`fromstring`),
+    sequences of parameter values (:meth:`fromlist`), configuration files
+    (:meth:`fromfile`) or other similar models. The :meth:`set` method
+    automatically picks the correct constructor based on the input.
+
+    Parameter names and values may be accessed and modified via a dict-like
+    interface mapping names to values.
+
     Parameters
     ----------
     params : sequence of :class:`Parameter` objects
@@ -85,7 +126,7 @@ class Model(object):
         return len(self.params)
 
     def __nonzero__(self):
-        """True if model contains any active parameters."""
+        """True if model contains any active (non-default) parameters."""
         return any(p for p in self)
 
     def __iter__(self):
@@ -118,12 +159,12 @@ class Model(object):
                                            for ps in self.param_strs())
 
     def __eq__(self, other):
-        """Equality comparison operator."""
+        """Equality comparison operator (parameter values only)."""
         return self.description == \
                (other.description if isinstance(other, self.__class__) else other)
 
     def __ne__(self, other):
-        """Inequality comparison operator."""
+        """Inequality comparison operator (parameter values only)."""
         return not (self == other)
 
     def __getitem__(self, key):
@@ -154,13 +195,13 @@ class Model(object):
 
     @property
     def description(self):
-        """Compact string representation, sufficient to reconstruct model ('tostring')."""
+        """Compact but complete string representation ('tostring')."""
         active = np.nonzero([bool(p) for p in self])[0]
         last_active = active[-1] if len(active) else -1
         return ' '.join([p.value_str for p in self][:last_active + 1])
 
     def fromstring(self, description):
-        """Load model from description string."""
+        """Load model from description string (parameters only)."""
         self.header = {}
         # Split string either on commas or whitespace, for good measure
         param_vals = [p.strip() for p in description.split(',')] \
@@ -173,7 +214,14 @@ class Model(object):
             param.value = param.default_value
 
     def tofile(self, file_like):
-        """Save model to config file."""
+        """Save model to config file (both header and parameters).
+
+        Parameters
+        ----------
+        file-like : object
+            File-like object with write() method representing config file
+
+        """
         cfg = ConfigParser.SafeConfigParser()
         cfg.add_section('header')
         for key, val in self.header.items():
@@ -184,7 +232,14 @@ class Model(object):
         cfg.write(file_like)
 
     def fromfile(self, file_like):
-        """Load model from config file."""
+        """Load model from config file (both header and parameters).
+
+        Parameters
+        ----------
+        file-like : object
+            File-like object with readline() method representing config file
+ 
+        """
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
         cfg = ConfigParser.SafeConfigParser(defaults)
         try:
@@ -211,9 +266,9 @@ class Model(object):
         ----------
         model : file-like or model object, sequence of floats, or string, optional
             Model specification. If this is a file-like or model object, load
-            the model from it. If this is a sequence of floats, accept it
-            directly as the model parameters (defaults to sequence of zeroes).
-            If it is a string, interpret it as a comma-separated (or whitespace-
+            the model from it (including header). If this is a sequence of
+            floats, accept it directly as the model parameters. If it is a
+            string, interpret it as a comma-separated (or whitespace-
             separated) sequence of parameters in their string form (i.e. a
             description string). The default is an empty model.
 
