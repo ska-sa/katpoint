@@ -34,13 +34,13 @@ class DelayModel(Model):
 
     Parameters
     ----------
-    model : file-like object, sequence of floats, or string, optional
-        Model specification. If this is a file-like object, load the model
-        from it. If this is a sequence of floats, accept it directly as the
-        model parameters (defaults to sequence of zeroes). If it is a string,
-        interpret it as a comma-separated (or whitespace-separated) sequence
-        of parameters in their string form (i.e. a description string). The
-        default is an empty model.
+    model : file-like or model object, sequence of floats, or string, optional
+        Model specification. If this is a file-like or model object, load the
+        model from it. If this is a sequence of floats, accept it directly as
+        the model parameters (defaults to sequence of zeroes). If it is a
+        string, interpret it as a comma-separated (or whitespace-separated)
+        sequence of parameters in their string form (i.e. a description
+        string). The default is an empty model.
 
     """
     def __init__(self, model=None):
