@@ -14,7 +14,8 @@ before_install:
   - ulimit -a
   - python -V
   # Install gfortran and numpy (to get proper f2py), followed by other dependencies
-  - sudo apt-get install -qq gfortran python-numpy
+  - sudo apt-get install -qq gfortran
+  - pip install numpy==1.4.1
   - pip install -r requirements.txt --use-mirrors
   # Build AIPS projection module using f2py
   - pushd katpoint/test/aips_projection
