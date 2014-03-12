@@ -138,7 +138,7 @@ class DelayCorrection(object):
 
     def _calculate_max_delay(self):
         """The maximum (absolute) delay achievable in the array, in seconds."""
-        max_delay_per_ant = np.linalg.norm(self._params[:, :3], axis=1)
+        max_delay_per_ant = np.sqrt((self._params[:, :3] ** 2).sum(axis=1))
         max_delay_per_ant += self._params[:, 3]
         max_delay_per_ant += self._params[:, 4:6].max(axis=1)
         # Add a 1% safety margin to guarantee positive delay corrections
