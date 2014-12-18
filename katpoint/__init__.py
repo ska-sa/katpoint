@@ -60,6 +60,7 @@ _no_config_handler.addFilter(_NoConfigFilter())
 logger = _logging.getLogger(__name__)
 logger.addHandler(_no_config_handler)
 
+# Attempt to determine installed package version
 try:
     import pkg_resources as _pkg_resources
 except ImportError:
@@ -71,5 +72,6 @@ else:
         # a .index method.
         ver = list(dist.parsed_version)
         __version__ = "r%d" % int(ver[ver.index("*r") + 1])
+        del dist, ver
     except (_pkg_resources.DistributionNotFound, ValueError, IndexError, TypeError):
         __version__ = "unknown"
