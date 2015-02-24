@@ -852,17 +852,21 @@ def construct_target_params(description):
             body.name = preferred_name
         else:
             body.name = "Ra: %s Dec: %s" % (ra, dec)
-        # Extract epoch info from tags default to ephem.J2000
+        # Extract epoch info from tags, default to ephem.J2000
         if ('B1900' in tags) or ('b1900' in tags):
             body._epoch = ephem.B1900
         elif ('B1950' in tags) or ('b1950' in tags):
             body._epoch = ephem.B1950
         else:
-            #Search for a well formed decimal number
-            epoch_re = re.compile('^(\d+(?:\.\d+)?)$')
-            epoch = [epoch_re.match(tag).group() for tag in tags if epoch_re.match(tag)]
-            #epoch will be an empty list if no decimal number is found
-            epoch = epoch[0] if epoch else ephem.J2000
+            #Search for a 'J' epoch string in tags
+            epoch_re = re.compile('^J(\d+(?:\.\d+)?)$')
+            epoch_match = [epoch_re.match(tag).group(1) for tag in tags if epoch_re.match(tag)]
+            #Default to ephem.J2000 epoch
+            epoch = ephem.J2000
+            if epoch_match:
+                #Convert first epoch string found to Dublin Julian date for input to Ephem
+                #Jxxxx.xx dates are defined (by convention) as offset in Julian years from Gregorian J2000 epoch
+                epoch+=(float(epoch_match[0])-2000.0)*365.25
             body._epoch = epoch
         body._ra = ra
         body._dec = dec
@@ -878,17 +882,21 @@ def construct_target_params(description):
             body.name = preferred_name
         else:
             body.name = "Galactic l: %.4f b: %.4f" % (l, b)
-        # Extract epoch info from tags default to ephem.J2000
+        # Extract epoch info from tags, default to ephem.J2000
         if ('B1900' in tags) or ('b1900' in tags):
             body._epoch = ephem.B1900
         elif ('B1950' in tags) or ('b1950' in tags):
             body._epoch = ephem.B1950
         else:
-            #Search for a well formed number (with optional decimal point)
-            decimal_re = re.compile('^(\d+(?:\.\d+)?)$')
-            epoch = [decimal_re.match(tag).group() for tag in tags if decimal_re.match(tag)]
-            #epoch will be an empty list if no decimal number is found
-            epoch = epoch[0] if epoch else ephem.J2000
+            #Search for a 'J' epoch string in tags
+            epoch_re = re.compile('^J(\d+(?:\.\d+)?)$')
+            epoch_match = [epoch_re.match(tag).group(1) for tag in tags if epoch_re.match(tag)]
+            #Default to ephem.J2000 epoch
+            epoch = ephem.J2000
+            if epoch_match:
+                #Convert first epoch string found to Dublin Julian date for input to Ephem
+                #Jxxxx.xx dates are defined (by convention) as offset in Julian years from Gregorian J2000 epoch
+                epoch+=(float(epoch_match[0])-2000.0)*365.25
             body._epoch = epoch
         body._ra = ra
         body._dec = dec
