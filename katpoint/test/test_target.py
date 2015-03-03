@@ -186,5 +186,6 @@ class TestTargetCalculations(unittest.TestCase):
         prec_ra1,prec_dec1 = targ1.astrometric_radec(epoch='J1950')
         targ2 = katpoint.construct_radec_target(prec_ra1,prec_dec1,epoch=katpoint.epoch_to_ephem('J1950'))
         ra2,dec2 = targ2.astrometric_radec(epoch='J1900')
-        np.testing.assert_almost_equal(ra1,ra2, decimal=5)
-        np.testing.assert_almost_equal(dec1,dec2, decimal=5)
+        #Check to 9 decimal places should be accurate to better than 100th of an arcsecond at declination 0
+        np.testing.assert_almost_equal(ra1,ra2, decimal=9)
+        np.testing.assert_almost_equal(dec1,dec2, decimal=9)
