@@ -62,16 +62,14 @@ logger.addHandler(_no_config_handler)
 
 # Attempt to determine installed package version
 try:
-    import pkg_resources as _pkg_resources
+    import pip
 except ImportError:
     __version__ = "unknown"
 else:
     try:
-        dist = _pkg_resources.get_distribution("katpoint")
-        # ver needs to be a list since tuples in Python <= 2.5 don't have
-        # a .index method.
-        ver = list(dist.parsed_version)
-        __version__ = "r%d" % int(ver[ver.index("*r") + 1])
-        del dist, ver
-    except (_pkg_resources.DistributionNotFound, ValueError, IndexError, TypeError):
+        dist = next(d for d in pip.get_installed_distributions()
+                    if d.key == 'katpoint')
+        __version__ = dist.version
+        del dist
+    except StopIteration:
         __version__ = "unknown"
