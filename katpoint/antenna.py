@@ -10,7 +10,7 @@ import numpy as np
 import ephem
 
 from .timestamp import Timestamp
-from .ephem_extra import is_iterable
+from .ephem_extra import is_iterable, rad2deg
 from .conversion import enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
 from .pointing import PointingModel
 from .delay import DelayModel
@@ -217,7 +217,11 @@ class Antenna(object):
 
     @property
     def description(self):
-        """Complete string representation of antenna object, sufficient to reconstruct it."""
+        """Complete string representation of antenna object, sufficient to reconstruct it.
+
+        The reconstruction is **not** exact, because some of the values are
+        rounded. Use :attr:`description_repr` for a less-readable string that will
+        exactly reconstruct the object."""
         # These fields are used to build up the antenna description string
         fields = [self.name]
         pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
@@ -228,9 +232,26 @@ class Antenna(object):
         fields += [str(self.beamwidth)]
         return ', '.join(fields)
 
+    @property
+    def description_repr(self):
+        """Complete string representation of antenna object, sufficient to reconstruct it.
+
+        Unlike :attr:`description`, this string can be used to reconstruct a
+        new antenna object precisely. The exact format is not specified.
+        """
+        # These fields are used to build up the antenna description string
+        fields = [self.name]
+        pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
+        fields += [repr(rad2deg(pos[0])), repr(rad2deg(pos[1])), repr(pos[2])]
+        fields += [repr(self.diameter)]
+        fields += [self.delay_model.description]
+        fields += [self.pointing_model.description]
+        fields += [repr(self.beamwidth)]
+        return ', '.join(fields)
+
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""
-        return self.description
+        return self.description_repr
 
     def baseline_toward(self, antenna2):
         """Baseline vector pointing toward second antenna, in ENU coordinates.

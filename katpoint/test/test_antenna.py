@@ -36,7 +36,7 @@ class TestAntennaConstruction(unittest.TestCase):
             ant = katpoint.Antenna(descr)
             print str(ant), repr(ant)
             self.assertEqual(descr, ant.description, 'Antenna description differs from original string')
-            self.assertEqual(ant.description, ant.format_katcp(), 'Antenna description differs from KATCP format')
+            self.assertEqual(ant.description_repr, ant.format_katcp(), 'Antenna description differs from KATCP format')
         for descr in self.invalid_antennas:
             self.assertRaises(ValueError, katpoint.Antenna, descr)
         descr = valid_antennas[0].description

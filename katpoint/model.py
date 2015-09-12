@@ -47,7 +47,7 @@ class Parameter(object):
     value_str
 
     """
-    def __init__(self, name, units, doc, from_str=float, to_str=str,
+    def __init__(self, name, units, doc, from_str=float, to_str=repr,
                  value=None, default_value=0.0):
         self.name = name
         self.units = units
