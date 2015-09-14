@@ -28,7 +28,12 @@ class TestDelayModel(unittest.TestCase):
         params = m.delay_params
         m3 = katpoint.DelayModel()
         m3.fromdelays(params)
-        self.assertEqual(m, m3, 'Converting delay model to delay parameters and loading it again failed')
+        # Conversion from distance to time and back again will introduce
+        # rounding errors, so we can't just use assertEqual.
+        for p, p3 in zip(m, m3):
+            self.assertEqual(p.name, p3.name, 'Converting delay model to delay parameters and loading it again failed')
+            self.assertEqual(p.units, p3.units, 'Converting delay model to delay parameters and loading it again failed')
+            np.testing.assert_allclose(p3.value, p.value, 1e-13, err_msg='Converting delay model to delay parameters and loading it again failed')
 
 
 class TestDelayCorrection(unittest.TestCase):
