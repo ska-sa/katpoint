@@ -137,7 +137,7 @@ class Target(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return self.description == (other.description if isinstance(other, Target) else other)
+        return self.description_repr == (other.description_repr if isinstance(other, Target) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
@@ -145,11 +145,11 @@ class Target(object):
 
     def __lt__(self, other):
         """Less-than comparison operator (needed for sorting and np.unique)."""
-        return self.description < (other.description if isinstance(other, Target) else other)
+        return self.description_repr < (other.description_repr if isinstance(other, Target) else other)
 
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""
-        return self.description
+        return self.description_repr
 
     def _set_timestamp_antenna_defaults(self, timestamp, antenna):
         """Set defaults for timestamp and antenna, if they are unspecified.
@@ -190,8 +190,7 @@ class Target(object):
         """Type of target body, as a string tag."""
         return self.tags[0].lower()
 
-    @property
-    def description(self):
+    def _description(self, to_str, angle_to_str, rad_to_str):
         """Complete string representation of target object, sufficient to reconstruct it."""
         names = ' | '.join([self.name] + self.aliases)
         tags = ' '.join(self.tags)
@@ -201,7 +200,7 @@ class Target(object):
             # Check if it's an unnamed target with a default name
             if names.startswith('Az:'):
                 fields = [tags]
-            fields += [str(self.body.az), str(self.body.el)]
+            fields += [angle_to_str(self.body.az), angle_to_str(self.body.el)]
             if fluxinfo:
                 fields += [fluxinfo]
 
@@ -210,7 +209,7 @@ class Target(object):
             if names.startswith('Ra:'):
                 fields = [tags]
             # pylint: disable-msg=W0212
-            fields += [str(self.body._ra), str(self.body._dec)]
+            fields += [angle_to_str(self.body._ra), angle_to_str(self.body._dec)]
             if fluxinfo:
                 fields += [fluxinfo]
 
@@ -219,7 +218,7 @@ class Target(object):
             if names.startswith('Galactic l:'):
                 fields = [tags]
             l, b = ephem.Galactic(ephem.Equatorial(self.body._ra, self.body._dec)).get()
-            fields += ['%.4f' % (rad2deg(l),), '%.4f' % (rad2deg(b),)]
+            fields += [rad_to_str(l), rad_to_str(b)]
             if fluxinfo:
                 fields += [fluxinfo]
 
@@ -245,6 +244,22 @@ class Target(object):
             fields += [edb_string]
 
         return ', '.join(fields)
+
+    @property
+    def description(self):
+        """Complete string representation of target object, sufficient to reconstruct it."""
+        return self._description(
+            to_str = str,
+            angle_to_str = str,
+            rad_to_str = lambda x: '%.4f' % (rad2deg(x),))
+
+    @property
+    def description_repr(self):
+        """Complete string representation of target object, sufficient to reconstruct it."""
+        return self._description(
+            to_str = repr,
+            angle_to_str = lambda x: repr(rad2deg(x)),
+            rad_to_str = lambda x: repr(rad2deg(x)))
 
     def add_tags(self, tags):
         """Add tags to target object.

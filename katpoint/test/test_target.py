@@ -88,7 +88,8 @@ class TestTargetConstruction(unittest.TestCase):
         self.assertNotEqual(t1, t2, 'Targets should not be equal')
         t1.aliases += ['bollie']
         self.assertEqual(t1.description, t2.description, 'Target description string not updated')
-        self.assertEqual(t1, t2.description, 'Equality with description string failed')
+        self.assertEqual(t1.description_repr, t2.description_repr, 'Target description string not updated')
+        self.assertEqual(t1, t2.description_repr, 'Equality with description string failed')
         self.assertEqual(t1, t2, 'Equality with target failed')
         self.assertEqual(t1, katpoint.Target(t2), 'Construction with target object failed')
 
