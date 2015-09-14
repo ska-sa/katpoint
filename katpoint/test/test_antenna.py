@@ -51,7 +51,7 @@ class TestAntennaConstruction(unittest.TestCase):
         a1.pointing_model = katpoint.PointingModel('0.1')
         a1.beamwidth = 1.22
         self.assertEqual(a1.description, a2.description, 'Antenna description string not updated')
-        self.assertEqual(a1, a2.description, 'Antenna not equal to description string')
+        self.assertEqual(a1, a2.description_repr, 'Antenna not equal to description string')
         self.assertEqual(a1, a2, 'Antennas not equal')
 
     def test_local_sidereal_time(self):

@@ -205,7 +205,7 @@ class Antenna(object):
 
     def __eq__(self, other):
         """Equality comparison operator."""
-        return self.description == (other.description if isinstance(other, Antenna) else other)
+        return self.description_repr == (other.description_repr if isinstance(other, Antenna) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
@@ -213,7 +213,7 @@ class Antenna(object):
 
     def __lt__(self, other):
         """Less-than comparison operator (needed for sorting and np.unique)."""
-        return self.description < (other.description if isinstance(other, Antenna) else other)
+        return self.description_repr < (other.description_repr if isinstance(other, Antenna) else other)
 
     def _description(self, to_str, angle_to_str):
         """Implementation of :attr:`description` and :attr:`description_repr`.
