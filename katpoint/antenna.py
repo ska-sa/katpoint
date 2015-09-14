@@ -215,6 +215,26 @@ class Antenna(object):
         """Less-than comparison operator (needed for sorting and np.unique)."""
         return self.description < (other.description if isinstance(other, Antenna) else other)
 
+    def _description(self, to_str, angle_to_str):
+        """Implementation of :attr:`description` and :attr:`description_repr`.
+
+        Parameters
+        ----------
+        to_str : callable
+            Convert real numbers to string
+        angle_to_str : callable
+            Convert :class:`ephem.Angle` objects to string
+        """
+        # These fields are used to build up the antenna description string
+        fields = [self.name]
+        pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
+        fields += [angle_to_str(pos[0]), angle_to_str(pos[1]), to_str(pos[2])]
+        fields += [to_str(self.diameter)]
+        fields += [self.delay_model.description]
+        fields += [self.pointing_model.description]
+        fields += [to_str(self.beamwidth)]
+        return ', '.join(fields)
+
     @property
     def description(self):
         """Complete string representation of antenna object, sufficient to reconstruct it.
@@ -222,15 +242,7 @@ class Antenna(object):
         The reconstruction is **not** exact, because some of the values are
         rounded. Use :attr:`description_repr` for a less-readable string that will
         exactly reconstruct the object."""
-        # These fields are used to build up the antenna description string
-        fields = [self.name]
-        pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
-        fields += [str(coord) for coord in pos]
-        fields += [str(self.diameter)]
-        fields += [self.delay_model.description]
-        fields += [self.pointing_model.description]
-        fields += [str(self.beamwidth)]
-        return ', '.join(fields)
+        return self._description(to_str=str, angle_to_str=str)
 
     @property
     def description_repr(self):
@@ -239,15 +251,7 @@ class Antenna(object):
         Unlike :attr:`description`, this string can be used to reconstruct a
         new antenna object precisely. The exact format is not specified.
         """
-        # These fields are used to build up the antenna description string
-        fields = [self.name]
-        pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
-        fields += [repr(rad2deg(pos[0])), repr(rad2deg(pos[1])), repr(pos[2])]
-        fields += [repr(self.diameter)]
-        fields += [self.delay_model.description]
-        fields += [self.pointing_model.description]
-        fields += [repr(self.beamwidth)]
-        return ', '.join(fields)
+        return self._description(to_str=repr, angle_to_str=lambda x: repr(rad2deg(x)))
 
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""
