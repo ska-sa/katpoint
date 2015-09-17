@@ -25,16 +25,23 @@ def deg2rad(x):
 
 
 def _just_gimme_an_ascii_string(s):
-    """Converts encoded/decoded string to a platform-appropriate ASCII string."""
-    try:
-        # Python 2 anything -> TypeError
-        # Python 3 Unicode string -> TypeError 
-        # Python 3 ASCII bytes -> Unicode string
+    """Converts encoded/decoded string to a platform-appropriate ASCII string.
+
+    On Python 2 this encodes Unicode strings to normal ASCII strings, while
+    normal strings are left unchanged. On Python 3 this decodes bytes to
+    Unicode strings via the ASCII encoding, while Unicode strings are left
+    unchanged (and might still contain non-ASCII characters!).
+
+    Raises
+    ------
+    UnicodeEncodeError, UnicodeDecodeError
+        If the conversion fails due to the presence of non-ASCII characters
+
+    """
+    if isinstance(s, bytes) and not isinstance(s, str):
+        # Only encoded bytes on Python 3 will end up here
         return str(s, encoding='ascii')
-    except TypeError:
-        # Python 2 anything -> ASCII string
-        # Python 3 Unicode string -> Unicode string
-        # Python 3 ASCII bytes -> something horrible...
+    else:
         return str(s)
 
 def angle_from_degrees(s):
@@ -55,7 +62,7 @@ def angle_from_hours(s):
         # If input is neither, assume that it really wants to be a string
         return ephem.hours(_just_gimme_an_ascii_string(s))
 
-        
+
 def wrap_angle(angle, period=2.0 * np.pi):
     """Wrap angle into interval centred on zero.
 
