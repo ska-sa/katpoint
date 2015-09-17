@@ -10,7 +10,7 @@ import numpy as np
 import ephem
 
 from .model import Parameter, Model
-from .ephem_extra import rad2deg, deg2rad
+from .ephem_extra import rad2deg, deg2rad, angle_from_degrees
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +39,10 @@ class PointingModel(Model):
     """
     def __init__(self, model=None):
         # There are two main types of parameter: angles and scale factors
-        angle_to_string = lambda a: str(ephem.degrees(a).znorm) if a else '0'
+        angle_to_string = lambda a: str(angle_from_degrees(a).znorm) if a else '0'
         def angle_param(name, doc):
             """Create angle-valued parameter."""
-            return Parameter(name, 'deg', doc, from_str=ephem.degrees,
+            return Parameter(name, 'deg', doc, from_str=angle_from_degrees,
                              to_str=angle_to_string)
         def scale_param(name, doc):
             """Create scale-valued parameter."""

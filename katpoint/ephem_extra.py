@@ -14,6 +14,7 @@ def is_iterable(x):
     """Checks if object is iterable (but not a string or 0-dimensional array)."""
     return hasattr(x, '__iter__') and not (getattr(x, 'shape', None) == ())
 
+
 def rad2deg(x):
     """Converts radians to degrees (also works for arrays)."""
     return x * (180.0 / np.pi)
@@ -21,6 +22,46 @@ def rad2deg(x):
 def deg2rad(x):
     """Converts degrees to radians (also works for arrays)."""
     return x * (np.pi / 180.0)
+
+
+def _just_gimme_an_ascii_string(s):
+    """Converts encoded/decoded string to a platform-appropriate ASCII string.
+
+    On Python 2 this encodes Unicode strings to normal ASCII strings, while
+    normal strings are left unchanged. On Python 3 this decodes bytes to
+    Unicode strings via the ASCII encoding, while Unicode strings are left
+    unchanged (and might still contain non-ASCII characters!).
+
+    Raises
+    ------
+    UnicodeEncodeError, UnicodeDecodeError
+        If the conversion fails due to the presence of non-ASCII characters
+
+    """
+    if isinstance(s, bytes) and not isinstance(s, str):
+        # Only encoded bytes on Python 3 will end up here
+        return str(s, encoding='ascii')
+    else:
+        return str(s)
+
+def angle_from_degrees(s):
+    """Creates angle object from sexagesimal string in degrees or number in radians."""
+    try:
+        # Ephem expects a number or platform-appropriate string (i.e. Unicode on Py3)
+        return ephem.degrees(s)
+    except TypeError:
+        # If input is neither, assume that it really wants to be a string
+        return ephem.degrees(_just_gimme_an_ascii_string(s))
+
+def angle_from_hours(s):
+    """Creates angle object from sexagesimal string in hours or number in radians."""
+    try:
+        # Ephem expects a number or platform-appropriate string (i.e. Unicode on Py3)
+        return ephem.hours(s)
+    except TypeError:
+        # If input is neither, assume that it really wants to be a string
+        return ephem.hours(_just_gimme_an_ascii_string(s))
+
 
 def wrap_angle(angle, period=2.0 * np.pi):
     """Wrap angle into interval centred on zero.
@@ -49,8 +90,8 @@ class StationaryBody(object):
 
     """
     def __init__(self, az, el, name=None):
-        self.az = ephem.degrees(az)
-        self.el = ephem.degrees(el)
+        self.az = angle_from_degrees(az)
+        self.el = angle_from_degrees(el)
         self.alt = self.el # alternative terminology
         if not name:
             name = "Az: %s El: %s" % (self.az, self.el)

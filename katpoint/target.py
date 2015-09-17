@@ -5,7 +5,8 @@ import ephem
 
 from .timestamp import Timestamp
 from .flux import FluxDensityModel
-from .ephem_extra import StationaryBody, NullBody, is_iterable, lightspeed, deg2rad, rad2deg
+from .ephem_extra import (StationaryBody, NullBody, is_iterable, lightspeed,
+                          deg2rad, rad2deg, angle_from_degrees, angle_from_hours)
 from .conversion import azel_to_enu
 from .projection import sphere_to_plane, plane_to_sphere
 
@@ -846,7 +847,7 @@ def construct_target_params(description):
             ra = deg2rad(float(fields[2]))
         except ValueError:
             ra = fields[2]
-        ra, dec = ephem.hours(ra), ephem.degrees(fields[3])
+        ra, dec = angle_from_hours(ra), angle_from_degrees(fields[3])
         if preferred_name:
             body.name = preferred_name
         else:
@@ -1000,7 +1001,7 @@ def construct_radec_target(ra, dec):
             ra = deg2rad(float(ra))
         except ValueError:
             pass
-    ra, dec = ephem.hours(ra), ephem.degrees(dec)
+    ra, dec = angle_from_hours(ra), angle_from_degrees(dec)
     body.name = "Ra: %s Dec: %s" % (ra, dec)
     body._epoch = ephem.J2000
     body._ra = ra
