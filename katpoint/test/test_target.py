@@ -158,6 +158,13 @@ class TestTargetCalculations(unittest.TestCase):
         np.testing.assert_almost_equal(v, -9.1043784587765906, decimal=5)
         np.testing.assert_almost_equal(w, 4.7781625336985198e-10, decimal=5)
 
+    def test_uvw_array(self):
+        """Test uvw calculation on an array."""
+        u, v, w = self.target.uvw(self.ant2, np.array([self.ts, self.ts]), self.ant1)
+        np.testing.assert_array_almost_equal(u, np.array([10.821750916197391] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([-9.1043784587765906] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([4.7781625336985198e-10] * 2), decimal=5)
+
     def test_separation(self):
         """Test separation calculation."""
         sun = katpoint.Target('Sun, special')
