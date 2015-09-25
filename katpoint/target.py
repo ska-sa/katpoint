@@ -555,6 +555,58 @@ class Target(object):
         delay_rate = - (np.dot(baseline_m, targetdir_after) - np.dot(baseline_m, targetdir_before)) / lightspeed
         return delay, delay_rate
 
+    def uvw_basis(self, timestamp=None, antenna=None):
+        """Calculate the coordinate transformation from local ENU coordinates
+        to (u,v,w) coordinates while pointing at target.
+
+        For simple cases, use :meth:`uvw` directly. This method is useful for
+        computing (u,v,w) coordinates for all antennas in an array more
+        efficiently than calling :meth:`uvw` for each antenna in turn.
+
+        Refer to :meth:`uvw` for details about how the (u,v,w) coordinate
+        system is defined.
+
+        Parameters
+        ----------
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Reference antenna of baseline pairs, which also serves as
+            pointing reference (defaults to default antenna)
+
+        Returns
+        -------
+        uvw : 2D or 3D array
+            Orthogonal basis vectors for the transformation. If `timestamp` is
+            scalar, the return value is a matrix to multiply by ENU column
+            vectors to produce UVW vectors. If `timestamp` is a vector,
+            the first two dimensions correspond to the matrix and the final
+            dimension to the timestamp.
+        """
+        timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+        # NCP vector is J2000 NCP
+        ncp = construct_radec_target(0.0,np.pi/2)
+        # Get J2000 NCP az-el vector at current epoch pointed to by reference antenna
+        ncp_az,ncp_el = ncp.azel(timestamp, antenna)
+        # Obtain direction vector(s) from reference antenna to target
+        az, el = self.azel(timestamp, antenna)
+        # w axis points toward target
+        w = np.array(azel_to_enu(az, el))
+        # enu vector pointing from reference antenna to north celestial pole
+        z = np.array(azel_to_enu(ncp_az, ncp_el))
+        # u axis is orthogonal to z and w, and row_stack makes it 2-D array of column vectors (for finding poles)
+        u = np.row_stack(np.cross(z, w, axis=0))
+        u_norm = np.sqrt(np.sum(u ** 2, axis=0))
+        # If the target is a celestial pole (so that w equals z or -z), u and v become degenerate
+        poles = u_norm < 1e-12
+        # Arbitrarily pick east vector of ENU system as u in this case
+        u[:, poles] = [[1.0], [0.0], [0.0]]
+        u_norm[poles] = 1.0
+        # Ensure that u and w (and therefore v) have the same shape to handle scalar vs array output correctly
+        u = u.reshape(w.shape) / u_norm
+        v = np.cross(w, u, axis=0)
+        return np.array([u, v, w])
+
     def uvw(self, antenna2, timestamp=None, antenna=None):
         """Calculate (u,v,w) coordinates of baseline while pointing at target.
 
@@ -591,28 +643,13 @@ class Target(object):
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         # Obtain baseline vector from reference antenna to second antenna
         baseline_m = antenna.baseline_toward(antenna2)
-        # NCP vector is J2000 NCP
-        ncp = construct_radec_target(0.0,np.pi/2)
-        # Get J2000 NCP az-el vector at current epoch pointed to by reference antenna
-        ncp_az,ncp_el = ncp.azel(timestamp, antenna)
-        # Obtain direction vector(s) from reference antenna to target
-        az, el = self.azel(timestamp, antenna)
-        # w axis points toward target
-        w = np.array(azel_to_enu(az, el))
-        # enu vector pointing from reference antenna to north celestial pole
-        z = np.array(azel_to_enu(ncp_az, ncp_el))
-        # u axis is orthogonal to z and w, and row_stack makes it 2-D array of column vectors (for finding poles)
-        u = np.row_stack(np.cross(z, w, axis=0))
-        u_norm = np.sqrt(np.sum(u ** 2, axis=0))
-        # If the target is a celestial pole (so that w equals z or -z), u and v become degenerate
-        poles = u_norm < 1e-12
-        # Arbitrarily pick east vector of ENU system as u in this case
-        u[:, poles] = [[1.0], [0.0], [0.0]]
-        u_norm[poles] = 1.0
-        # Ensure that u and w (and therefore v) have the same shape to handle scalar vs array output correctly
-        u = u.reshape(w.shape) / u_norm
-        v = np.cross(w, u, axis=0)
-        return np.dot(baseline_m, u), np.dot(baseline_m, v), np.dot(baseline_m, w)
+        # Obtain basis vectors
+        basis = self.uvw_basis(timestamp, antenna)
+        # Apply linear coordinate transformation. A single call np.dot won't
+        # work for both the scalar and array case, so we explicitly specify the
+        # axes to sum over.
+        u, v, w = np.tensordot(basis, baseline_m, ([1], [0]))
+        return u, v, w
 
     def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency (or frequencies).
