@@ -6,11 +6,16 @@ import time
 
 import katpoint
 
+
+# Use the current year in TLE epochs to avoid pyephem crash due to expired TLEs
+YY = time.localtime().tm_year % 100
+
 class TestCatalogueConstruction(unittest.TestCase):
     """Test construction of catalogues."""
     def setUp(self):
         self.tle_lines = ['GPS BIIA-21 (PRN 09)    \n',
-                          '1 22700U 93042A   07266.32333151  .00000012  00000-0  10000-3 0  8054\n',
+                          '1 22700U 93042A   %02d266.32333151  .00000012  00000-0  10000-3 0  805%1d\n' %
+                           (YY, (YY // 10 + YY - 7 + 4) % 10),
                           '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n']
         self.edb_lines = ['HIC 13847,f|S|A4,2:58:16.03,-40:18:17.1,2.906,2000,\n']
         self.antenna = katpoint.Antenna('XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0')

@@ -2,10 +2,14 @@
 # pylint: disable-msg=C0103,W0212
 
 import unittest
+import time
 
 import numpy as np
 
 import katpoint
+
+# Use the current year in TLE epochs to avoid pyephem crash due to expired TLEs
+YY = time.localtime().tm_year % 100
 
 class TestTargetConstruction(unittest.TestCase):
     """Test construction of targets from strings and vice versa."""
@@ -21,10 +25,12 @@ class TestTargetConstruction(unittest.TestCase):
                               'Zizou, radec cal, 1.4, 30.0, (1000.0 2000.0 1.0 10.0)',
                               'Fluffy | *Dinky, radec, 12.5, -50.0, (1.0 2.0 1.0 2.0 3.0 4.0)',
                               'tle, GPS BIIA-21 (PRN 09)    \n' +
-                              '1 22700U 93042A   07266.32333151  .00000012  00000-0  10000-3 0  8054\n' +
+                              ('1 22700U 93042A   %02d266.32333151  .00000012  00000-0  10000-3 0  805%1d\n' %
+                               (YY, (YY // 10 + YY - 7 + 4) % 10)) +
                               '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n',
                               ', tle, GPS BIIA-22 (PRN 05)    \n' +
-                              '1 22779U 93054A   07266.92814765  .00000062  00000-0  10000-3 0  2895\n' +
+                              ('1 22779U 93054A   %02d266.92814765  .00000062  00000-0  10000-3 0  289%1d\n' %
+                               (YY, (YY // 10 + YY - 7 + 5) % 10)) +
                               '2 22779  53.8943 118.4708 0081407  68.2645 292.7207  2.00558015103055\n',
                               'Sun, special',
                               'Nothing, special',
@@ -45,7 +51,8 @@ class TestTargetConstruction(unittest.TestCase):
                                 'tle, GPS BIIA-21 (PRN 09)    \n' +
                                 '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n',
                                 ', tle, GPS BIIA-22 (PRN 05)    \n' +
-                                '1 93054A   07266.92814765  .00000062  00000-0  10000-3 0  2895\n' +
+                                ('1 93054A   %02d266.92814765  .00000062  00000-0  10000-3 0  289%1d\n' %
+                                 (YY, (YY // 10 + YY - 7 + 5) % 10)) +
                                 '2 22779  53.8943 118.4708 0081407  68.2645 292.7207  2.00558015103055\n',
                                 'Sunny, special',
                                 'Slinky, star',
