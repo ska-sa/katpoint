@@ -22,6 +22,7 @@ class TestAntennaConstruction(unittest.TestCase):
             ]
         self.invalid_antennas = [
             'XDM, -25:53:23.05075, 27:41:03.0',
+            '',
             # Delay model can now have any number of terms (not 3 minimum)
 #           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7',
 #           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4, -8.7, 0.0'

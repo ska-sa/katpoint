@@ -133,6 +133,8 @@ class Antenna(object):
                  beamwidth=1.22):
         if isinstance(name, Antenna):
             name = name.description
+        if not name and latitude is None:
+            raise ValueError('Empty antenna description string %r' % (name,))
         # The presence of a comma indicates that a description string is passed in - parse this string into parameters
         if name.find(',') >= 0:
             try:
