@@ -65,8 +65,8 @@ class Antenna(object):
 
     Parameters
     ----------
-    name : string
-        Name of antenna, or full description string
+    name : string or :class:`Antenna` object
+        Name of antenna, or full description string or existing antenna object
     latitude : string or float, optional
         Geodetic latitude, either in 'D:M:S' string format or float in radians
     longitude : string or float, optional
@@ -131,6 +131,8 @@ class Antenna(object):
     def __init__(self, name, latitude=None, longitude=None, altitude=None,
                  diameter=0.0, delay_model=None, pointing_model=None,
                  beamwidth=1.22):
+        if isinstance(name, Antenna):
+            name = name.description
         # The presence of a comma indicates that a description string is passed in - parse this string into parameters
         if name.find(',') >= 0:
             try:

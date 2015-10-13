@@ -53,6 +53,7 @@ class TestAntennaConstruction(unittest.TestCase):
         self.assertEqual(a1.description, a2.description, 'Antenna description string not updated')
         self.assertEqual(a1, a2.description, 'Antenna not equal to description string')
         self.assertEqual(a1, a2, 'Antennas not equal')
+        self.assertEqual(a1, katpoint.Antenna(a2), 'Construction with antenna object failed')
 
     def test_local_sidereal_time(self):
         """Test sidereal time and the use of date/time strings vs floats as timestamps."""
