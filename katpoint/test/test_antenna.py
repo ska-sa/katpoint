@@ -22,6 +22,7 @@ class TestAntennaConstruction(unittest.TestCase):
             ]
         self.invalid_antennas = [
             'XDM, -25:53:23.05075, 27:41:03.0',
+            '',
             # Delay model can now have any number of terms (not 3 minimum)
 #           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7',
 #           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4, -8.7, 0.0'
@@ -53,6 +54,7 @@ class TestAntennaConstruction(unittest.TestCase):
         self.assertEqual(a1.description, a2.description, 'Antenna description string not updated')
         self.assertEqual(a1, a2.description, 'Antenna not equal to description string')
         self.assertEqual(a1, a2, 'Antennas not equal')
+        self.assertEqual(a1, katpoint.Antenna(a2), 'Construction with antenna object failed')
 
     def test_local_sidereal_time(self):
         """Test sidereal time and the use of date/time strings vs floats as timestamps."""

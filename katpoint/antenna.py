@@ -65,8 +65,8 @@ class Antenna(object):
 
     Parameters
     ----------
-    name : string
-        Name of antenna, or full description string
+    name : string or :class:`Antenna` object
+        Name of antenna, or full description string or existing antenna object
     latitude : string or float, optional
         Geodetic latitude, either in 'D:M:S' string format or float in radians
     longitude : string or float, optional
@@ -127,10 +127,21 @@ class Antenna(object):
     various position tuples will not be updated - reconstruct a new antenna
     object instead.
 
+    Also note that the description string of the new Antenna could differ from
+    the original description string if the original string had higher precision
+    in its latitude and longitude coordinates than what ephem can handle
+    internally. Generally the latitude and longitude should be specified up to
+    0.1 arcsecond precision, while altitude should be in metres and East, North
+    and Up offsets are generally specified up to millimetres.
+
     """
     def __init__(self, name, latitude=None, longitude=None, altitude=None,
                  diameter=0.0, delay_model=None, pointing_model=None,
                  beamwidth=1.22):
+        if isinstance(name, Antenna):
+            name = name.description
+        if not name and latitude is None:
+            raise ValueError('Empty antenna description string %r' % (name,))
         # The presence of a comma indicates that a description string is passed in - parse this string into parameters
         if name.find(',') >= 0:
             try:
