@@ -214,6 +214,10 @@ class Antenna(object):
         """Short human-friendly string representation of antenna object."""
         return "<katpoint.Antenna '%s' diam=%sm at 0x%x>" % (self.name, self.diameter, id(self))
 
+    def __reduce__(self):
+        """Custom pickling routine based on description string."""
+        return (self.__class__, (self.description,))
+
     def __eq__(self, other):
         """Equality comparison operator."""
         return self.description == (other.description if isinstance(other, Antenna) else other)
