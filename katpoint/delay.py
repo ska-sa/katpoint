@@ -242,9 +242,10 @@ class DelayCorrection(object):
         else:
             # Use cache for a single timestamp
             delays = self._cached_delays(target, timestamp)
-        omega_centre = 2.0 * np.pi * self.sky_centre_freq
+        # The phase associated with delay t0 at the centre frequency
+        phase = lambda t0: - 2.0 * np.pi * self.sky_centre_freq * t0
         delay_corrections = self.max_delay - delays
-        phase_corrections = - omega_centre * delays
+        phase_corrections = - phase(delays)
         if next_timestamp is None:
             return dict(zip(self.inputs, delay_corrections)), \
                    dict(zip(self.inputs, phase_corrections))
@@ -253,8 +254,8 @@ class DelayCorrection(object):
         if not is_iterable(next_timestamp):
             next_delays = self._cached_delays(target, next_timestamp)
         next_delay_corrections = self.max_delay - next_delays
+        next_phase_corrections = - phase(next_delays)
         delay_slopes = (next_delay_corrections - delay_corrections) / step
-        next_phase_corrections = - omega_centre * next_delays
         phase_slopes = (next_phase_corrections - phase_corrections) / step
         # This construction works for both the scalar and vector cases.
         # The squeeze() gets rid of an extra singleton in the scalar case.
