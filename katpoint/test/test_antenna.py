@@ -3,6 +3,7 @@
 
 import unittest
 import time
+import cPickle
 
 import katpoint
 import numpy as np
@@ -55,6 +56,7 @@ class TestAntennaConstruction(unittest.TestCase):
         self.assertEqual(a1, a2.description, 'Antenna not equal to description string')
         self.assertEqual(a1, a2, 'Antennas not equal')
         self.assertEqual(a1, katpoint.Antenna(a2), 'Construction with antenna object failed')
+        self.assertEqual(a1, cPickle.loads(cPickle.dumps(a1)), 'Pickling failed')
 
     def test_local_sidereal_time(self):
         """Test sidereal time and the use of date/time strings vs floats as timestamps."""

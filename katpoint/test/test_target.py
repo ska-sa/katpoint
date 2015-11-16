@@ -3,6 +3,7 @@
 
 import unittest
 import time
+import cPickle
 
 import numpy as np
 
@@ -98,6 +99,7 @@ class TestTargetConstruction(unittest.TestCase):
         self.assertEqual(t1, t2.description, 'Equality with description string failed')
         self.assertEqual(t1, t2, 'Equality with target failed')
         self.assertEqual(t1, katpoint.Target(t2), 'Construction with target object failed')
+        self.assertEqual(t1, cPickle.loads(cPickle.dumps(t1)), 'Pickling failed')
 
     def test_constructed_coords(self):
         """Test whether calculated coordinates match those with which it is constructed."""
