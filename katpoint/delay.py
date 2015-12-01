@@ -47,13 +47,13 @@ class DelayModel(Model):
         params.append(Parameter('POS_E', 'm', 'antenna position: offset East of reference position'))
         params.append(Parameter('POS_N', 'm', 'antenna position: offset North of reference position'))
         params.append(Parameter('POS_U', 'm', 'antenna position: offset above reference position'))
-        params.append(Parameter('NIAO',  'm', 'non-intersecting axis offset - distance between az and el axes'))
         params.append(Parameter('FIX_H', 'm', 'fixed additional path length for H feed due to electronics / cables'))
         params.append(Parameter('FIX_V', 'm', 'fixed additional path length for V feed due to electronics / cables'))
+        params.append(Parameter('NIAO',  'm', 'non-intersecting axis offset - distance between az and el axes'))
         Model.__init__(self, params)
         self.set(model)
         # The EM wave velocity associated with each parameter
-        self._speeds = np.array([lightspeed] * 4 + [FIXEDSPEED] * 2)
+        self._speeds = np.array([lightspeed] * 3 + [FIXEDSPEED] * 2 + [lightspeed])
 
     @property
     def delay_params(self):
@@ -136,9 +136,12 @@ class DelayCorrection(object):
 
     def _calculate_max_delay(self):
         """The maximum (absolute) delay achievable in the array, in seconds."""
+        # Worst case is wavefront moving along baseline connecting ant to ref
         max_delay_per_ant = np.sqrt((self._params[:, :3] ** 2).sum(axis=1))
-        max_delay_per_ant += self._params[:, 3]
-        max_delay_per_ant += self._params[:, 4:6].max(axis=1)
+        # Pick largest fixed delay
+        max_delay_per_ant += self._params[:, 3:5].max(axis=1)
+        # Worst case for NIAO is looking at the horizon
+        max_delay_per_ant += self._params[:, 5]
         # Add a 1% safety margin to guarantee positive delay corrections
         return 1.01 * max(max_delay_per_ant) if self.ants else 0.0
 
@@ -161,8 +164,8 @@ class DelayCorrection(object):
         az, el = target.azel(timestamp, self.ref_ant)
         targetdir = np.array(azel_to_enu(az, el))
         cos_el = np.cos(el)
-        design_mat = np.array([np.r_[-targetdir, cos_el, 1.0, 0.0],
-                               np.r_[-targetdir, cos_el, 0.0, 1.0]])
+        design_mat = np.array([np.r_[-targetdir, 1.0, 0.0, cos_el],
+                               np.r_[-targetdir, 0.0, 1.0, cos_el]])
         return np.dot(self._params, design_mat.T).ravel()
 
     def _cached_delays(self, target, timestamp):
