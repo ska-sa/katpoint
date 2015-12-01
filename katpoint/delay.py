@@ -14,12 +14,10 @@ from .model import Parameter, Model
 from .conversion import azel_to_enu
 from .ephem_extra import lightspeed, is_iterable
 
-# Speed of EM wave in fixed path (typically due to cables / electronics).
+# Speed of EM wave in fixed path (typically due to cables / clock distribution).
 # This number is not critical - only meant to convert delays to "nice" lengths.
-# E.g. typical factors are: RF over fibre = 0.7 (KAT-7), coax = 0.84 (MeerKAT).
-# Since MeerKAT has a mix of free space and coax anyway, pick something between
-# KAT-7 and full speed.
-FIXEDSPEED = 0.85 * lightspeed
+# Typical factors are: fibre = 0.7, coax = 0.84.
+FIXEDSPEED = 0.7 * lightspeed
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +47,13 @@ class DelayModel(Model):
         params.append(Parameter('POS_E', 'm', 'antenna position: offset East of reference position'))
         params.append(Parameter('POS_N', 'm', 'antenna position: offset North of reference position'))
         params.append(Parameter('POS_U', 'm', 'antenna position: offset above reference position'))
-        params.append(Parameter('NIAO',  'm', 'non-intersecting axis offset - distance between az and el axes'))
         params.append(Parameter('FIX_H', 'm', 'fixed additional path length for H feed due to electronics / cables'))
         params.append(Parameter('FIX_V', 'm', 'fixed additional path length for V feed due to electronics / cables'))
+        params.append(Parameter('NIAO',  'm', 'non-intersecting axis offset - distance between az and el axes'))
         Model.__init__(self, params)
         self.set(model)
         # The EM wave velocity associated with each parameter
-        self._speeds = np.array([lightspeed] * 4 + [FIXEDSPEED] * 2)
+        self._speeds = np.array([lightspeed] * 3 + [FIXEDSPEED] * 2 + [lightspeed])
 
     @property
     def delay_params(self):
@@ -138,9 +136,12 @@ class DelayCorrection(object):
 
     def _calculate_max_delay(self):
         """The maximum (absolute) delay achievable in the array, in seconds."""
+        # Worst case is wavefront moving along baseline connecting ant to ref
         max_delay_per_ant = np.sqrt((self._params[:, :3] ** 2).sum(axis=1))
-        max_delay_per_ant += self._params[:, 3]
-        max_delay_per_ant += self._params[:, 4:6].max(axis=1)
+        # Pick largest fixed delay
+        max_delay_per_ant += self._params[:, 3:5].max(axis=1)
+        # Worst case for NIAO is looking at the horizon
+        max_delay_per_ant += self._params[:, 5]
         # Add a 1% safety margin to guarantee positive delay corrections
         return 1.01 * max(max_delay_per_ant) if self.ants else 0.0
 
@@ -163,8 +164,8 @@ class DelayCorrection(object):
         az, el = target.azel(timestamp, self.ref_ant)
         targetdir = np.array(azel_to_enu(az, el))
         cos_el = np.cos(el)
-        design_mat = np.array([np.r_[-targetdir, cos_el, 1.0, 0.0],
-                               np.r_[-targetdir, cos_el, 0.0, 1.0]])
+        design_mat = np.array([np.r_[-targetdir, 1.0, 0.0, cos_el],
+                               np.r_[-targetdir, 0.0, 1.0, cos_el]])
         return np.dot(self._params, design_mat.T).ravel()
 
     def _cached_delays(self, target, timestamp):
@@ -242,9 +243,10 @@ class DelayCorrection(object):
         else:
             # Use cache for a single timestamp
             delays = self._cached_delays(target, timestamp)
-        omega_centre = 2.0 * np.pi * self.sky_centre_freq
+        # The phase associated with delay t0 at the centre frequency
+        phase = lambda t0: - 2.0 * np.pi * self.sky_centre_freq * t0
         delay_corrections = self.max_delay - delays
-        phase_corrections = - omega_centre * delays
+        phase_corrections = - phase(delays)
         if next_timestamp is None:
             return dict(zip(self.inputs, delay_corrections)), \
                    dict(zip(self.inputs, phase_corrections))
@@ -253,8 +255,8 @@ class DelayCorrection(object):
         if not is_iterable(next_timestamp):
             next_delays = self._cached_delays(target, next_timestamp)
         next_delay_corrections = self.max_delay - next_delays
+        next_phase_corrections = - phase(next_delays)
         delay_slopes = (next_delay_corrections - delay_corrections) / step
-        next_phase_corrections = - omega_centre * next_delays
         phase_slopes = (next_phase_corrections - phase_corrections) / step
         # This construction works for both the scalar and vector cases.
         # The squeeze() gets rid of an extra singleton in the scalar case.
