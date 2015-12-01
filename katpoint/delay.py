@@ -14,12 +14,10 @@ from .model import Parameter, Model
 from .conversion import azel_to_enu
 from .ephem_extra import lightspeed, is_iterable
 
-# Speed of EM wave in fixed path (typically due to cables / electronics).
+# Speed of EM wave in fixed path (typically due to cables / clock distribution).
 # This number is not critical - only meant to convert delays to "nice" lengths.
-# E.g. typical factors are: RF over fibre = 0.7 (KAT-7), coax = 0.84 (MeerKAT).
-# Since MeerKAT has a mix of free space and coax anyway, pick something between
-# KAT-7 and full speed.
-FIXEDSPEED = 0.85 * lightspeed
+# Typical factors are: fibre = 0.7, coax = 0.84.
+FIXEDSPEED = 0.7 * lightspeed
 
 logger = logging.getLogger(__name__)
 
