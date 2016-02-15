@@ -60,16 +60,13 @@ _no_config_handler.addFilter(_NoConfigFilter())
 logger = _logging.getLogger(__name__)
 logger.addHandler(_no_config_handler)
 
-# Attempt to determine installed package version
+# BEGIN VERSION CHECK
+# Get package version when locally imported from repo or via -e develop install
 try:
-    import pip
+    import katversion as _katversion
 except ImportError:
-    __version__ = "unknown"
+    import time as _time
+    __version__ = "0.0+unknown.{}".format(_time.strftime('%Y%m%d%H%M'))
 else:
-    try:
-        dist = next(d for d in pip.get_installed_distributions()
-                    if d.key == 'katpoint')
-        __version__ = dist.version
-        del dist
-    except StopIteration:
-        __version__ = "unknown"
+    __version__ = _katversion.get_version(__path__[0])
+# END VERSION CHECK

@@ -2,7 +2,6 @@
 from setuptools import setup, find_packages
 
 setup(name="katpoint",
-      version="trunk",
       description="Karoo Array Telescope pointing coordinate library'",
       author="Ludwig Schwardt",
       author_email="ludwig@ska.ac.za",
@@ -19,5 +18,7 @@ setup(name="katpoint",
       platforms=["OS Independent"],
       keywords="kat kat7 ska",
       zip_safe=False,
+      setup_requires=['katversion'],
+      use_katversion=True,
       test_suite="nose.collector",
       install_requires=["numpy", "pyephem"])
