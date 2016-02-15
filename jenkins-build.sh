@@ -1,9 +1,7 @@
-svn co https://katfs.kat.ac.za/svnDS/code/tools
-tools/kat_build_virtualenv.py -s checkout/system-requirements.txt -t venv
-. venv/bin/activate
-# Install other svn dependencies
-# pip install svn+https://katfs.kat.ac.za/svnDS/code/katcp-python/trunk@${SVN_REVISION}
-
-# Install self
-pip install ./checkout
-
+#!/bin/bash
+set -e -x
+pip install -U pip setuptools wheel
+pip install coverage
+install-requirements.py -d ~/docker-base/base-requirements.txt -r requirements.txt
+# install-requirements.py -d ~/docker-base/base-requirements.txt -r test-requirements.txt
+nosetests --with-xunit --with-coverage --cover-erase --cover-xml --cover-inclusive --cover-package=katpoint
