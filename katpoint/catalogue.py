@@ -962,9 +962,13 @@ def _catalogue_completer(context, event):
 
     # Obtain catalogue object from user namespace
     try:
-        cat = eval(base, context.shell.user_ns)
-    except:
-        raise TryNext
+        cat = eval(base, context.user_ns)
+    except (NameError, AttributeError):
+        try:
+            # IPython version < 1.0
+            cat = eval(base, context.shell.user_ns)
+        except (NameError, AttributeError):
+            raise TryNext
 
     # Only continue if this object is actually a Catalogue
     if not isinstance(cat, Catalogue):
