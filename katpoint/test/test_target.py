@@ -174,6 +174,25 @@ class TestTargetCalculations(unittest.TestCase):
         np.testing.assert_array_almost_equal(v, np.array([-9.1043784587765906] * 2), decimal=5)
         np.testing.assert_array_almost_equal(w, np.array([4.7781625336985198e-10] * 2), decimal=5)
 
+    def test_lmn(self):
+        """Test lmn calculation."""
+        # For angles less than pi/2, it matches SIN projection
+        pointing = katpoint.construct_radec_target('11:00:00.0', '-75:00:00.0')
+        target = katpoint.construct_radec_target('16:00:00.0', '-65:00:00.0')
+        ra, dec = target.radec(timestamp=self.ts, antenna=self.ant1)
+        l, m, n = pointing.lmn(ra, dec)
+        expected_l, expected_m = pointing.sphere_to_plane(
+                ra, dec, projection_type='SIN', coord_system='radec')
+        expected_n = np.sqrt(1.0 - expected_l**2 - expected_m**2)
+        np.testing.assert_almost_equal(l, expected_l, decimal=12)
+        np.testing.assert_almost_equal(m, expected_m, decimal=12)
+        np.testing.assert_almost_equal(n, expected_n, decimal=12)
+        # Test angle > pi/2: using the diametrically opposite target
+        l, m, n = pointing.lmn(np.pi + ra, -dec)
+        np.testing.assert_almost_equal(l, -expected_l, decimal=12)
+        np.testing.assert_almost_equal(m, -expected_m, decimal=12)
+        np.testing.assert_almost_equal(n, -expected_n, decimal=12)
+
     def test_separation(self):
         """Test separation calculation."""
         sun = katpoint.Target('Sun, special')

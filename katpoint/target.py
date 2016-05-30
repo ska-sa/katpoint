@@ -8,7 +8,7 @@ from .flux import FluxDensityModel
 from .ephem_extra import (StationaryBody, NullBody, is_iterable, lightspeed,
                           deg2rad, rad2deg, angle_from_degrees, angle_from_hours)
 from .conversion import azel_to_enu
-from .projection import sphere_to_plane, plane_to_sphere
+from .projection import sphere_to_plane, sphere_to_ortho, plane_to_sphere
 
 
 class Target(object):
@@ -654,6 +654,33 @@ class Target(object):
         # axes to sum over.
         u, v, w = np.tensordot(basis, baseline_m, ([1], [0]))
         return u, v, w
+
+    def lmn(self, ra, dec, timestamp=None, antenna=None):
+        """Calculate (l, m, n) coordinates for another target, while pointing at
+        this target.
+
+        Refer to :meth:`uvw` for a description of the coordinate system. This
+        function is vectorised, allowing for multiple targets and multiple
+        timestamps.
+
+        Parameters
+        ----------
+        ra : float or array
+            Right ascension of the other target, in radians
+        dec : float or array
+            Declination of the other target, in radians
+        timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
+            Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
+        antenna : :class:`Antenna` object, optional
+            Pointing reference (defaults to default antenna)
+
+        Returns
+        -------
+        l,m,n : float, or array of same length as `ra`, `dec`, `timestamps`
+            (l, m, n) coordinates of target(s).
+        """
+        ref_ra, ref_dec = self.radec(timestamp, antenna)
+        return sphere_to_ortho(ref_ra, ref_dec, ra, dec)
 
     def flux_density(self, flux_freq_MHz=None):
         """Calculate flux density for given observation frequency (or frequencies).

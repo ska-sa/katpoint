@@ -113,7 +113,7 @@ import numpy as np
 #--- Common
 #--------------------------------------------------------------------------------------------------
 
-def _sphere_to_plane_common(az0, el0, az, el):
+def sphere_to_ortho(az0, el0, az, el):
     """Do calculations common to all zenithal/azimuthal projections."""
     if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
         raise ValueError('Elevation angle outside range of +- pi/2 radians')
@@ -179,7 +179,7 @@ def sphere_to_plane_sin(az0, el0, az, el):
     'slant orthographic' projection as in WCSLIB.
 
     """
-    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
+    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el)
     if np.any(cos_theta < 0.0):
         raise ValueError('Target point more than pi/2 radians away from reference point')
     # x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
@@ -283,7 +283,7 @@ def sphere_to_plane_tan(az0, el0, az, el):
         If input values are out of range, or target is too far from reference
 
     """
-    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
+    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el)
     if np.any(cos_theta <= 0.0):
         raise ValueError('Target point pi/2 radians or more away from reference point')
     # x = tan(theta) * sin(phi), y = tan(theta) * cos(phi)
@@ -369,7 +369,7 @@ def sphere_to_plane_arc(az0, el0, az, el):
         If input values are out of range
 
     """
-    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
+    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el)
     # Safeguard the arccos, as over-ranging happens occasionally due to round-off error
     theta = np.arccos(np.clip(cos_theta, -1.0, 1.0))
     if np.isscalar(theta):
@@ -482,7 +482,7 @@ def sphere_to_plane_stg(az0, el0, az, el):
         If input values are out of range, or target point opposite to reference
 
     """
-    ortho_x, ortho_y, cos_theta = _sphere_to_plane_common(az0, el0, az, el)
+    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el)
     den = 1.0 + cos_theta
     if np.any(den < 1e-5):
         raise ValueError('Target point too close to pi radians away from reference point')
