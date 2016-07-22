@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
-from katversion import get_version
 
 setup(name="katpoint",
-      version=get_version(),
       description="Karoo Array Telescope pointing coordinate library'",
       author="Ludwig Schwardt",
       author_email="ludwig@ska.ac.za",
