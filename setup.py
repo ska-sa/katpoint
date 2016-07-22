@@ -21,4 +21,13 @@ setup(name="katpoint",
       setup_requires=['katversion'],
       use_katversion=True,
       test_suite="nose.collector",
-      install_requires=["numpy", "pyephem"])
+      install_requires=[
+          "numpy",
+          "pyephem"
+      ],
+      tests_require=[
+          "nose",
+          "coverage",
+          "nosexcover",
+          "unittest2"
+      ])
