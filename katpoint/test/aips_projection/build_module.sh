@@ -1,10 +1,18 @@
 #!/bin/bash
 #
-# Build aips_projection Python module using f2py. Requires numpy and gfortran.
+# Build aips_projection Python module using f2py.
+# Requires rsync, patch, numpy and gfortran.
 #
 # On Mac OS 10.7 (Lion), f2py of the system numpy can be found at
 # /System/Library/Frameworks/Python.framework/Versions/2.7/Extras/bin/f2py
 #
+
+# Obtain AIPS source files (keep URL up to date!)
+aips_src=ftp.aoc.nrao.edu::31DEC16
+rsync -auvz --timeout=120 --files-from=aips_files.lst --no-relative $aips_src .
+for f in *.FOR; do mv $f ${f/.FOR/.F}; done
+# Add f2py icing and comment out troublesome AIPS calls
+patch -p0 < aips_files.patch
 
 # On some systems the Python version is appended to f2py executable name (probably to avoid clashes)
 if which f2py; then
@@ -15,7 +23,7 @@ else
 fi
 echo "Using f2py compiler '$f2py_exe'"
 
-$f2py_exe -c -m aips_projection DIRCOS.F NEWPOS.F
+$f2py_exe -c -m aips_projection DIRCOS.F NEWPOS.F CELNAT.F NATCEL.F MOLGAM.F
 if [ -f aips_projection.so ]; then
   mv -f aips_projection.so ..
 fi

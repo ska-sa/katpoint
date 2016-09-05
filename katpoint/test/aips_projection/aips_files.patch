@@ -1,0 +1,74 @@
+--- DIRCOS.FOR	2013-05-14 05:43:05.000000000 +0200
++++ DIRCOS.F	2016-09-05 22:56:44.000000000 +0200
+@@ -52,10 +52,18 @@
+       DOUBLE PRECISION RA0, DEC0, RA, DEC, L, M
+ C
+       DOUBLE PRECISION DEPS, COSS, SINS, DT, DA, DD, SINT, PHI, THETA
+-      INCLUDE 'INCS:DMSG.INC'
+-      INCLUDE 'INCS:DLOC.INC'
+-      INCLUDE 'INCS:PSTD.INC'
++      INCLUDE 'DMSG.INC'
++      INCLUDE 'DLOC.INC'
++      INCLUDE 'PSTD.INC'
+       DATA DEPS /1.0D-5/
++Cf2py intent(in) type
++Cf2py intent(in) ra0
++Cf2py intent(in) dec0
++Cf2py intent(in) ra
++Cf2py intent(in) dec
++Cf2py intent(out) l
++Cf2py intent(out) m
++Cf2py intent(out) ierr
+ C-----------------------------------------------------------------------
+ C                                       Use full accuracy
+       IERR = 2
+@@ -104,7 +112,7 @@
+          ELSE
+             IERR = 3
+             WRITE (MSGTXT,1050)
+-            CALL MSGWRT (6)
++C           CALL MSGWRT (6)
+             L = 0.0D0
+             M = 0.0D0
+             END IF
+--- NEWPOS.FOR	2013-05-14 05:43:06.000000000 +0200
++++ NEWPOS.F	2016-09-05 22:56:30.000000000 +0200
+@@ -55,15 +55,23 @@
+ C
+       DOUBLE PRECISION SINS, COSS, DECT, RAT, DT, DEPS, MG, DA, DZ,
+      *   COS0, SIN0, THETA, PHI
+-      INCLUDE 'INCS:DMSG.INC'
+-      INCLUDE 'INCS:DLOC.INC'
+-      INCLUDE 'INCS:PSTD.INC'
++      INCLUDE 'DMSG.INC'
++      INCLUDE 'DLOC.INC'
++      INCLUDE 'PSTD.INC'
+       DATA DEPS /1.D-5/
++Cf2py intent(in) type
++Cf2py intent(in) ra0
++Cf2py intent(in) dec0
++Cf2py intent(in) l
++Cf2py intent(in) m
++Cf2py intent(out) raout
++Cf2py intent(out) decout
++Cf2py intent(out) ierr
+ C-----------------------------------------------------------------------
+       IERR = 2
+       IF ((TYPE.LT.2) .OR. (TYPE.GT.12)) THEN
+          WRITE (MSGTXT,1000) TYPE
+-         CALL MSGWRT (6)
++C        CALL MSGWRT (6)
+          GO TO 999
+          END IF
+ C                                       angle too large
+--- MOLGAM.FOR	2013-05-14 05:43:05.000000000 +0200
++++ MOLGAM.F	2016-09-05 22:54:07.000000000 +0200
+@@ -41,7 +41,7 @@
+ C
+       INTEGER   I, NC
+       DOUBLE PRECISION VAL, XMIN, XMAX, X, DX, DIST, XP, V
+-      INCLUDE 'INCS:PSTD.INC'
++      INCLUDE 'PSTD.INC'
+ C-----------------------------------------------------------------------
+       VAL = PI * SIN (THETA)
+       XMIN = -TWOPI * 2.0D0
