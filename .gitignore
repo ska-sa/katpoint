@@ -30,3 +30,7 @@ nosetests.xml
 # Developer tools
 *~
 .ropeproject
+
+# Downloaded AIPS source files
+katpoint/test/aips_projection/*.F
+katpoint/test/aips_projection/*.INC
