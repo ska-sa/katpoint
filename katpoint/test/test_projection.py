@@ -383,9 +383,9 @@ class TestProjectionSTG(unittest.TestCase):
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
         for n in xrange(len(az)):
             az_aips[n], el_aips[n], ierr = \
-            newpos(9, self.az0[n], self.el0[n], self.x[n], self.y[n])
+            newpos(6, self.az0[n], self.el0[n], self.x[n], self.y[n])
             x_aips[n], y_aips[n], ierr = \
-            dircos(9, self.az0[n], self.el0[n], az[n], el[n])
+            dircos(6, self.az0[n], self.el0[n], az[n], el[n])
         self.assertEqual(ierr, 0)
         # AIPS NEWPOS STG has poor accuracy on azimuth angle (large closure errors by itself)
         # assert_angles_almost_equal(az, az_aips, decimal=9)
