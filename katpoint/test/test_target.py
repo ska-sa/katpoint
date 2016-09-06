@@ -213,3 +213,14 @@ class TestTargetCalculations(unittest.TestCase):
         re_az, re_el = self.target.plane_to_sphere(x, y, self.ts, self.ant1)
         np.testing.assert_almost_equal(re_az, az, decimal=12)
         np.testing.assert_almost_equal(re_el, el, decimal=12)
+
+    def test_epoch(self):
+        """Test epoch conversion."""
+        targ1 = katpoint.Target('Belle Epoch, radec J1900, 18:00:00, -60:00:00',antenna=self.ant1)
+        ra1,dec1 = targ1.astrometric_radec(epoch='J1900')
+        prec_ra1,prec_dec1 = targ1.astrometric_radec(epoch='J1950')
+        targ2 = katpoint.construct_radec_target(prec_ra1,prec_dec1,epoch=katpoint.epoch_to_ephem('J1950'))
+        ra2,dec2 = targ2.astrometric_radec(epoch='J1900')
+        #Check to 9 decimal places should be accurate to better than 100th of an arcsecond at declination 0
+        np.testing.assert_almost_equal(ra1,ra2, decimal=9)
+        np.testing.assert_almost_equal(dec1,dec2, decimal=9)

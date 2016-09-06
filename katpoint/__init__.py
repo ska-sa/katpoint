@@ -14,7 +14,7 @@ import logging as _logging
 
 from .target import Target, construct_azel_target, construct_radec_target
 from .antenna import Antenna
-from .timestamp import Timestamp
+from .timestamp import Timestamp, epoch_to_ephem
 from .flux import FluxDensityModel
 from .catalogue import Catalogue, specials, _catalogue_completer
 from .ephem_extra import lightspeed, rad2deg, deg2rad, wrap_angle, is_iterable

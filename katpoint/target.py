@@ -3,7 +3,7 @@
 import numpy as np
 import ephem
 
-from .timestamp import Timestamp
+from .timestamp import Timestamp, epoch_to_ephem
 from .flux import FluxDensityModel
 from .ephem_extra import (StationaryBody, NullBody, is_iterable, lightspeed,
                           deg2rad, rad2deg, angle_from_degrees, angle_from_hours)
@@ -366,12 +366,11 @@ class Target(object):
         else:
             return _scalar_radec(timestamp)
 
-    def astrometric_radec(self, timestamp=None, antenna=None):
+    def astrometric_radec(self, timestamp=None, antenna=None, epoch='J2000'):
         """Calculate target's astrometric (ra, dec) coordinates as seen from antenna at time(s).
 
-        This calculates the J2000 *astrometric geocentric position* of the
-        target, in equatorial coordinates. This is its star atlas position for
-        the epoch of J2000.
+        This calculates the *astrometric geocentric position* of the target, in equatorial coordinates
+        at the specified epoch. This is its star atlas position for the given epoch.
 
         Parameters
         ----------
@@ -379,6 +378,10 @@ class Target(object):
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
+        epoch : string, optional
+            The desired epoch of the returned coordinates, either B1900 or B1950 
+            or can be of the form 'Jxxxx.xx' which specifies the date in terms
+            of Julian years from J2000 epoch.
 
         Returns
         -------
@@ -394,9 +397,9 @@ class Target(object):
 
         """
         if self.body_type == 'radec':
-            # Convert to J2000 equatorial coordinates
+            # Convert coordinates to specified epoch
             original_radec = ephem.Equatorial(self.body._ra, self.body._dec, epoch=self.body._epoch)
-            ra, dec = ephem.Equatorial(original_radec, epoch=ephem.J2000).get()
+            ra, dec = ephem.Equatorial(original_radec, epoch=epoch_to_ephem(epoch)).get()
             if is_iterable(timestamp):
                 return np.tile(ra, len(timestamp)), np.tile(dec, len(timestamp))
             else:
@@ -405,6 +408,7 @@ class Target(object):
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
             antenna.observer.date = Timestamp(t).to_ephem_date()
+            antenna.observer.epoch = epoch_to_ephem(epoch)
             self.body.compute(antenna.observer)
             return self.body.a_ra, self.body.a_dec
         if is_iterable(timestamp):
@@ -416,12 +420,12 @@ class Target(object):
     # The default (ra, dec) coordinates are the astrometric ones
     radec = astrometric_radec
 
-    def galactic(self, timestamp=None, antenna=None):
+    def galactic(self, timestamp=None, antenna=None, epoch='J2000'):
         """Calculate target's galactic (l, b) coordinates as seen from antenna at time(s).
 
         This calculates the galactic coordinates of the target, based on the
-        J2000 *astrometric* equatorial coordinates. This is its position relative
-        to the Galactic reference frame for the epoch of J2000.
+        *astrometric* equatorial coordinates. This is its position relative
+        to the Galactic reference frame for the given epoch.
 
         Parameters
         ----------
@@ -429,6 +433,10 @@ class Target(object):
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
         antenna : :class:`Antenna` object, optional
             Antenna which points at target (defaults to default antenna)
+        epoch : string, optional
+            The desired epoch of the returned coordinates, either B1900 or B1950 
+            or can be of the form 'Jxxxx.xx' which specifies the date in terms
+            of Julian years from J2000 epoch.
 
         Returns
         -------
@@ -444,12 +452,15 @@ class Target(object):
 
         """
         if self.body_type == 'gal':
-            l, b = ephem.Galactic(ephem.Equatorial(self.body._ra, self.body._dec)).get()
+            #Get J2000 equatorial coordinates
+            original_radec = ephem.Equatorial(self.body._ra, self.body._dec, epoch=self.body._epoch)
+            ra, dec = ephem.Equatorial(original_radec, epoch=epoch_to_ephem(epoch)).get()
+            l, b = ephem.Galactic(ephem.Equatorial(ra, dec)).get()
             if is_iterable(timestamp):
                 return np.tile(l, len(timestamp)), np.tile(b, len(timestamp))
             else:
                 return l, b
-        ra, dec = self.astrometric_radec(timestamp, antenna)
+        ra, dec = self.astrometric_radec(timestamp, antenna, epoch=epoch)
         if is_iterable(ra):
             lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in xrange(len(ra))])
             return lb[:, 0], lb[:, 1]
@@ -920,13 +931,15 @@ def construct_target_params(description):
             body.name = preferred_name
         else:
             body.name = "Ra: %s Dec: %s" % (ra, dec)
-        # Extract epoch info from tags
-        if ('B1900' in tags) or ('b1900' in tags):
-            body._epoch = ephem.B1900
-        elif ('B1950' in tags) or ('b1950' in tags):
-            body._epoch = ephem.B1950
-        else:
-            body._epoch = ephem.J2000
+        # Extract epoch info from tags, default to ephem.J2000
+        epoch = ephem.J2000
+        # Search for a well formed epoch string in tags
+        for tag in tags:
+            try:
+                epoch=epoch_to_ephem(tag)
+            except ValueError:
+                pass
+            body._epoch = epoch
         body._ra = ra
         body._dec = dec
 
@@ -941,7 +954,15 @@ def construct_target_params(description):
             body.name = preferred_name
         else:
             body.name = "Galactic l: %.4f b: %.4f" % (l, b)
-        body._epoch = ephem.J2000
+        # Extract epoch info from tags, default to ephem.J2000
+        epoch = ephem.J2000
+        # Search for a well formed epoch string in tags
+        for tag in tags:
+            try:
+                epoch=epoch_to_ephem(tag)
+            except ValueError:
+                pass
+            body._epoch = epoch
         body._ra = ra
         body._dec = dec
 
@@ -1041,11 +1062,11 @@ def construct_azel_target(az, el):
 #--- FUNCTION :  construct_radec_target
 #--------------------------------------------------------------------------------------------------
 
-def construct_radec_target(ra, dec):
+def construct_radec_target(ra, dec, epoch=ephem.J2000):
     """Convenience function to create unnamed fixed target (*radec* body type).
 
     The input parameters will also accept :class:`ephem.Angle` objects, as these
-    are floats in radians internally. The epoch is assumed to be J2000.
+    are floats in radians internally.
 
     Parameters
     ----------
@@ -1055,6 +1076,8 @@ def construct_radec_target(ra, dec):
     dec : string or float
         Declination, either in 'D:M:S' or decimal degree string format, or as
         a float in radians
+    epoch : string or float or tuple or :class:`ephem.Date` object
+        The epoch of the position, in any format accepted by a call to ephem.Date() 
 
     Returns
     -------
@@ -1071,7 +1094,7 @@ def construct_radec_target(ra, dec):
             pass
     ra, dec = angle_from_hours(ra), angle_from_degrees(dec)
     body.name = "Ra: %s Dec: %s" % (ra, dec)
-    body._epoch = ephem.J2000
+    body._epoch = epoch
     body._ra = ra
     body._dec = dec
     return Target(body, 'radec')

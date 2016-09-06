@@ -4,6 +4,7 @@ import time
 import math
 
 import numpy as np
+import re
 import ephem
 
 
@@ -156,3 +157,25 @@ class Timestamp(object):
         djd = self.to_ephem_date()
         return djd + 2415020 - 2400000.5
 
+def epoch_to_ephem(input_epoch='J2000'):
+    """Convert an epoch string to ephem date object.
+    An epoch can be specified as either B1900 or B1950 to specify the inbuilt Besselian
+    dates in ephem. Or can be of the form 'Jxxxx.xx' which specifies the date in terms
+    of Julian years from J2000 epoch.
+    """
+    # Extract epoch info from tags, default to ephem.J2000
+    if input_epoch in ['B1900','b1900','B1950','b1950','J2000','j2000']:
+        epoch = getattr(ephem, input_epoch.upper())
+    else:
+        #Search for a 'J' epoch string in tags
+        epoch_re = re.compile('^[Jj](\d+(?:\.\d+)?)$')
+        epoch_match = epoch_re.match(input_epoch)
+        if epoch_match:
+            #Convert first epoch string found to Dublin Julian date for input to Ephem
+            #Jxxxx.xx dates are defined (by convention) in Julian years from Gregorian J2000 epoch
+            epoch=(float(epoch_match.groups(1)[0])-2000.0)*365.25 + ephem.J2000
+        else:
+            raise ValueError("Epoch string '%s' not in correct format - " % (input_epoch,) +
+                             "should be Jxxxx.xx, where xxxx.xx specifies the date in terms of " +
+                             "Julian years from J2000 epoch.")
+    return ephem.Date(epoch)
