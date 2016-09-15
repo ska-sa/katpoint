@@ -18,19 +18,27 @@
 
 from setuptools import setup, find_packages
 
+
+with open('README.rst') as readme:
+    long_description = readme.read()
+
 setup(name="katpoint",
-      description="Karoo Array Telescope pointing coordinate library'",
+      description="Karoo Array Telescope pointing coordinate library",
+      long_description=long_description,
       author="Ludwig Schwardt",
       author_email="ludwig@ska.ac.za",
       packages=find_packages(),
       url='https://github.com/ska-sa/katpoint',
       license="BSD",
       classifiers=[
-          "Development Status :: 3 - Alpha",
+          "Development Status :: 4 - Beta",
           "Intended Audience :: Developers",
           "License :: OSI Approved :: BSD License",
           "Operating System :: OS Independent",
           "Programming Language :: Python",
+          "Programming Language :: Python :: 2",
+          "Programming Language :: Python :: 2.6",
+          "Programming Language :: Python :: 2.7",
           "Topic :: Software Development :: Libraries :: Python Modules",
           "Topic :: Scientific/Engineering :: Astronomy"],
       platforms=["OS Independent"],
