@@ -27,8 +27,10 @@ import urllib2
 import json
 import time
 
+
 # Download catalogue in JSON format and fix non-JSON string quotes
-url = urllib2.urlopen('http://www.narrabri.atnf.csiro.au/cgi-bin/Calibrators/new/calinfo_json.pl?action=caltable&rarange=0,24&decrange=-90,90')
+url = urllib2.urlopen('http://www.narrabri.atnf.csiro.au/cgi-bin/Calibrators/new'
+                      '/calinfo_json.pl?action=caltable&rarange=0,24&decrange=-90,90')
 table_str = url.read().replace("'", '"')
 # Parse JSON and extract calibrator list
 calibrators = json.loads(table_str)['calibrators']

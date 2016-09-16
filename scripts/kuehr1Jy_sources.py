@@ -107,7 +107,8 @@ for src in table.array:
     plt.subplot(plot_rows, plot_rows, 1 + plot_ind % plots_per_fig)
     plt.plot(log_freq, log_flux, 'ob')
     plt.plot(test_log_freq, test_log_flux, 'r')
-    plt.xticks([]); plt.yticks([])
+    plt.xticks([])
+    plt.yticks([])
     colorcode = 'g' if src['Fct'] == 'LIN' else 'y' if src['Fct'] == 'EXP' else 'k'
     plt.axvspan(np.log10(min_freq), np.log10(max_freq), facecolor=colorcode, alpha=0.5)
     plt.xlim(test_log_freq[0], test_log_freq[-1])

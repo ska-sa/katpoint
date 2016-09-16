@@ -54,7 +54,8 @@ for n, src in enumerate(old):
         plt.plot(np.log10(freq_range), np.log10(pks_src.flux_density(freq_range)), 'g')
         pks.remove(pks_src.name)
     plt.axis((np.log10(freq_range[0]), np.log10(freq_range[-1]), 0, 4))
-    plt.xticks([]); plt.yticks([])
+    plt.xticks([])
+    plt.yticks([])
     print
 
 plt.figtext(0.5, 0.93, 'Spectra (log S vs. log v) old=b, 1Jy=r, pks=g', ha='center', va='center')

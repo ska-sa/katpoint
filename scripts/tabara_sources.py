@@ -120,7 +120,7 @@ for src in table.array:
     if len(src['OName']) > 0:
         names += ' | ' + src['OName']
     ra, dec = atca_cat[src['Name']].radec() if use_atca else \
-              (katpoint.deg2rad(src['_RAJ2000']), katpoint.deg2rad(src['_DEJ2000']))
+        (katpoint.deg2rad(src['_RAJ2000']), katpoint.deg2rad(src['_DEJ2000']))
     tags_ra_dec = katpoint.construct_radec_target(ra, dec).add_tags('J2000 ' + src['Type']).description
     # Extract polarisation data for the current source from pol table
     pol_data = pol_table.array[pol_table.array['Name'] == src['Name']]

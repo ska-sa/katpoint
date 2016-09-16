@@ -31,8 +31,6 @@ except ImportError:
 
 import numpy as np
 
-from .ephem_extra import is_iterable
-
 
 class Parameter(object):
     """Generic model parameter.
@@ -84,6 +82,7 @@ class Parameter(object):
     def value_str(self):
         """String form of parameter value used to convert it to/from a string."""
         return self._to_str(self.value)
+
     @value_str.setter
     def value_str(self, valstr):
         self.value = self._from_str(valstr)
@@ -133,6 +132,7 @@ class Model(object):
         Full set of model parameters in the expected order
 
     """
+
     def __init__(self, params):
         self.header = {}
         self.params = OrderedDict((p.name, p) for p in params)
@@ -177,7 +177,7 @@ class Model(object):
     def __eq__(self, other):
         """Equality comparison operator (parameter values only)."""
         return self.description == \
-               (other.description if isinstance(other, self.__class__) else other)
+            (other.description if isinstance(other, self.__class__) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator (parameter values only)."""
@@ -221,7 +221,7 @@ class Model(object):
         self.header = {}
         # Split string either on commas or whitespace, for good measure
         param_vals = [p.strip() for p in description.split(',')] \
-                     if ',' in description else description.split()
+            if ',' in description else description.split()
         params = [p for p in self]
         min_len = min(len(params), len(param_vals))
         for param, param_val in zip(params[:min_len], param_vals[:min_len]):

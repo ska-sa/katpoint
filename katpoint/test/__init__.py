@@ -39,6 +39,7 @@ ch.setLevel(logging.DEBUG)
 ch.setFormatter(logging.Formatter("LOG: %(name)s %(levelname)s %(message)s"))
 logger.addHandler(ch)
 
+
 def suite():
     loader = unittest.TestLoader()
     testsuite = unittest.TestSuite()

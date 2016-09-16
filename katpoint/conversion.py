@@ -18,9 +18,10 @@
 
 import numpy as np
 
-#--------------------------------------------------------------------------------------------------
-#--- Geodetic coordinate transformations
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Geodetic coordinate transformations
+# --------------------------------------------------------------------------------------------------
+
 
 def lla_to_ecef(lat_rad, long_rad, alt_m):
     """Convert WGS84 spherical coordinates to ECEF cartesian coordinates.
@@ -64,6 +65,7 @@ def lla_to_ecef(lat_rad, long_rad, alt_m):
     z_m = ((1.0 - e2) * R + alt_m) * np.sin(lat_rad)
 
     return x_m, y_m, z_m
+
 
 def ecef_to_lla(x_m, y_m, z_m):
     """Convert ECEF cartesian coordinates to WGS84 spherical coordinates.
@@ -122,7 +124,7 @@ def ecef_to_lla(x_m, y_m, z_m):
     P = F / (3.0 * (S + 1.0 / S + 1.0) ** 2 * G ** 2)
     Q = np.sqrt(1.0 + 2.0 * e2 ** 2 * P)
     r0 = - P * e2 * r / (1.0 + Q) + \
-         np.sqrt(0.5 * a2 * (1.0 + 1.0 / Q) - P * (1 - e2) * z2 / (Q * (1.0 + Q)) - 0.5 * P * r ** 2)
+        np.sqrt(0.5 * a2 * (1.0 + 1.0 / Q) - P * (1 - e2) * z2 / (Q * (1.0 + Q)) - 0.5 * P * r ** 2)
     U = np.sqrt((r - e2 * r0) ** 2 + z2)
     V = np.sqrt((r - e2 * r0) ** 2 + (1.0 - e2) * z2)
     z0 = (b2 * z_m) / (a * V)
@@ -131,6 +133,7 @@ def ecef_to_lla(x_m, y_m, z_m):
     long_rad = np.arctan2(y_m, x_m)
 
     return lat_rad, long_rad, alt_m
+
 
 def ecef_to_lla2(x_m, y_m, z_m):
     """Convert ECEF cartesian coordinates to WGS84 spherical coordinates.
@@ -167,7 +170,7 @@ def ecef_to_lla2(x_m, y_m, z_m):
     b = np.sqrt(a**2 * (1.0 - e**2))
     ep = np.sqrt((a**2 - b**2) / b**2)
     p = np.sqrt(x_m**2 + y_m**2)
-    th  = np.arctan2(a * z_m, b * p)
+    th = np.arctan2(a * z_m, b * p)
     long_rad = np.arctan2(y_m, x_m)
     lat_rad = np.arctan2((z_m + ep**2 * b * np.sin(th)**3), (p - e**2 * a * np.cos(th)**3))
     N = a / np.sqrt(1.0 - e**2 * np.sin(lat_rad)**2)
@@ -187,6 +190,7 @@ def ecef_to_lla2(x_m, y_m, z_m):
         alt_m[near_poles] = np.abs(z_m[near_poles]) - b
 
     return lat_rad, long_rad, alt_m
+
 
 def enu_to_ecef(ref_lat_rad, ref_long_rad, ref_alt_m, e_m, n_m, u_m):
     """Convert ENU coordinates relative to reference location to ECEF coordinates.
@@ -221,6 +225,7 @@ def enu_to_ecef(ref_lat_rad, ref_long_rad, ref_alt_m, e_m, n_m, u_m):
     z_m = ref_z_m +                         cos_lat*n_m +          sin_lat*u_m
 
     return x_m, y_m, z_m
+
 
 def ecef_to_enu(ref_lat_rad, ref_long_rad, ref_alt_m, x_m, y_m, z_m):
     """Convert ECEF coordinates to ENU coordinates relative to reference location.
@@ -257,9 +262,10 @@ def ecef_to_enu(ref_lat_rad, ref_long_rad, ref_alt_m, x_m, y_m, z_m):
 
     return e_m, n_m, u_m
 
-#--------------------------------------------------------------------------------------------------
-#--- Spherical coordinate transformations
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Spherical coordinate transformations
+# --------------------------------------------------------------------------------------------------
+
 
 def azel_to_enu(az_rad, el_rad):
     """Convert (az, el) spherical coordinates to unit vector in ENU coordinates.
@@ -283,6 +289,7 @@ def azel_to_enu(az_rad, el_rad):
     sin_el, cos_el = np.sin(el_rad), np.cos(el_rad)
     return sin_az * cos_el, cos_az * cos_el, sin_el
 
+
 def enu_to_azel(e, n, u):
     """Convert vector in ENU coordinates to (az, el) spherical coordinates.
 
@@ -303,6 +310,7 @@ def enu_to_azel(e, n, u):
 
     """
     return np.arctan2(e, n), np.arctan2(u, np.sqrt(e * e + n * n))
+
 
 def hadec_to_enu(ha_rad, dec_rad, lat_rad):
     """Convert (ha, dec) spherical coordinates to unit vector in ENU coordinates.
@@ -325,9 +333,10 @@ def hadec_to_enu(ha_rad, dec_rad, lat_rad):
     sin_ha, cos_ha = np.sin(ha_rad), np.cos(ha_rad)
     sin_dec, cos_dec = np.sin(dec_rad), np.cos(dec_rad)
     sin_lat, cos_lat = np.sin(lat_rad), np.cos(lat_rad)
-    return -cos_dec * sin_ha, \
-            cos_lat * sin_dec - sin_lat * cos_dec * cos_ha, \
-            sin_lat * sin_dec + cos_lat * cos_dec * cos_ha
+    return (-cos_dec * sin_ha,
+            cos_lat * sin_dec - sin_lat * cos_dec * cos_ha,
+            sin_lat * sin_dec + cos_lat * cos_dec * cos_ha)
+
 
 def enu_to_xyz(e, n, u, lat_rad):
     """Convert ENU to XYZ coordinates.

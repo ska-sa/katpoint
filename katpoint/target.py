@@ -141,7 +141,7 @@ class Target(object):
             descr += ', no flux info'
         else:
             descr += ', flux defined for %g - %g MHz' % (self.flux_model.min_freq_MHz, self.flux_model.max_freq_MHz)
-            if not self.flux_freq_MHz is None:
+            if self.flux_freq_MHz is not None:
                 flux = self.flux_model.flux_density(self.flux_freq_MHz)
                 if not np.isnan(flux):
                     descr += ', flux=%.1f Jy @ %g MHz' % (flux, self.flux_freq_MHz)
@@ -293,7 +293,7 @@ class Target(object):
             tags = [tags]
         for tag_str in tags:
             for tag in tag_str.split():
-                if not tag in self.tags:
+                if tag not in self.tags:
                     self.tags.append(tag)
         return self
 
@@ -326,6 +326,7 @@ class Target(object):
             else:
                 return self.body.az, self.body.el
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+
         def _scalar_azel(t):
             """Calculate (az, el) coordinates for a single time instant."""
             antenna.observer.date = Timestamp(t).to_ephem_date()
@@ -371,6 +372,7 @@ class Target(object):
 
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
             antenna.observer.date = Timestamp(t).to_ephem_date()
@@ -418,6 +420,7 @@ class Target(object):
             else:
                 return ra, dec
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+
         def _scalar_radec(t):
             """Calculate (ra, dec) coordinates for a single time instant."""
             antenna.observer.date = Timestamp(t).to_ephem_date()
@@ -605,9 +608,9 @@ class Target(object):
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
         # NCP vector is J2000 NCP
-        ncp = construct_radec_target(0.0,np.pi/2)
+        ncp = construct_radec_target(0.0, np.pi / 2.0)
         # Get J2000 NCP az-el vector at current epoch pointed to by reference antenna
-        ncp_az,ncp_el = ncp.azel(timestamp, antenna)
+        ncp_az, ncp_el = ncp.azel(timestamp, antenna)
         # Obtain direction vector(s) from reference antenna to target
         az, el = self.azel(timestamp, antenna)
         # w axis points toward target
@@ -762,6 +765,7 @@ class Target(object):
         """
         # Get a common timestamp and antenna for both targets
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
+
         def _scalar_separation(t):
             """Calculate angular separation for a single time instant."""
             return ephem.separation(self.azel(t, antenna), other_target.azel(t, antenna))
@@ -852,9 +856,10 @@ class Target(object):
             ref_az, ref_el = self.azel(timestamp, antenna)
             return plane_to_sphere[projection_type](ref_az, ref_el, x, y)
 
-#--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  construct_target_params
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- FUNCTION :  construct_target_params
+# --------------------------------------------------------------------------------------------------
+
 
 def construct_target_params(description):
     """Construct parameters of Target object from description string.
@@ -1028,9 +1033,10 @@ def construct_target_params(description):
 
     return body, tags, aliases, flux_model
 
-#--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  construct_azel_target
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- FUNCTION :  construct_azel_target
+# --------------------------------------------------------------------------------------------------
+
 
 def construct_azel_target(az, el):
     """Convenience function to create unnamed stationary target (*azel* body type).
@@ -1053,9 +1059,10 @@ def construct_azel_target(az, el):
     """
     return Target(StationaryBody(az, el), 'azel')
 
-#--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  construct_radec_target
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- FUNCTION :  construct_radec_target
+# --------------------------------------------------------------------------------------------------
+
 
 def construct_radec_target(ra, dec):
     """Convenience function to create unnamed fixed target (*radec* body type).

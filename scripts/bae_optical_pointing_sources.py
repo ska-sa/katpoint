@@ -35,6 +35,10 @@
 #
 
 import numpy as np
+import matplotlib.pyplot as plt
+
+import katpoint
+
 
 # Create lookup that returns names for a given HIC number
 names = file('bae_stars2.txt').readlines()
@@ -55,9 +59,8 @@ for line in inlines:
         continue
 
 # Save results
-f = file('bae_optical_pointing_sources.csv','w')
-f.writelines(
-"""# These are the sources to be used by BAE for optical pointing tests of the
+f = file('bae_optical_pointing_sources.csv', 'w')
+f.writelines("""# These are the sources to be used by BAE for optical pointing tests of the
 # KAT-7 dishes, in response to Mantis ticket 460 (second BAE list).
 # Compiled by Ludwig Schwardt from various sources on 6 November 2009.
 #
@@ -71,9 +74,6 @@ f.writelines(np.sort(outlines))
 f.close()
 
 # Test the catalogue
-import katpoint
-import matplotlib.pyplot as plt
-
 ant = katpoint.Antenna('KAT7, -30:43:16.71, 21:24:35.86, 1055, 12.0')
 cat = katpoint.Catalogue(file('bae_optical_pointing_sources.csv'),
                          add_specials=False, antenna=ant)
@@ -82,7 +82,7 @@ ra, dec = np.array([t.radec(timestamp) for t in cat]).transpose()
 constellation = [t.aliases[0].partition(' ')[2][:3] if t.aliases else 'SOL' for t in cat]
 ra, dec = katpoint.rad2deg(ra), katpoint.rad2deg(dec)
 az, el = np.hstack([targ.azel([katpoint.Timestamp(timestamp + t)
-                               for t in range(0, 24*3600, 30*60)]) for targ in cat])
+                               for t in range(0, 24 * 3600, 30 * 60)]) for targ in cat])
 az, el = katpoint.rad2deg(az), katpoint.rad2deg(el)
 
 plt.figure(1)

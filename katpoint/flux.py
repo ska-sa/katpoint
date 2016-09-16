@@ -20,6 +20,7 @@ import numpy as np
 
 from .ephem_extra import is_iterable
 
+
 class FluxDensityModel(object):
     """Spectral flux density model.
 
@@ -128,7 +129,7 @@ class FluxDensityModel(object):
         """
         a, b, c, d, e, f = self.coefs
         log10_v = np.log10(freq_MHz)
-        log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*np.exp(f*log10_v)
+        log10_S = a + b * log10_v + c * log10_v ** 2 + d * log10_v ** 3 + e * np.exp(f * log10_v)
         flux = 10 ** log10_S
         if is_iterable(freq_MHz):
             freq_MHz = np.asarray(freq_MHz)

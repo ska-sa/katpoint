@@ -84,14 +84,14 @@ def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
     # Compute SN (surface refractivity) (via dewpoint and water vapor partial pressure? [LS])
     rhumi = (100. - humidity_percent) * 0.9
     dewpt = temperature_C - rhumi * (0.136667 + rhumi * 1.33333e-3 + temperature_C * 1.5e-3)
-    pp = p[0] + p[1]*dewpt + p[2]*(dewpt**2) + p[3]*(dewpt**3) + p[4]*(dewpt**4)
+    pp = p[0] + p[1] * dewpt + p[2] * dewpt ** 2 + p[3] * dewpt ** 3 + p[4] * dewpt ** 4
     temperature_K = temperature_C + 273.
     # This looks like Smith & Weintraub (1953) or Crane (1976) [LS]
     sn = 77.6 * (pressure_hPa + (4810.0 * cvt * pp) / temperature_K) / temperature_K
 
     # Compute refraction at elevation (clipped at 1 degree to avoid cot(el) blow-up at horizon)
     el_deg = np.clip(rad2deg(el), 1.0, 90.0)
-    aphi =  a / ((el_deg + b) ** c)
+    aphi = a / ((el_deg + b) ** c)
     dele = -d / ((el_deg + e) ** f)
     zenith_angle = deg2rad(90. - el_deg)
     bphi = g * (np.tan(zenith_angle) + dele)
@@ -121,7 +121,7 @@ class RefractionCorrection(object):
 
     """
     def __init__(self, model='VLBI Field System'):
-        self.models = {'VLBI Field System' : refraction_offset_vlbi}
+        self.models = {'VLBI Field System': refraction_offset_vlbi}
         try:
             self.offset = self.models[model]
         except KeyError:

@@ -23,7 +23,6 @@ This implements a pointing model for a non-ideal antenna mount.
 import logging
 
 import numpy as np
-import ephem
 
 from .model import Parameter, Model
 from .ephem_extra import rad2deg, deg2rad, angle_from_degrees
@@ -55,11 +54,14 @@ class PointingModel(Model):
     """
     def __init__(self, model=None):
         # There are two main types of parameter: angles and scale factors
-        angle_to_string = lambda a: str(angle_from_degrees(a).znorm) if a else '0'
+        def angle_to_string(a):
+            return str(angle_from_degrees(a).znorm) if a else '0'
+
         def angle_param(name, doc):
             """Create angle-valued parameter."""
             return Parameter(name, 'deg', doc, from_str=angle_from_degrees,
                              to_str=angle_to_string)
+
         def scale_param(name, doc):
             """Create scale-valued parameter."""
             return Parameter(name, '', doc,
@@ -95,7 +97,7 @@ class PointingModel(Model):
             self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
         if '%d' in self.__class__.fit.im_func.__doc__:
             self.__class__.fit.im_func.__doc__ = self.__class__.fit.im_func.__doc__ % \
-                                                 (len(self), len(self))
+                (len(self), len(self))
 
     # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
@@ -140,8 +142,8 @@ class PointingModel(Model):
         """
         # Unpack parameters to make the code correspond to the maths
         P1, P2, P3, P4, P5, P6, P7, P8, \
-        P9, P10, P11, P12, P13, P14, P15, \
-        P16, P17, P18, P19, P20, P21, P22 = self.values()
+            P9, P10, P11, P12, P13, P14, P15, \
+            P16, P17, P18, P19, P20, P21, P22 = self.values()
         # Compute each trig term only once and store it
         sin_az, cos_az, sin_2az, cos_2az = np.sin(az), np.cos(az), np.sin(2 * az), np.cos(2 * az)
         sin_el, cos_el, sin_8el, cos_8el = np.sin(el), np.cos(el), np.sin(8 * el), np.cos(8 * el)
@@ -200,8 +202,8 @@ class PointingModel(Model):
         """
         # Unpack parameters to make the code correspond to the maths
         P1, P2, P3, P4, P5, P6, P7, P8, \
-        P9, P10, P11, P12, P13, P14, P15, \
-        P16, P17, P18, P19, P20, P21, P22 = self.values()
+            P9, P10, P11, P12, P13, P14, P15, \
+            P16, P17, P18, P19, P20, P21, P22 = self.values()
         # Compute each trig term only once and store it
         sin_az, cos_az, sin_2az, cos_2az = np.sin(az), np.cos(az), np.sin(2 * az), np.cos(2 * az)
         sin_el, cos_el, sin_8el, cos_8el = np.sin(el), np.cos(el), np.sin(8 * el), np.cos(8 * el)
@@ -322,7 +324,7 @@ class PointingModel(Model):
         az, el, delta_az, delta_el = np.asarray(az), np.asarray(el), np.asarray(delta_az), np.asarray(delta_el)
         sigma_daz, sigma_del = np.asarray(sigma_daz), np.asarray(sigma_del)
         assert az.shape == el.shape == delta_az.shape == delta_el.shape == sigma_daz.shape == sigma_del.shape, \
-               'Input parameters should all have the same shape'
+            'Input parameters should all have the same shape'
 
         # Blank out the existing model
         self.set()
