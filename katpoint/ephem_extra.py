@@ -1,14 +1,31 @@
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 """Enhancements to PyEphem."""
 
 import numpy as np
 import ephem
 
-#--------------------------------------------------------------------------------------------------
-#--- Helper functions
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Helper functions
+# --------------------------------------------------------------------------------------------------
 
 # The speed of light, in metres per second
 lightspeed = ephem.c
+
 
 def is_iterable(x):
     """Checks if object is iterable (but not a string or 0-dimensional array)."""
@@ -18,6 +35,7 @@ def is_iterable(x):
 def rad2deg(x):
     """Converts radians to degrees (also works for arrays)."""
     return x * (180.0 / np.pi)
+
 
 def deg2rad(x):
     """Converts degrees to radians (also works for arrays)."""
@@ -44,6 +62,7 @@ def _just_gimme_an_ascii_string(s):
     else:
         return str(s)
 
+
 def angle_from_degrees(s):
     """Creates angle object from sexagesimal string in degrees or number in radians."""
     try:
@@ -52,6 +71,7 @@ def angle_from_degrees(s):
     except TypeError:
         # If input is neither, assume that it really wants to be a string
         return ephem.degrees(_just_gimme_an_ascii_string(s))
+
 
 def angle_from_hours(s):
     """Creates angle object from sexagesimal string in hours or number in radians."""
@@ -71,9 +91,10 @@ def wrap_angle(angle, period=2.0 * np.pi):
     """
     return (angle + 0.5 * period) % period - 0.5 * period
 
-#--------------------------------------------------------------------------------------------------
-#--- CLASS :  StationaryBody
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- CLASS :  StationaryBody
+# --------------------------------------------------------------------------------------------------
+
 
 class StationaryBody(object):
     """Stationary body with fixed (az, el) coordinates.
@@ -92,7 +113,7 @@ class StationaryBody(object):
     def __init__(self, az, el, name=None):
         self.az = angle_from_degrees(az)
         self.el = angle_from_degrees(el)
-        self.alt = self.el # alternative terminology
+        self.alt = self.el  # alternative terminology
         if not name:
             name = "Az: %s El: %s" % (self.az, self.el)
         self.name = name
@@ -114,9 +135,10 @@ class StationaryBody(object):
             self.a_ra = ra
             self.a_dec = dec
 
-#--------------------------------------------------------------------------------------------------
-#--- CLASS :  NullBody
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- CLASS :  NullBody
+# --------------------------------------------------------------------------------------------------
+
 
 class NullBody(object):
     """Body with no position, used as a placeholder.

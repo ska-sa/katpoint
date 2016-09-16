@@ -1,3 +1,19 @@
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 """Delay model and correction.
 
 This implements the basic delay model used to calculate the delay
@@ -49,7 +65,7 @@ class DelayModel(Model):
         params.append(Parameter('POS_U', 'm', 'antenna position: offset above reference position'))
         params.append(Parameter('FIX_H', 'm', 'fixed additional path length for H feed due to electronics / cables'))
         params.append(Parameter('FIX_V', 'm', 'fixed additional path length for V feed due to electronics / cables'))
-        params.append(Parameter('NIAO',  'm', 'non-intersecting axis offset - distance between az and el axes'))
+        params.append(Parameter('NIAO', 'm', 'non-intersecting axis offset - distance between az and el axes'))
         Model.__init__(self, params)
         self.set(model)
         # The EM wave velocity associated with each parameter
@@ -121,9 +137,9 @@ class DelayCorrection(object):
         if any([ant.ref_position_wgs84 != ref_ant.position_wgs84
                 for ant in self.ants + [ref_ant]]):
             msg = "Antennas '%s' do not all share the same reference " \
-                  "position of the reference antenna %r" % (
-                  "', '".join(ant.description for ant in self.ants),
-                  self.ref_ant.description)
+                  "position of the reference antenna %r" % \
+                  ("', '".join(ant.description for ant in self.ants),
+                   self.ref_ant.description)
             raise ValueError(msg)
         self.sky_centre_freq = sky_centre_freq
         self.inputs = [ant.name + pol for ant in ants for pol in ('h', 'v')]
@@ -217,7 +233,7 @@ class DelayCorrection(object):
 
         Returns
         -------
-        delays : dict mapping string to float or array of floats 
+        delays : dict mapping string to float or array of floats
             Dict mapping correlator input name to delay correction,
             which consists of a delay value (in seconds) and optionally
             a delay rate value (in seconds per second). If a sequence
@@ -243,13 +259,15 @@ class DelayCorrection(object):
         else:
             # Use cache for a single timestamp
             delays = self._cached_delays(target, timestamp)
-        # The phase associated with delay t0 at the centre frequency
-        phase = lambda t0: - 2.0 * np.pi * self.sky_centre_freq * t0
+
+        def phase(t0):
+            """The phase associated with delay t0 at the centre frequency."""
+            return - 2.0 * np.pi * self.sky_centre_freq * t0
         delay_corrections = self.max_delay - delays
         phase_corrections = - phase(delays)
         if next_timestamp is None:
-            return dict(zip(self.inputs, delay_corrections)), \
-                   dict(zip(self.inputs, phase_corrections))
+            return (dict(zip(self.inputs, delay_corrections)),
+                    dict(zip(self.inputs, phase_corrections)))
         step = next_timestamp - timestamp
         # We still have to get next_delays in the single timestamp case
         if not is_iterable(next_timestamp):
@@ -265,5 +283,5 @@ class DelayCorrection(object):
         # number of polynomial terms is 2 by design).
         delay_polys = np.dstack((delay_corrections, delay_slopes)).squeeze()
         phase_polys = np.dstack((phase_corrections, phase_slopes)).squeeze()
-        return dict(zip(self.inputs, delay_polys)), \
-               dict(zip(self.inputs, phase_polys))
+        return (dict(zip(self.inputs, delay_polys)),
+                dict(zip(self.inputs, phase_polys)))

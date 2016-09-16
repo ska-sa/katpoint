@@ -1,3 +1,19 @@
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 """Model base class.
 
 This provides a base class for pointing and delay models, handling the loading,
@@ -14,8 +30,6 @@ except ImportError:
     from .ordereddict import OrderedDict
 
 import numpy as np
-
-from .ephem_extra import is_iterable
 
 
 class Parameter(object):
@@ -68,6 +82,7 @@ class Parameter(object):
     def value_str(self):
         """String form of parameter value used to convert it to/from a string."""
         return self._to_str(self.value)
+
     @value_str.setter
     def value_str(self, valstr):
         self.value = self._from_str(valstr)
@@ -117,6 +132,7 @@ class Model(object):
         Full set of model parameters in the expected order
 
     """
+
     def __init__(self, params):
         self.header = {}
         self.params = OrderedDict((p.name, p) for p in params)
@@ -161,7 +177,7 @@ class Model(object):
     def __eq__(self, other):
         """Equality comparison operator (parameter values only)."""
         return self.description == \
-               (other.description if isinstance(other, self.__class__) else other)
+            (other.description if isinstance(other, self.__class__) else other)
 
     def __ne__(self, other):
         """Inequality comparison operator (parameter values only)."""
@@ -205,7 +221,7 @@ class Model(object):
         self.header = {}
         # Split string either on commas or whitespace, for good measure
         param_vals = [p.strip() for p in description.split(',')] \
-                     if ',' in description else description.split()
+            if ',' in description else description.split()
         params = [p for p in self]
         min_len = min(len(params), len(param_vals))
         for param, param_val in zip(params[:min_len], param_vals[:min_len]):
@@ -238,7 +254,7 @@ class Model(object):
         ----------
         file-like : object
             File-like object with readline() method representing config file
- 
+
         """
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
         cfg = ConfigParser.SafeConfigParser(defaults)

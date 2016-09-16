@@ -1,8 +1,25 @@
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 """Flux density model."""
 
 import numpy as np
 
 from .ephem_extra import is_iterable
+
 
 class FluxDensityModel(object):
     """Spectral flux density model.
@@ -112,7 +129,7 @@ class FluxDensityModel(object):
         """
         a, b, c, d, e, f = self.coefs
         log10_v = np.log10(freq_MHz)
-        log10_S = a + b*log10_v + c*log10_v**2 + d*log10_v**3 + e*np.exp(f*log10_v)
+        log10_S = a + b * log10_v + c * log10_v ** 2 + d * log10_v ** 3 + e * np.exp(f * log10_v)
         flux = 10 ** log10_S
         if is_iterable(freq_MHz):
             freq_MHz = np.asarray(freq_MHz)

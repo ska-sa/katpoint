@@ -1,3 +1,19 @@
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 """Target catalogue."""
 
 import logging
@@ -29,13 +45,15 @@ logger = logging.getLogger(__name__)
 
 specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
 
+
 def _hash(name):
     """Normalise string to make name lookup more robust."""
     return name.strip().lower().replace(' ', '').replace('_', '')
 
-#--------------------------------------------------------------------------------------------------
-#--- CLASS :  Catalogue
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- CLASS :  Catalogue
+# --------------------------------------------------------------------------------------------------
+
 
 class Catalogue(object):
     """A searchable and filterable catalogue of targets.
@@ -305,8 +323,10 @@ class Catalogue(object):
     def antenna():
         """Class method which creates antenna property."""
         doc = 'Default antenna used to calculate target positions.'
+
         def fget(self):
             return self._antenna
+
         def fset(self, value):
             self._antenna = value
             for target in self.targets:
@@ -318,8 +338,10 @@ class Catalogue(object):
     def flux_freq_MHz():
         """Class method which creates flux_freq_MHz property."""
         doc = 'Default frequency at which to evaluate flux density, in MHz.'
+
         def fget(self):
             return self._flux_freq_MHz
+
         def fset(self, value):
             self._flux_freq_MHz = value
             for target in self.targets:
@@ -429,7 +451,7 @@ class Catalogue(object):
                 target = Target(target)
             if not isinstance(target, Target):
                 raise ValueError('List of targets should either contain Target objects or description strings')
-            if self.lookup.has_key(_hash(target.name)):
+            if _hash(target.name) in self.lookup:
                 logger.warn("Skipped '%s' [%s] (already in catalogue)" % (target.name, target.tags[0]))
             else:
                 target.add_tags(tags)
@@ -555,7 +577,7 @@ class Catalogue(object):
             Name of target to remove (may also be an alternate name of target)
 
         """
-        if self.lookup.has_key(_hash(name)):
+        if _hash(name) in self.lookup:
             target = self[name]
             self.lookup.pop(_hash(target.name))
             for alias in target.aliases:
@@ -673,11 +695,11 @@ class Catalogue(object):
                 pass
 
         """
-        tag_filter = not tags is None
-        flux_filter = not flux_limit_Jy is None
-        azimuth_filter = not az_limit_deg is None
-        elevation_filter = not el_limit_deg is None
-        proximity_filter = not dist_limit_deg is None
+        tag_filter = tags is not None
+        flux_filter = flux_limit_Jy is not None
+        azimuth_filter = az_limit_deg is not None
+        elevation_filter = el_limit_deg is not None
+        proximity_filter = dist_limit_deg is not None
         # Copy targets to a new list which will be pruned by filters
         targets = list(self.targets)
 
@@ -936,16 +958,17 @@ class Catalogue(object):
                 print '--------------------------------------------------------------------------'
                 above_horizon = False
             line = '%-24s %12s %12s %c' % (target.name, az.znorm, el, el_code)
-            line = line + ' %7.1f' % (flux, ) if not np.isnan(flux) else line +  '        '
+            line = line + ' %7.1f' % (flux,) if not np.isnan(flux) else line + '        '
             if fringe_period is not None:
                 line += '    %10.2f' % (fringe_period,)
             print line
 
-#--------------------------------------------------------------------------------------------------
-#--- FUNCTION :  _catalogue_completer
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- FUNCTION :  _catalogue_completer
+# --------------------------------------------------------------------------------------------------
 
 dict_lookup_match = re.compile(r"""(?:.*\=)?(.*)\[(?P<quote>['|"])(?!.*(?P=quote))(.*)$""")
+
 
 def _catalogue_completer(context, event):
     """Custom IPython completer for catalogue name lookups.
@@ -976,6 +999,6 @@ def _catalogue_completer(context, event):
 
     if readline:
         # Remove space and plus from delimiter list, so completion works past spaces and pluses in names
-        readline.set_completer_delims(readline.get_completer_delims().replace(' ','').replace('+', ''))
+        readline.set_completer_delims(readline.get_completer_delims().replace(' ', '').replace('+', ''))
 
     return [name for name in cat.iternames() if name[:len(start_of_name)] == start_of_name]

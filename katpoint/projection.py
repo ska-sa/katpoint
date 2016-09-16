@@ -1,3 +1,19 @@
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 """Spherical projections.
 
 This module provides a basic set of routines that projects spherical coordinates
@@ -109,9 +125,10 @@ Alternatively they can be called directly::
 
 import numpy as np
 
-#--------------------------------------------------------------------------------------------------
-#--- Common
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Common
+# --------------------------------------------------------------------------------------------------
+
 
 def sphere_to_ortho(az0, el0, az, el):
     """Do calculations common to all zenithal/azimuthal projections."""
@@ -128,9 +145,10 @@ def sphere_to_ortho(az0, el0, az, el):
     ortho_y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
     return ortho_x, ortho_y, cos_theta
 
-#--------------------------------------------------------------------------------------------------
-#--- Orthographic projection (SIN)
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Orthographic projection (SIN)
+# --------------------------------------------------------------------------------------------------
+
 
 def sphere_to_plane_sin(az0, el0, az, el):
     """Project sphere to plane using orthographic (SIN) projection.
@@ -184,6 +202,7 @@ def sphere_to_plane_sin(az0, el0, az, el):
         raise ValueError('Target point more than pi/2 radians away from reference point')
     # x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
     return ortho_x, ortho_y
+
 
 def plane_to_sphere_sin(az0, el0, x, y):
     """Deproject plane to sphere using orthographic (SIN) projection.
@@ -244,9 +263,10 @@ def plane_to_sphere_sin(az0, el0, x, y):
     az = az0 + np.arctan2(x, cos_el_cos_daz)
     return az, el
 
-#--------------------------------------------------------------------------------------------------
-#--- Gnomonic projection (TAN)
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Gnomonic projection (TAN)
+# --------------------------------------------------------------------------------------------------
+
 
 def sphere_to_plane_tan(az0, el0, az, el):
     """Project sphere to plane using gnomonic (TAN) projection.
@@ -288,6 +308,7 @@ def sphere_to_plane_tan(az0, el0, az, el):
         raise ValueError('Target point pi/2 radians or more away from reference point')
     # x = tan(theta) * sin(phi), y = tan(theta) * cos(phi)
     return ortho_x / cos_theta, ortho_y / cos_theta
+
 
 def plane_to_sphere_tan(az0, el0, x, y):
     """Deproject plane to sphere using gnomonic (TAN) projection.
@@ -331,9 +352,10 @@ def plane_to_sphere_tan(az0, el0, x, y):
     el = np.arctan(np.cos(az - az0) * (sin_el0 + y * cos_el0) / den)
     return az, el
 
-#--------------------------------------------------------------------------------------------------
-#--- Zenithal equidistant projection (ARC)
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Zenithal equidistant projection (ARC)
+# --------------------------------------------------------------------------------------------------
+
 
 def sphere_to_plane_arc(az0, el0, az, el):
     """Project sphere to plane using zenithal equidistant (ARC) projection.
@@ -383,6 +405,7 @@ def sphere_to_plane_arc(az0, el0, az, el):
         scale[nonzero] = theta[nonzero] / np.sin(theta[nonzero])
     # x = theta * sin(phi), y = theta * cos(phi)
     return scale * ortho_x, scale * ortho_y
+
 
 def plane_to_sphere_arc(az0, el0, x, y):
     """Deproject plane to sphere using zenithal equidistant (ARC) projection.
@@ -444,9 +467,10 @@ def plane_to_sphere_arc(az0, el0, x, y):
     az = az0 + np.arctan2(num, den)
     return az, el
 
-#--------------------------------------------------------------------------------------------------
-#--- Stereographic projection (STG)
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Stereographic projection (STG)
+# --------------------------------------------------------------------------------------------------
+
 
 def sphere_to_plane_stg(az0, el0, az, el):
     """Project sphere to plane using stereographic (STG) projection.
@@ -488,6 +512,7 @@ def sphere_to_plane_stg(az0, el0, az, el):
         raise ValueError('Target point too close to pi radians away from reference point')
     # x = 2 sin(theta) sin(phi) / (1 + cos(theta)), y = 2 sin(theta) cos(phi) / (1 + cos(theta))
     return 2.0 * ortho_x / den, 2.0 * ortho_y / den
+
 
 def plane_to_sphere_stg(az0, el0, x, y):
     """Deproject plane to sphere using stereographic (STG) projection.
@@ -542,9 +567,10 @@ def plane_to_sphere_stg(az0, el0, x, y):
     az = az0 + np.arctan2(num, den)
     return az, el
 
-#--------------------------------------------------------------------------------------------------
-#--- Plate carree projection (CAR)
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Plate carree projection (CAR)
+# --------------------------------------------------------------------------------------------------
+
 
 def sphere_to_plane_car(az0, el0, az, el):
     """Project sphere to plane using plate carree (CAR) projection.
@@ -576,6 +602,7 @@ def sphere_to_plane_car(az0, el0, az, el):
     """
     return az - az0, el - el0
 
+
 def plane_to_sphere_car(az0, el0, x, y):
     """Deproject plane to sphere using plate carree (CAR) projection.
 
@@ -606,9 +633,10 @@ def plane_to_sphere_car(az0, el0, x, y):
     """
     return az0 + x, el0 + y
 
-#--------------------------------------------------------------------------------------------------
-#--- Swapped orthographic projection (SSN)
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Swapped orthographic projection (SSN)
+# --------------------------------------------------------------------------------------------------
+
 
 def sphere_to_plane_ssn(az0, el0, az, el):
     """Project sphere to plane using swapped orthographic (SSN) projection.
@@ -659,6 +687,7 @@ def sphere_to_plane_ssn(az0, el0, az, el):
 
     """
     return sphere_to_plane_sin(az, el, az0, el0)
+
 
 def plane_to_sphere_ssn(az0, el0, x, y):
     """Deproject plane to sphere using swapped orthographic (SSN) projection.
@@ -738,21 +767,21 @@ def plane_to_sphere_ssn(az0, el0, x, y):
     el = np.arctan2(num, den)
     return az, el
 
-#--------------------------------------------------------------------------------------------------
-#--- Top-level projection routines
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# --- Top-level projection routines
+# --------------------------------------------------------------------------------------------------
 
 # Maps projection code to appropriate function
-sphere_to_plane = {'SIN' : sphere_to_plane_sin,
-                   'TAN' : sphere_to_plane_tan,
-                   'ARC' : sphere_to_plane_arc,
-                   'STG' : sphere_to_plane_stg,
-                   'CAR' : sphere_to_plane_car,
-                   'SSN' : sphere_to_plane_ssn}
+sphere_to_plane = {'SIN': sphere_to_plane_sin,
+                   'TAN': sphere_to_plane_tan,
+                   'ARC': sphere_to_plane_arc,
+                   'STG': sphere_to_plane_stg,
+                   'CAR': sphere_to_plane_car,
+                   'SSN': sphere_to_plane_ssn}
 
-plane_to_sphere = {'SIN' : plane_to_sphere_sin,
-                   'TAN' : plane_to_sphere_tan,
-                   'ARC' : plane_to_sphere_arc,
-                   'STG' : plane_to_sphere_stg,
-                   'CAR' : plane_to_sphere_car,
-                   'SSN' : plane_to_sphere_ssn}
+plane_to_sphere = {'SIN': plane_to_sphere_sin,
+                   'TAN': plane_to_sphere_tan,
+                   'ARC': plane_to_sphere_arc,
+                   'STG': plane_to_sphere_stg,
+                   'CAR': plane_to_sphere_car,
+                   'SSN': plane_to_sphere_ssn}

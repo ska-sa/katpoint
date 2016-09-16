@@ -1,4 +1,21 @@
 #! /usr/bin/python
+
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 #
 # Tool that extracts sources from the Catalog of Extragalactic Radio Sources Having Flux Densities
 # Greater Than 1 Jy at 5 GHz (1Jy).
@@ -90,7 +107,8 @@ for src in table.array:
     plt.subplot(plot_rows, plot_rows, 1 + plot_ind % plots_per_fig)
     plt.plot(log_freq, log_flux, 'ob')
     plt.plot(test_log_freq, test_log_flux, 'r')
-    plt.xticks([]); plt.yticks([])
+    plt.xticks([])
+    plt.yticks([])
     colorcode = 'g' if src['Fct'] == 'LIN' else 'y' if src['Fct'] == 'EXP' else 'k'
     plt.axvspan(np.log10(min_freq), np.log10(max_freq), facecolor=colorcode, alpha=0.5)
     plt.xlim(test_log_freq[0], test_log_freq[-1])

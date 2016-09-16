@@ -1,4 +1,21 @@
 #! /usr/bin/python
+
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 #
 # Tool that extracts bright sources from Parkes Radio Sources Catalogue (PKSCAT90).
 #
@@ -29,14 +46,16 @@ from __future__ import with_statement
 import numpy as np
 import matplotlib.pyplot as plt
 
+import katpoint
 from vo.table import parse_single_table
+
 
 # For each flux field in table, specify the name, centre frequency and start frequency (in MHz)
 flux_bins = ['S80', 'S178', 'S408', 'S635', 'S1410', 'S2700', 'S5000', 'S8400', 'S22000']
 freq = np.array([80.0, 178.0, 408.0, 635.0, 1410.0, 2700.0, 5000.0, 8400.0, 22000.0])
 start = [20.0, 100.0, 200.0, 400.0, 750.0, 1500.0, 3000.0, 6000.0, 12000.0, 30000.0]
 # List of anomalous flux fields that will be edited out for the purpose of fitting
-anomalies = {'J0108+1320' : 6, 'J0541-0154' : 2, 'J2253+1608' : 6}
+anomalies = {'J0108+1320': 6, 'J0541-0154': 2, 'J2253+1608': 6}
 
 # Load main table in one shot (don't be pedantic, as the VizieR VOTables contain a deprecated DEFINITIONS element)
 table = parse_single_table("pkscat90_S1410_min_10Jy.vot", pedantic=False)
@@ -84,7 +103,8 @@ for n, src in enumerate(table.array):
     plt.plot(test_log_freq, test_log_flux, 'r')
     if not np.isnan(anomalous_flux):
         plt.plot(np.log10(freq[anomalous_bin]), np.log10(anomalous_flux), '*b')
-    plt.xticks([]); plt.yticks([])
+    plt.xticks([])
+    plt.yticks([])
     plt.axvspan(np.log10(freq_range[0]), np.log10(freq_range[1]), facecolor='g', alpha=0.5)
 
 with file('parkes_source_list.csv', 'w') as f:
