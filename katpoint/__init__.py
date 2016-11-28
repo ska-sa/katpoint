@@ -62,7 +62,7 @@ try:
 except NameError:
     # IPython 0.10 and below (or normal Python shell)
     _ip = __builtins__.get('__IPYTHON__')
-if _ip is not None:
+if hasattr(_ip, 'set_hook'):
     _ip.set_hook('complete_command', _catalogue_completer, re_key=r"(?:.*\=)?(.+?)\[")
 
 
