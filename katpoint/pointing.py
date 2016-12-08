@@ -24,7 +24,7 @@ import logging
 
 import numpy as np
 
-from .model import Parameter, Model
+from .model import Parameter, Model, BadModelFile
 from .ephem_extra import rad2deg, deg2rad, angle_from_degrees
 
 logger = logging.getLogger(__name__)
@@ -376,3 +376,69 @@ class PointingModel(Model):
 #        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f' % (N, M, s[0] / s[-1]))
 
         return param_vector, sigma_params
+
+    def fromfile(self, file_like):
+        """Load pointing model either from an ini-style config file (both header
+        and parameters) or from a Field System mdlpo.ctl file (parameters only).
+
+        Parameters
+        ----------
+        file-like : object
+            File-like object with readline() method representing config file
+        """
+        try:
+            super(PointingModel, self).fromfile(file_like)
+        except BadModelFile:
+            file_like.seek(0) # To reset the thing.
+            self.fromstring(_fs_to_kp_pointing_model(file_like))
+
+
+def _fs_to_kp_pointing_model(pmodl_file):
+    """Parses a Field System pointing model file (mdlpo.ctl)
+    Returns:
+        katpoint pointing model (object? string?)
+    """
+    lines = ["This line deliberately ignored."] # So that I can start line numbering at 1, as Himwich does in the description.
+    for i in pmodl_file:
+        if i[0] != '*':
+            lines.append(i)
+    if len(lines) != 8:
+        raise BadModelFile("%s not correct length for pointing model file (8 lines). File is %d lines long."%(repr(pmodl_file), len(lines) - 1))
+    # Line 2 gives the enabled parameters:
+    params_implemented = lines[2].split()
+
+    if len(params_implemented) != 31:
+        raise BadModelFile("%s not correct format for pointing model file." % (repr(pmodl_file)))
+    # The first number on the line is the phi value
+    phi = float(params_implemented[0])
+
+    # If any of the higher ones are used, throw a warning:
+    if params_implemented[23] == '1' or \
+       params_implemented[24] == '1' or \
+       params_implemented[25] == '1' or \
+       params_implemented[26] == '1' or \
+       params_implemented[27] == '1' or \
+       params_implemented[28] == '1' or \
+       params_implemented[29] == '1' or \
+       params_implemented[30] == '1':
+        logger.warning("Warning: pointing model file uses params above the 22 implemented in katpoint.")
+
+    # Lines 3 - 8 each have 5 parameters on them.
+    params = [ 0 ] # Pad list entry number 0 so that the param numbers correspond.
+    params.extend(lines[3].split())
+    params.extend(lines[4].split())
+    params.extend(lines[5].split())
+    params.extend(lines[6].split())
+    params.extend(lines[7].split())
+    params.extend(lines[8].split())
+
+    pmodl_string = ""
+
+    for i in range(1,23):
+        if params_implemented[i] == '1' and float(params[i]) != 0:
+            pmodl_string += "%s "%(params[i])
+        else:
+            pmodl_string += "0 "
+
+    pmodl_string = pmodl_string[:-1] # Remove the resulting space on the end.
+    return pmodl_string
