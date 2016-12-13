@@ -398,11 +398,13 @@ def _fs_to_kp_pointing_model(pmodl_file):
 
     Parameters
     ----------
-    pmodl_file : file-like object referring to a Field System mdlpo.ctl file.
+    pmodl_file : object
+        File-like object with readline() method referring to a Field System mdlpo.ctl file.
 
     Returns
     -------
-        pmodl_string : katpoint pointing model in string form
+    pmodl_string : string
+        Pointing model string parseable by katpoint in the usual way.
     """
     lines = []
     for i in pmodl_file:
