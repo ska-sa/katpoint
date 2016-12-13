@@ -394,51 +394,50 @@ class PointingModel(Model):
 
 
 def _fs_to_kp_pointing_model(pmodl_file):
-    """Parses a Field System pointing model file (mdlpo.ctl)
-    Returns:
-        katpoint pointing model (object? string?)
+    """Parse a Field System pointing model file to a format katpoint can understand.
+
+    Parameters
+    ----------
+    pmodl_file : file-like object referring to a Field System mdlpo.ctl file.
+
+    Returns
+    -------
+        pmodl_string : katpoint pointing model in string form
     """
-    lines = ["This line deliberately ignored."] # So that I can start line numbering at 1, as Himwich does in the description.
+    lines = []
     for i in pmodl_file:
         if i[0] != '*':
             lines.append(i)
     if len(lines) != 8:
-        raise BadModelFile("%s not correct length for pointing model file (8 lines). File is %d lines long."%(repr(pmodl_file), len(lines) - 1))
-    # Line 2 gives the enabled parameters:
-    params_implemented = lines[2].split()
+        raise BadModelFile("File not correct length for mdlop.ctl file, %d lines, should be 8."% (len(lines)))
 
+    # Line 2 gives the enabled parameters and the phi value:
+    params_implemented = lines[1].split()
     if len(params_implemented) != 31:
         raise BadModelFile("%s not correct format for pointing model file." % (repr(pmodl_file)))
-    # The first number on the line is the phi value
-    phi = float(params_implemented[0])
 
-    # If any of the higher ones are used, throw a warning:
-    if params_implemented[23] == '1' or \
-       params_implemented[24] == '1' or \
-       params_implemented[25] == '1' or \
-       params_implemented[26] == '1' or \
-       params_implemented[27] == '1' or \
-       params_implemented[28] == '1' or \
-       params_implemented[29] == '1' or \
-       params_implemented[30] == '1':
-        logger.warning("Warning: pointing model file uses params above the 22 implemented in katpoint.")
+    # The first number on the line is the phi value. Not really needed since this is hardcoded in katpoint.
+    phi = params_implemented.pop(0)
 
-    # Lines 3 - 8 each have 5 parameters on them.
-    params = [ 0 ] # Pad list entry number 0 so that the param numbers correspond.
-    params.extend(lines[3].split())
-    params.extend(lines[4].split())
-    params.extend(lines[5].split())
-    params.extend(lines[6].split())
-    params.extend(lines[7].split())
-    params.extend(lines[8].split())
+    # If any of the higher ones (23 or above) are used, throw a warning:
+    if any(param_used == '1' for param_used in params_implemented[22:]):
+        logger.warning(" Pointing model file uses param(s) not among the 22 implemented in katpoint." \
+                       "\nIt is likely that they are not implemented in Field System either.")
 
+    # Lines 3 and above each have 5 parameters on them.
+    params = []
+    for line in lines[2:]:
+        params.extend(line.split())
+
+    # Create a string which katpoint will be able to parse.
     pmodl_string = ""
-
-    for i in range(1,23):
+    for i in range(0,22):
         if params_implemented[i] == '1' and float(params[i]) != 0:
+            # Not really any point in converting it to a float or dms value, since the precision in the FS file is
+            # what FS was using anyway. Just use the string.
             pmodl_string += "%s "%(params[i])
         else:
             pmodl_string += "0 "
-
     pmodl_string = pmodl_string[:-1] # Remove the resulting space on the end.
+
     return pmodl_string
