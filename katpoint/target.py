@@ -17,6 +17,7 @@
 """Target object used for pointing and flux density calculation."""
 
 import numpy as np
+import re
 import ephem
 
 from .timestamp import Timestamp
@@ -941,13 +942,18 @@ def construct_target_params(description):
             body.name = preferred_name
         else:
             body.name = "Ra: %s Dec: %s" % (ra, dec)
-        # Extract epoch info from tags
+        # Extract epoch info from tags default to ephem.J2000
         if ('B1900' in tags) or ('b1900' in tags):
             body._epoch = ephem.B1900
         elif ('B1950' in tags) or ('b1950' in tags):
             body._epoch = ephem.B1950
         else:
-            body._epoch = ephem.J2000
+            #Search for a well formed decimal number
+            epoch_re = re.compile('^(\d+(?:\.\d+)?)$')
+            epoch = [epoch_re.match(tag).group() for tag in tags if epoch_re.match(tag)]
+            #epoch will be an empty list if no decimal number is found
+            epoch = epoch[0] if epoch else ephem.J2000
+            body._epoch = epoch
         body._ra = ra
         body._dec = dec
 
@@ -962,7 +968,18 @@ def construct_target_params(description):
             body.name = preferred_name
         else:
             body.name = "Galactic l: %.4f b: %.4f" % (l, b)
-        body._epoch = ephem.J2000
+        # Extract epoch info from tags default to ephem.J2000
+        if ('B1900' in tags) or ('b1900' in tags):
+            body._epoch = ephem.B1900
+        elif ('B1950' in tags) or ('b1950' in tags):
+            body._epoch = ephem.B1950
+        else:
+            #Search for a well formed number (with optional decimal point)
+            decimal_re = re.compile('^(\d+(?:\.\d+)?)$')
+            epoch = [decimal_re.match(tag).group() for tag in tags if decimal_re.match(tag)]
+            #epoch will be an empty list if no decimal number is found
+            epoch = epoch[0] if epoch else ephem.J2000
+            body._epoch = epoch
         body._ra = ra
         body._dec = dec
 
@@ -1064,11 +1081,11 @@ def construct_azel_target(az, el):
 # --------------------------------------------------------------------------------------------------
 
 
-def construct_radec_target(ra, dec):
+def construct_radec_target(ra, dec, epoch=ephem.J2000):
     """Convenience function to create unnamed fixed target (*radec* body type).
 
     The input parameters will also accept :class:`ephem.Angle` objects, as these
-    are floats in radians internally. The epoch is assumed to be J2000.
+    are floats in radians internally.
 
     Parameters
     ----------
@@ -1078,6 +1095,8 @@ def construct_radec_target(ra, dec):
     dec : string or float
         Declination, either in 'D:M:S' or decimal degree string format, or as
         a float in radians
+    epoch : string or float or tuple or :class:`ephem.Date` object
+        The epoch of the position, in any format accepted by a call to ephem.Date() 
 
     Returns
     -------
@@ -1094,7 +1113,7 @@ def construct_radec_target(ra, dec):
             pass
     ra, dec = angle_from_hours(ra), angle_from_degrees(dec)
     body.name = "Ra: %s Dec: %s" % (ra, dec)
-    body._epoch = ephem.J2000
+    body._epoch = epoch
     body._ra = ra
     body._dec = dec
     return Target(body, 'radec')
