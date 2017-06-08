@@ -116,6 +116,10 @@ class TestTargetConstruction(unittest.TestCase):
         self.assertEqual(t1, t2, 'Equality with target failed')
         self.assertEqual(t1, katpoint.Target(t2), 'Construction with target object failed')
         self.assertEqual(t1, cPickle.loads(cPickle.dumps(t1)), 'Pickling failed')
+        try:
+            self.assertEqual(len(set((t1, t2))), 1, 'Targets not equal')
+        except TypeError:
+            self.fail('Target object not hashable')
 
     def test_constructed_coords(self):
         """Test whether calculated coordinates match those with which it is constructed."""

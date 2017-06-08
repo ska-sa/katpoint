@@ -54,6 +54,10 @@ class TestPointingModel(unittest.TestCase):
         self.assertEqual(pm4, pm, 'Pointing models should be equal')
         self.assertNotEqual(pm2, pm, 'Pointing models should be inequal')
         np.testing.assert_almost_equal(pm4.values(), pm.values(), decimal=6)
+        try:
+            self.assertEqual(len(set((pm4, pm))), 1, 'Pointing models not equal')
+        except TypeError:
+            self.fail('PointingModel object not hashable')
 
     def test_pointing_closure(self):
         """Test closure between pointing correction and its reverse operation."""

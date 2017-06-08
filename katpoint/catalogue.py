@@ -399,6 +399,10 @@ class Catalogue(object):
         """Inequality comparison operator."""
         return not (self == other)
 
+    def __hash__(self):
+        """Hash value matches behaviour of equality comparison operator."""
+        return hash(tuple(self.lookup.values()))
+
     def __iter__(self):
         """Iterate over targets in catalogue."""
         return iter(self.targets)

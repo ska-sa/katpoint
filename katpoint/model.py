@@ -183,6 +183,10 @@ class Model(object):
         """Inequality comparison operator (parameter values only)."""
         return not (self == other)
 
+    def __hash__(self):
+        """Base hash on description string, just like equality operator."""
+        return hash(self.description)
+
     def __getitem__(self, key):
         """Access parameter value by name."""
         return self.params[key].value

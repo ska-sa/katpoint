@@ -113,6 +113,19 @@ class FluxDensityModel(object):
         return "<katpoint.FluxDensityModel %d-%d MHz params=%s at 0x%x>" % \
                (self.min_freq_MHz, self.max_freq_MHz, param_str, id(self))
 
+    def __eq__(self, other):
+        """Equality comparison operator (based on description string)."""
+        return self.description == \
+            (other.description if isinstance(other, self.__class__) else other)
+
+    def __ne__(self, other):
+        """Inequality comparison operator (based on description string)."""
+        return not (self == other)
+
+    def __hash__(self):
+        """Base hash on description string, just like equality operator."""
+        return hash(self.description)
+
     def flux_density(self, freq_MHz):
         """Calculate flux density for given observation frequency.
 
