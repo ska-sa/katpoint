@@ -72,6 +72,6 @@ class TestTimestamp(unittest.TestCase):
         t = katpoint.Timestamp(self.valid_timestamps[1][0])
         self.assertAlmostEqual(t.to_ephem_date(), self.valid_timestamps[1][0], places=9)
         try:
-            self.assertEqual(len(set((t, t + 0.0))), 1, 'Timestamps not equal')
+            self.assertEqual(hash(t), hash(t + 0.0), 'Timestamp hashes not equal')
         except TypeError:
             self.fail('Timestamp object not hashable')

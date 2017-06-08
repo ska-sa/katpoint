@@ -55,7 +55,7 @@ class TestPointingModel(unittest.TestCase):
         self.assertNotEqual(pm2, pm, 'Pointing models should be inequal')
         np.testing.assert_almost_equal(pm4.values(), pm.values(), decimal=6)
         try:
-            self.assertEqual(len(set((pm4, pm))), 1, 'Pointing models not equal')
+            self.assertEqual(hash(pm4), hash(pm), 'Pointing model hashes not equal')
         except TypeError:
             self.fail('PointingModel object not hashable')
 

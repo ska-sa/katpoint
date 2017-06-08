@@ -46,7 +46,7 @@ class TestDelayModel(unittest.TestCase):
         m3.fromdelays(params)
         self.assertEqual(m, m3, 'Converting delay model to delay parameters and loading it again failed')
         try:
-            self.assertEqual(len(set((m, m3))), 1, 'Delay models not equal')
+            self.assertEqual(hash(m), hash(m3), 'Delay model hashes not equal')
         except TypeError:
             self.fail('DelayModel object not hashable')
 

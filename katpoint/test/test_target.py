@@ -117,7 +117,7 @@ class TestTargetConstruction(unittest.TestCase):
         self.assertEqual(t1, katpoint.Target(t2), 'Construction with target object failed')
         self.assertEqual(t1, cPickle.loads(cPickle.dumps(t1)), 'Pickling failed')
         try:
-            self.assertEqual(len(set((t1, t2))), 1, 'Targets not equal')
+            self.assertEqual(hash(t1), hash(t2), 'Target hashes not equal')
         except TypeError:
             self.fail('Target object not hashable')
 

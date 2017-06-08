@@ -84,7 +84,7 @@ class TestModel(unittest.TestCase):
         m8 = OtherModel(self.new_params())
         self.assertRaises(katpoint.BadModelFile, m8.set, m)
         try:
-            self.assertEqual(len(set((m, m4))), 1, 'Models not equal')
+            self.assertEqual(hash(m), hash(m4), 'Model hashes not equal')
         except TypeError:
             self.fail('Model object not hashable')
 
