@@ -132,6 +132,10 @@ class Timestamp(object):
         """Convert to floating-point UTC seconds."""
         return self.secs
 
+    def __hash__(self):
+        """Base hash on internal timestamp, just like equality operator."""
+        return hash(self.secs)
+
     def local(self):
         """Convert timestamp to local time string representation (for display only)."""
         int_secs = math.floor(self.secs)

@@ -83,6 +83,10 @@ class TestModel(unittest.TestCase):
             pass
         m8 = OtherModel(self.new_params())
         self.assertRaises(katpoint.BadModelFile, m8.set, m)
+        try:
+            self.assertEqual(hash(m), hash(m4), 'Model hashes not equal')
+        except TypeError:
+            self.fail('Model object not hashable')
 
     def test_dict_interface(self):
         """Test dict interface of generic model."""

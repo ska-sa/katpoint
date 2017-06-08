@@ -168,6 +168,10 @@ class Target(object):
         """Less-than comparison operator (needed for sorting and np.unique)."""
         return self.description < (other.description if isinstance(other, Target) else other)
 
+    def __hash__(self):
+        """Base hash on description string, just like equality operator."""
+        return hash(self.description)
+
     def format_katcp(self):
         """String representation if object is passed as parameter to KATCP command."""
         return self.description

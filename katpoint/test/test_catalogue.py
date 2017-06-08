@@ -42,7 +42,13 @@ class TestCatalogueConstruction(unittest.TestCase):
         cat.add(katpoint.Target('Sun, special'))
         num_targets = len(cat)
         self.assertEqual(num_targets, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
-        self.assertEqual(cat, cat, 'Catalogue not equal to itself')
+        cat2 = katpoint.Catalogue(add_specials=True, add_stars=True)
+        cat2.add(katpoint.Target('Sun, special'))
+        self.assertEqual(cat, cat2, 'Catalogues not equal')
+        try:
+            self.assertEqual(hash(cat), hash(cat2), 'Catalogue hashes not equal')
+        except TypeError:
+            self.fail('Catalogue object not hashable')
         test_target = cat.targets[0]
         self.assertEqual(test_target.description, cat[test_target.name].description, 'Lookup failed')
         self.assertEqual(cat['Non-existent'], None, 'Lookup of non-existent target failed')

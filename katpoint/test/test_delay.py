@@ -45,6 +45,10 @@ class TestDelayModel(unittest.TestCase):
         m3 = katpoint.DelayModel()
         m3.fromdelays(params)
         self.assertEqual(m, m3, 'Converting delay model to delay parameters and loading it again failed')
+        try:
+            self.assertEqual(hash(m), hash(m3), 'Delay model hashes not equal')
+        except TypeError:
+            self.fail('DelayModel object not hashable')
 
 
 class TestDelayCorrection(unittest.TestCase):

@@ -73,6 +73,10 @@ class TestAntennaConstruction(unittest.TestCase):
         self.assertEqual(a1, a2, 'Antennas not equal')
         self.assertEqual(a1, katpoint.Antenna(a2), 'Construction with antenna object failed')
         self.assertEqual(a1, cPickle.loads(cPickle.dumps(a1)), 'Pickling failed')
+        try:
+            self.assertEqual(hash(a1), hash(a2), 'Antenna hashes not equal')
+        except TypeError:
+            self.fail('Antenna object not hashable')
 
     def test_local_sidereal_time(self):
         """Test sidereal time and the use of date/time strings vs floats as timestamps."""

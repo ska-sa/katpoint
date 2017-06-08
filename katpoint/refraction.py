@@ -141,6 +141,10 @@ class RefractionCorrection(object):
         """Inequality comparison operator."""
         return not (self == other)
 
+    def __hash__(self):
+        """Base hash on underlying model name, just like equality operator."""
+        return hash((self.__class__, self.model))
+
     def apply(self, el, temperature_C, pressure_hPa, humidity_percent):
         """Apply refraction correction to elevation angle.
 

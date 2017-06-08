@@ -38,7 +38,12 @@ class TestRefractionCorrection(unittest.TestCase):
         """Test basic refraction correction properties."""
         print repr(self.rc)
         self.assertRaises(ValueError, katpoint.RefractionCorrection, 'unknown')
-        self.assertEqual(self.rc, self.rc, 'Refraction models should be equal')
+        rc2 = katpoint.RefractionCorrection()
+        self.assertEqual(self.rc, rc2, 'Refraction models should be equal')
+        try:
+            self.assertEqual(hash(self.rc), hash(rc2), 'Refraction model hashes should be equal')
+        except TypeError:
+            self.fail('RefractionCorrection object not hashable')
 
     def test_refraction_closure(self):
         """Test closure between refraction correction and its reverse operation."""
