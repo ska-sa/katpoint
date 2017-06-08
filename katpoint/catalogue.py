@@ -403,6 +403,10 @@ class Catalogue(object):
         """Iterate over targets in catalogue."""
         return iter(self.targets)
 
+    def _ipython_key_completions_(self):
+        """Produce list of keys used in IPython (version >= 5) tab completion."""
+        return list(self.iternames())
+
     def iternames(self):
         """Iterator over known target names in catalogue which can be searched for.
 

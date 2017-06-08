@@ -32,7 +32,7 @@ from .target import Target, construct_azel_target, construct_radec_target
 from .antenna import Antenna
 from .timestamp import Timestamp
 from .flux import FluxDensityModel
-from .catalogue import Catalogue, specials, _catalogue_completer
+from .catalogue import Catalogue, specials
 from .ephem_extra import lightspeed, rad2deg, deg2rad, wrap_angle, is_iterable
 from .conversion import (lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu,
                          azel_to_enu, enu_to_azel, hadec_to_enu, enu_to_xyz)
@@ -54,17 +54,6 @@ try:
         conversion, projection, pointing, refraction, delay
 except NameError:
     pass
-
-# Attempt to register custom IPython tab completer for catalogue name lookups (only when run from IPython shell)
-try:
-    # IPython 0.11 and above
-    _ip = get_ipython()
-except NameError:
-    # IPython 0.10 and below (or normal Python shell)
-    _ip = __builtins__.get('__IPYTHON__')
-if hasattr(_ip, 'set_hook'):
-    _ip.set_hook('complete_command', _catalogue_completer, re_key=r"(?:.*\=)?(.+?)\[")
-
 
 # Setup library logger and add a print-like handler used when no logging is configured
 class _NoConfigFilter(_logging.Filter):
