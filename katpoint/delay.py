@@ -285,3 +285,12 @@ class DelayCorrection(object):
         phase_polys = np.dstack((phase_corrections, phase_slopes)).squeeze()
         return (dict(zip(self.inputs, delay_polys)),
                 dict(zip(self.inputs, phase_polys)))
+
+    @property
+    def description(self):
+        """Concise string representation of delay correction object."""
+        lines = [self.ref_ant.description]
+        for ant in self.ants:
+            lines.append("{}, {}".format(ant.name, ant.delay_model.description))
+        lines.append("sky centre freq {}".format(self.sky_centre_freq))
+        return '\n'.join(lines)

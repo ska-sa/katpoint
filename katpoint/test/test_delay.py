@@ -92,3 +92,20 @@ class TestDelayCorrection(unittest.TestCase):
         for n in range(max_size + 10):
             delay0, phase0 = self.delays.corrections(self.target1, self.ts + n)
         self.assertEqual(len(self.delays._cache), max_size, 'Delay cache grew past limit')
+
+    def test_description(self):
+        """Test description property."""
+        description = self.delays.description
+        num_lines_expected = len(self.delays.ants) + 2  # (2 = 1 x ref + 1 x freq)
+        num_lines = len(description.splitlines())
+        self.assertEqual(num_lines_expected, num_lines)
+        for item in ['A1', 'A2', 'A3', 'sky centre freq']:
+            self.assertIn(item, description)
+        # check that description doesn't break with no antennas
+        no_ants_delays = katpoint.DelayCorrection([], self.ant1, 1.285e9)
+        description = no_ants_delays.description
+        num_lines_expected = 0 + 2
+        num_lines = len(description.splitlines())
+        self.assertEqual(num_lines_expected, num_lines)
+        for item in ['A1', 'sky centre freq']:
+            self.assertIn(item, description)
