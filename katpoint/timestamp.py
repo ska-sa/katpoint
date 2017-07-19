@@ -77,7 +77,7 @@ class Timestamp(object):
             int_secs = math.floor(timestamp[5])
             frac_secs = timestamp[5] - int_secs
             timestamp[5] = int(int_secs)
-            self.secs = time.mktime(timestamp) - time.timezone + frac_secs
+            self.secs = time.mktime(tuple(timestamp)) - time.timezone + frac_secs
         else:
             self.secs = float(timestamp)
 

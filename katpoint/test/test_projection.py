@@ -78,7 +78,7 @@ class TestProjectionSIN(unittest.TestCase):
         xx, yy = self.sphere_to_plane(self.az0, self.el0, az, el)
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-        for n in xrange(len(az)):
+        for n in range(len(az)):
             az_aips[n], el_aips[n], ierr = \
             newpos(2, self.az0[n], self.el0[n], self.x[n], self.y[n])
             x_aips[n], y_aips[n], ierr = \
@@ -184,7 +184,7 @@ class TestProjectionTAN(unittest.TestCase):
         xx, yy = self.sphere_to_plane(az0, el0, az, el)
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-        for n in xrange(len(az)):
+        for n in range(len(az)):
             az_aips[n], el_aips[n], ierr = \
             newpos(3, az0[n], el0[n], x[n], y[n])
             x_aips[n], y_aips[n], ierr = \
@@ -283,7 +283,7 @@ class TestProjectionARC(unittest.TestCase):
         xx, yy = self.sphere_to_plane(self.az0, self.el0, az, el)
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-        for n in xrange(len(az)):
+        for n in range(len(az)):
             az_aips[n], el_aips[n], ierr = \
             newpos(4, self.az0[n], self.el0[n], self.x[n], self.y[n])
             x_aips[n], y_aips[n], ierr = \
@@ -397,7 +397,7 @@ class TestProjectionSTG(unittest.TestCase):
         xx, yy = self.sphere_to_plane(self.az0, self.el0, az, el)
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
-        for n in xrange(len(az)):
+        for n in range(len(az)):
             az_aips[n], el_aips[n], ierr = \
             newpos(6, self.az0[n], self.el0[n], self.x[n], self.y[n])
             x_aips[n], y_aips[n], ierr = \

@@ -98,8 +98,8 @@ class TestModel(unittest.TestCase):
         values = [p.value for p in params]
         m = katpoint.Model(params)
         self.assertEqual(len(m), 6, 'Unexpected model length')
-        self.assertEqual(m.keys(), names, 'Parameter names do not match')
-        self.assertEqual(m.values(), values, 'Parameter values do not match')
+        self.assertEqual(list(m.keys()), names, 'Parameter names do not match')
+        self.assertEqual(list(m.values()), values, 'Parameter values do not match')
         m['NIAO'] = 6789.0
         self.assertEqual(m['NIAO'], 6789.0, 'Parameter setting via dict interface failed')
 

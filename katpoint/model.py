@@ -151,16 +151,16 @@ class Model(object):
 
     def __iter__(self):
         """Iterate over parameter objects."""
-        return self.params.itervalues()
+        return self.params.values().__iter__()
 
     def param_strs(self):
         """Justified (name, value, units, doc) strings for active parameters."""
         name_len = max(len(p.name) for p in self)
-        value_len = max(len(p.value_str) for p in self.params.itervalues())
-        units_len = max(len(p.units) for p in self.params.itervalues())
+        value_len = max(len(p.value_str) for p in self.params.values())
+        units_len = max(len(p.units) for p in self.params.values())
         return [(p.name.ljust(name_len), p.value_str.ljust(value_len),
                  p.units.ljust(units_len), p.__doc__)
-                for p in self.params.itervalues() if p]
+                for p in self.params.values() if p]
 
     def __repr__(self):
         """Short human-friendly string representation of model object."""

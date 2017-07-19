@@ -250,7 +250,7 @@ class PointingModel(Model):
         # Initial guess of uncorrected az/el is the corrected az/el minus fixed offsets
         az, el = pointed_az - self['P1'], pointed_el - self['P7']
         # Solve F(az, el) = apply(az, el) - (pointed_az, pointed_el) = 0 via Newton's method, should converge quickly
-        for iteration in xrange(30):
+        for iteration in range(30):
             # Set up linear system J dx = -F (or A x = b), where J is Jacobian matrix of apply()
             a11, a12, a21, a22 = self._jacobian(az, el)
             test_az, test_el = self.apply(az, el)

@@ -316,7 +316,7 @@ class Catalogue(object):
             self.add(['%s, special' % (name,) for name in specials], tags)
             self.add('Zenith, azel, 0, 90', tags)
         if add_stars:
-            self.add(['%s, star' % (name,) for name in ephem.stars.stars.iterkeys()], tags)
+            self.add(['%s, star' % (name,) for name in ephem.stars.stars.keys()], tags)
         if targets is None:
             targets = []
         self.add(targets, tags)
@@ -396,7 +396,7 @@ class Catalogue(object):
     def __eq__(self, other):
         """Equality comparison operator."""
         # Use lookup dict instead of targets list, as it has a fixed order based on target name
-        return isinstance(other, Catalogue) and (self.lookup.values() == other.lookup.values())
+        return isinstance(other, Catalogue) and (tuple(self.lookup.values()) == tuple(other.lookup.values()))
 
     def __ne__(self, other):
         """Inequality comparison operator."""

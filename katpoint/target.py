@@ -476,7 +476,7 @@ class Target(object):
                 return l, b
         ra, dec = self.astrometric_radec(timestamp, antenna)
         if is_iterable(ra):
-            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in xrange(len(ra))])
+            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in range(len(ra))])
             return lb[:, 0], lb[:, 1]
         else:
             return ephem.Galactic(ephem.Equatorial(ra, dec)).get()
