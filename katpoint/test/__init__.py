@@ -19,17 +19,17 @@
 import logging
 import sys
 import unittest
-# pylint: disable-msg=W0403
-import test_target
-import test_antenna
-import test_catalogue
-import test_projection
-import test_timestamp
-import test_flux
-import test_conversion
-import test_pointing
-import test_refraction
-import test_delay
+
+from katpoint.test import test_target
+from katpoint.test import test_antenna
+from katpoint.test import test_catalogue
+from katpoint.test import test_projection
+from katpoint.test import test_timestamp
+from katpoint.test import test_flux
+from katpoint.test import test_conversion
+from katpoint.test import test_pointing
+from katpoint.test import test_refraction
+from katpoint.test import test_delay
 
 # Enable verbose logging to stdout for katpoint module - see output via nosetests -s flag
 logger = logging.getLogger("katpoint")
