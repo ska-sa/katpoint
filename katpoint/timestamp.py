@@ -19,11 +19,15 @@
 import time
 import math
 
+from functools import total_ordering
+
 import numpy as np
 import ephem
 
 from past.builtins import basestring
 
+
+@total_ordering
 class Timestamp(object):
     """Basic representation of time, in UTC seconds since Unix epoch.
 
@@ -88,9 +92,13 @@ class Timestamp(object):
         """Verbose human-friendly string representation of timestamp object."""
         return self.to_string()
 
-    def __cmp__(self, other):
-        """Compare timestamps based on chronological order."""
-        return np.sign(self.secs - other.secs)
+    def __eq__(self, other):
+        """Test for equality"""
+        return self.secs == other.secs
+
+    def __lt__(self, other):
+        """Test for less than"""
+        return self.secs < other.secs
 
     def __add__(self, other):
         """Add seconds (as floating-point number) to timestamp and return result."""
