@@ -95,9 +95,13 @@ class PointingModel(Model):
         # Fix docstrings to contain the number of parameters
         if '%d' in self.__class__.__doc__:
             self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
-        if '%d' in self.__class__.fit.__func__.__doc__:
-            self.__class__.fit.__func__.__doc__ = self.__class__.fit.__func__.__doc__ % \
-                (len(self), len(self))
+
+        try:
+            fit_func = self.__class__.fit.__func__  # python2
+        except AttributeError:
+            fit_func = self.__class__.fit  # python 3
+        if '%d' in fit_func.__doc__:
+            fit_func.__doc__ = fit_func.__doc__ % (len(self), len(self))
 
     # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
