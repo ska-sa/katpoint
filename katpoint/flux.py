@@ -18,6 +18,8 @@
 
 import numpy as np
 
+from past.builtins import basestring
+
 from .ephem_extra import is_iterable
 
 

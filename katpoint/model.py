@@ -25,10 +25,11 @@ try:
 except ImportError:
     import configparser  # python3
 
-
 from collections import OrderedDict
 
 import numpy as np
+
+from past.builtins import basestring
 
 
 class Parameter(object):

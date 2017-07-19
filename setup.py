@@ -48,12 +48,13 @@ setup(name="katpoint",
       use_katversion=True,
       test_suite="nose.collector",
       install_requires=[
+          "future",
           "numpy",
-          "pyephem"
+          "pyephem",
       ],
       tests_require=[
           "nose",
           "coverage",
           "nosexcover",
-          "unittest2"
+          "unittest2",
       ])

@@ -22,6 +22,7 @@ import math
 import numpy as np
 import ephem
 
+from past.builtins import basestring
 
 class Timestamp(object):
     """Basic representation of time, in UTC seconds since Unix epoch.

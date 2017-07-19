@@ -19,6 +19,8 @@
 import numpy as np
 import ephem
 
+from past.builtins import basestring
+
 from .timestamp import Timestamp
 from .flux import FluxDensityModel
 from .ephem_extra import (StationaryBody, NullBody, is_iterable, lightspeed,

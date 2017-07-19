@@ -21,6 +21,9 @@ import re
 
 import ephem.stars
 import numpy as np
+
+from past.builtins import basestring
+
 # This is needed for tab completion, but is ignored if no IPython is installed
 try:
     # IPython 0.11 and above
