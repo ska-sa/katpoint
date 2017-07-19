@@ -22,12 +22,7 @@ saving and display of parameters.
 """
 
 import ConfigParser
-try:
-    # Python 2.7 and above have builtin support
-    from collections import OrderedDict
-except ImportError:
-    # Alternative for Python 2.4, 2.5, 2.6, pypy from http://code.activestate.com/recipes/576693/
-    from .ordereddict import OrderedDict
+from collections import OrderedDict
 
 import numpy as np
 
