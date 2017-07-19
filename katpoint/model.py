@@ -20,6 +20,8 @@ This provides a base class for pointing and delay models, handling the loading,
 saving and display of parameters.
 
 """
+import sys
+
 try:
     import ConfigParser as configparser  # python2
 except ImportError:
@@ -30,6 +32,8 @@ from collections import OrderedDict
 import numpy as np
 
 from past.builtins import basestring
+
+py2 = sys.version[0] == '2'
 
 
 class Parameter(object):
@@ -261,7 +265,10 @@ class Model(object):
 
         """
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
-        cfg = configparser.SafeConfigParser(defaults)
+        if py2:
+            cfg = configparser.SafeConfigParser(defaults)
+        else:
+            cfg = configparser.ConfigParser(defaults, inline_comment_prefixes=(';', '#'))
         try:
             cfg.readfp(file_like)
             if cfg.sections() != ['header', 'params']:
