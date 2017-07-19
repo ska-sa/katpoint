@@ -19,7 +19,11 @@
 
 import unittest
 import time
-import cPickle
+
+try:
+    import cPickle as pickle  # python2
+except ImportError:
+    import pickle  # python3
 
 import numpy as np
 
@@ -115,7 +119,7 @@ class TestTargetConstruction(unittest.TestCase):
         self.assertEqual(t1, t2.description, 'Equality with description string failed')
         self.assertEqual(t1, t2, 'Equality with target failed')
         self.assertEqual(t1, katpoint.Target(t2), 'Construction with target object failed')
-        self.assertEqual(t1, cPickle.loads(cPickle.dumps(t1)), 'Pickling failed')
+        self.assertEqual(t1, pickle.loads(pickle.dumps(t1)), 'Pickling failed')
         try:
             self.assertEqual(hash(t1), hash(t2), 'Target hashes not equal')
         except TypeError:

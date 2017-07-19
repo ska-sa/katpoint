@@ -17,7 +17,10 @@
 """Tests for the model module."""
 
 import unittest
-import StringIO
+try:
+    from StringIO import StringIO  # python2
+except ImportError:
+    from io import StringIO  # python3
 
 import katpoint
 
@@ -42,17 +45,17 @@ class TestModel(unittest.TestCase):
         # Exercise all string representations for coverage purposes
         print('%r %s %r' % (m, m, m.params['POS_E']))
         # An empty file should lead to a BadModelFile exception
-        cfg_file = StringIO.StringIO()
+        cfg_file = StringIO()
         self.assertRaises(katpoint.BadModelFile, m.fromfile, cfg_file)
         m.tofile(cfg_file)
         cfg_str = cfg_file.getvalue()
         cfg_file.close()
         # Load the saved config file
-        cfg_file = StringIO.StringIO(cfg_str)
+        cfg_file = StringIO(cfg_str)
         m2 = katpoint.Model(self.new_params())
         m2.fromfile(cfg_file)
         self.assertEqual(m, m2, 'Saving model to file and loading it again failed')
-        cfg_file = StringIO.StringIO(cfg_str)
+        cfg_file = StringIO(cfg_str)
         m2.set(cfg_file)
         self.assertEqual(m, m2, 'Saving model to file and loading it again failed')
         # Build model from description string
@@ -68,7 +71,7 @@ class TestModel(unittest.TestCase):
         m4.set(m.values())
         self.assertEqual(m, m4, 'Saving model to list and loading it again failed')
         # Empty model
-        cfg_file = StringIO.StringIO('[header]\n[params]\n')
+        cfg_file = StringIO('[header]\n[params]\n')
         m5 = katpoint.Model(self.new_params())
         m5.fromfile(cfg_file)
         print(m5)

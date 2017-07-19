@@ -20,8 +20,12 @@ This provides a base class for pointing and delay models, handling the loading,
 saving and display of parameters.
 
 """
+try:
+    import ConfigParser as configparser  # python2
+except ImportError:
+    import configparser  # python3
 
-import ConfigParser
+
 from collections import OrderedDict
 
 import numpy as np
@@ -237,7 +241,7 @@ class Model(object):
             File-like object with write() method representing config file
 
         """
-        cfg = ConfigParser.SafeConfigParser()
+        cfg = configparser.SafeConfigParser()
         cfg.add_section('header')
         for key, val in self.header.items():
             cfg.set('header', key, str(val))
@@ -256,12 +260,12 @@ class Model(object):
 
         """
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
-        cfg = ConfigParser.SafeConfigParser(defaults)
+        cfg = configparser.SafeConfigParser(defaults)
         try:
             cfg.readfp(file_like)
             if cfg.sections() != ['header', 'params']:
-                raise ConfigParser.Error('Expected sections not found in model file')
-        except ConfigParser.Error as exc:
+                raise configparser.Error('Expected sections not found in model file')
+        except configparser.Error as exc:
             filename = getattr(file_like, 'name', '')
             msg = 'Could not construct %s from %s\n\nOriginal exception: %s' % \
                   (self.__class__.__name__,
