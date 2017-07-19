@@ -95,8 +95,8 @@ class PointingModel(Model):
         # Fix docstrings to contain the number of parameters
         if '%d' in self.__class__.__doc__:
             self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
-        if '%d' in self.__class__.fit.im_func.__doc__:
-            self.__class__.fit.im_func.__doc__ = self.__class__.fit.im_func.__doc__ % \
+        if '%d' in self.__class__.fit.__func__.__doc__:
+            self.__class__.fit.__func__.__doc__ = self.__class__.fit.__func__.__doc__ % \
                 (len(self), len(self))
 
     # pylint: disable-msg=R0914,C0103,W0612

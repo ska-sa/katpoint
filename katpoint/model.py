@@ -261,7 +261,7 @@ class Model(object):
             cfg.readfp(file_like)
             if cfg.sections() != ['header', 'params']:
                 raise ConfigParser.Error('Expected sections not found in model file')
-        except ConfigParser.Error, exc:
+        except ConfigParser.Error as exc:
             filename = getattr(file_like, 'name', '')
             msg = 'Could not construct %s from %s\n\nOriginal exception: %s' % \
                   (self.__class__.__name__,

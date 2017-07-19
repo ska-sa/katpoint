@@ -41,13 +41,13 @@ import katpoint
 
 
 # Create lookup that returns names for a given HIC number
-names = file('bae_stars2.txt').readlines()
+names = open('bae_stars2.txt').readlines()
 names = [[part.strip() for part in name.split(',')] for name in names]
 lookup = {}
 for name, num in names:
     lookup['HYP' + num] = name
 
-inlines = file('hipparcos.edb').readlines()
+inlines = open('hipparcos.edb').readlines()
 
 # Start with Solar System bodies, and add stars found in list as xephem bodies
 outlines = ['Jupiter, special\n', 'Mars, special\n', 'Moon, special\n']
@@ -59,7 +59,7 @@ for line in inlines:
         continue
 
 # Save results
-f = file('bae_optical_pointing_sources.csv', 'w')
+f = open('bae_optical_pointing_sources.csv', 'w')
 f.writelines("""# These are the sources to be used by BAE for optical pointing tests of the
 # KAT-7 dishes, in response to Mantis ticket 460 (second BAE list).
 # Compiled by Ludwig Schwardt from various sources on 6 November 2009.
@@ -75,7 +75,7 @@ f.close()
 
 # Test the catalogue
 ant = katpoint.Antenna('KAT7, -30:43:16.71, 21:24:35.86, 1055, 12.0')
-cat = katpoint.Catalogue(file('bae_optical_pointing_sources.csv'),
+cat = katpoint.Catalogue(open('bae_optical_pointing_sources.csv'),
                          add_specials=False, antenna=ant)
 timestamp = katpoint.Timestamp()
 ra, dec = np.array([t.radec(timestamp) for t in cat]).transpose()

@@ -91,7 +91,7 @@ class TestTargetConstruction(unittest.TestCase):
             t = katpoint.Target(descr)
             self.assertEqual(descr, t.description, "Target description ('%s') differs from original string ('%s')" %
                              (t.description, descr))
-            print repr(t), t
+            print('%r %s' % (t, t))
         for descr in self.invalid_targets:
             self.assertRaises(ValueError, katpoint.Target, descr)
         azel1 = katpoint.Target(self.azel_target)

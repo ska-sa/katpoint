@@ -40,7 +40,7 @@ class TestModel(unittest.TestCase):
         m = katpoint.Model(self.new_params())
         m.header['date'] = '2014-01-15'
         # Exercise all string representations for coverage purposes
-        print repr(m), m, repr(m.params['POS_E'])
+        print('%r %s %r' % (m, m, m.params['POS_E']))
         # An empty file should lead to a BadModelFile exception
         cfg_file = StringIO.StringIO()
         self.assertRaises(katpoint.BadModelFile, m.fromfile, cfg_file)
@@ -71,7 +71,7 @@ class TestModel(unittest.TestCase):
         cfg_file = StringIO.StringIO('[header]\n[params]\n')
         m5 = katpoint.Model(self.new_params())
         m5.fromfile(cfg_file)
-        print m5
+        print(m5)
         self.assertNotEqual(m, m5, 'Model should not be equal to an empty one')
         m6 = katpoint.Model(self.new_params())
         m6.set()

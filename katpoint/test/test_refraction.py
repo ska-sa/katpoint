@@ -36,7 +36,7 @@ class TestRefractionCorrection(unittest.TestCase):
 
     def test_refraction_basic(self):
         """Test basic refraction correction properties."""
-        print repr(self.rc)
+        print(repr(self.rc))
         self.assertRaises(ValueError, katpoint.RefractionCorrection, 'unknown')
         rc2 = katpoint.RefractionCorrection()
         self.assertEqual(self.rc, rc2, 'Refraction models should be equal')

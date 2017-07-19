@@ -91,7 +91,7 @@ for n, src in enumerate(table.array):
     freq_range = [min(freq_range[0], 1000.0), max(freq_range[1], 2000.0)]
     flux_str = katpoint.FluxDensityModel(freq_range[0], freq_range[1], flux_poly[::-1]).description
     src_strings.append(', '.join((names, tags, ra, dec, flux_str)) + '\n')
-    print src_strings[-1].strip()
+    print(src_strings[-1].strip())
 
     # Display flux polynomial fits
     test_log_freq = np.linspace(np.log10(start[0]), np.log10(start[-1]), 200)
@@ -105,7 +105,7 @@ for n, src in enumerate(table.array):
     plt.yticks([])
     plt.axvspan(np.log10(freq_range[0]), np.log10(freq_range[1]), facecolor='g', alpha=0.5)
 
-with file('parkes_source_list.csv', 'w') as f:
+with open('parkes_source_list.csv', 'w') as f:
     f.writelines(src_strings)
 
 plt.figtext(0.5, 0.93, 'Spectra (log S vs. log v) for %d sources' % (len(src_strings)), ha='center', va='center')
