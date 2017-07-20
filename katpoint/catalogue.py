@@ -316,7 +316,7 @@ class Catalogue(object):
             self.add(['%s, special' % (name,) for name in specials], tags)
             self.add('Zenith, azel, 0, 90', tags)
         if add_stars:
-            self.add(['%s, star' % (name,) for name in ephem.stars.stars.keys()], tags)
+            self.add(['%s, star' % (name,) for name in sorted(ephem.stars.stars.keys())], tags)
         if targets is None:
             targets = []
         self.add(targets, tags)
