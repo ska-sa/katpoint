@@ -25,8 +25,6 @@ and other parameters that affect pointing and delay calculations.
 import numpy as np
 import ephem
 
-from past.builtins import basestring
-
 from .timestamp import Timestamp
 from .ephem_extra import is_iterable
 from .conversion import enu_to_ecef, ecef_to_lla, lla_to_ecef, ecef_to_enu
@@ -317,7 +315,7 @@ class Antenna(object):
             self.observer.date = Timestamp(t).to_ephem_date()
             # pylint: disable-msg=E1101
             return self.observer.sidereal_time()
-        if not isinstance(timestamp, basestring) and is_iterable(timestamp):
+        if is_iterable(timestamp):
             return np.array([_scalar_local_sidereal_time(t) for t in timestamp])
         else:
             return _scalar_local_sidereal_time(timestamp)
