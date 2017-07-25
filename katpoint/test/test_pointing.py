@@ -44,7 +44,7 @@ class TestPointingModel(unittest.TestCase):
         """Test construction / load / save of pointing model."""
         params = katpoint.deg2rad(np.random.randn(self.num_params + 1))
         pm = katpoint.PointingModel(params[:-1])
-        print repr(pm), pm
+        print('%r %s' % (pm, pm))
         pm2 = katpoint.PointingModel(params[:-2])
         self.assertEqual(pm2.values()[-1], 0.0, 'Unspecified pointing model params not zeroed')
         pm3 = katpoint.PointingModel(params)

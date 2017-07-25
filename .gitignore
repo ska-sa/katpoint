@@ -2,6 +2,7 @@
 
 # C extensions
 *.so
+*.so.dSYM
 
 # Packages
 *.egg
@@ -9,6 +10,7 @@
 dist
 build
 eggs
+.eggs
 parts
 bin
 var

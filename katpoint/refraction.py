@@ -202,7 +202,7 @@ class RefractionCorrection(object):
         upper = refracted_el + deg2rad(1. / 3600.)
         # Do binary search for desired el within this range (but cap iterations in case of a mishap)
         # This assumes that refraction-corrected elevation is monotone function of uncorrected elevation
-        for iteration in xrange(40):
+        for iteration in range(40):
             el = 0.5 * (lower + upper)
             test_el = self.apply(el, temperature_C, pressure_hPa, humidity_percent)
             if np.all(np.abs(test_el - refracted_el) < tolerance):

@@ -49,8 +49,6 @@
 # 15 March 2010
 #
 
-from __future__ import with_statement
-
 import numpy as np
 import matplotlib.pyplot as plt
 import katpoint
@@ -94,7 +92,7 @@ for src in table.array:
         flux_poly = np.polyfit(log_freq[mid_freqs], log_flux[mid_freqs], 1)
         flux_str = katpoint.FluxDensityModel(min_freq, max_freq, flux_poly[::-1]).description
     src_strings.append(', '.join((names, tags_ra_dec, flux_str)) + '\n')
-    print src_strings[-1].strip()
+    print(src_strings[-1].strip())
 
     # Display flux model fit
     test_log_flux = np.log10(katpoint.FluxDensityModel(flux_str).flux_density(10 ** test_log_freq))
@@ -113,7 +111,7 @@ for src in table.array:
     plt.axvspan(np.log10(min_freq), np.log10(max_freq), facecolor=colorcode, alpha=0.5)
     plt.xlim(test_log_freq[0], test_log_freq[-1])
 
-with file('kuehr1Jy_source_list.csv', 'w') as f:
+with open('kuehr1Jy_source_list.csv', 'w') as f:
     f.writelines(src_strings)
 
 plt.show()

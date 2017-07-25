@@ -20,16 +20,20 @@ This provides a base class for pointing and delay models, handling the loading,
 saving and display of parameters.
 
 """
+import sys
 
-import ConfigParser
 try:
-    # Python 2.7 and above have builtin support
-    from collections import OrderedDict
+    import ConfigParser as configparser  # python2
 except ImportError:
-    # Alternative for Python 2.4, 2.5, 2.6, pypy from http://code.activestate.com/recipes/576693/
-    from .ordereddict import OrderedDict
+    import configparser  # python3
+
+from collections import OrderedDict
 
 import numpy as np
+
+from past.builtins import basestring
+
+py2 = sys.version[0] == '2'
 
 
 class Parameter(object):
@@ -147,16 +151,16 @@ class Model(object):
 
     def __iter__(self):
         """Iterate over parameter objects."""
-        return self.params.itervalues()
+        return self.params.values().__iter__()
 
     def param_strs(self):
         """Justified (name, value, units, doc) strings for active parameters."""
         name_len = max(len(p.name) for p in self)
-        value_len = max(len(p.value_str) for p in self.params.itervalues())
-        units_len = max(len(p.units) for p in self.params.itervalues())
+        value_len = max(len(p.value_str) for p in self.params.values())
+        units_len = max(len(p.units) for p in self.params.values())
         return [(p.name.ljust(name_len), p.value_str.ljust(value_len),
                  p.units.ljust(units_len), p.__doc__)
-                for p in self.params.itervalues() if p]
+                for p in self.params.values() if p]
 
     def __repr__(self):
         """Short human-friendly string representation of model object."""
@@ -242,7 +246,7 @@ class Model(object):
             File-like object with write() method representing config file
 
         """
-        cfg = ConfigParser.SafeConfigParser()
+        cfg = configparser.SafeConfigParser()
         cfg.add_section('header')
         for key, val in self.header.items():
             cfg.set('header', key, str(val))
@@ -261,12 +265,15 @@ class Model(object):
 
         """
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
-        cfg = ConfigParser.SafeConfigParser(defaults)
+        if py2:
+            cfg = configparser.SafeConfigParser(defaults)
+        else:
+            cfg = configparser.ConfigParser(defaults, inline_comment_prefixes=(';', '#'))
         try:
             cfg.readfp(file_like)
             if cfg.sections() != ['header', 'params']:
-                raise ConfigParser.Error('Expected sections not found in model file')
-        except ConfigParser.Error, exc:
+                raise configparser.Error('Expected sections not found in model file')
+        except configparser.Error as exc:
             filename = getattr(file_like, 'name', '')
             msg = 'Could not construct %s from %s\n\nOriginal exception: %s' % \
                   (self.__class__.__name__,

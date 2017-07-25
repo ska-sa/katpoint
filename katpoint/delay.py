@@ -134,7 +134,9 @@ class DelayCorrection(object):
     def __init__(self, ants, ref_ant, sky_centre_freq=0.0):
         self.ants = list(ants)
         self.ref_ant = ref_ant
-        if any([ant.ref_position_wgs84 != ref_ant.position_wgs84
+        # These tolerances translate to micrometre differences (assume float64)
+        if any([not np.allclose(ant.ref_position_wgs84, ref_ant.position_wgs84,
+                                rtol=0., atol=1e-14)
                 for ant in self.ants + [ref_ant]]):
             msg = "Antennas '%s' do not all share the same reference " \
                   "position of the reference antenna %r" % \

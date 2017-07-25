@@ -21,6 +21,9 @@ import re
 
 import ephem.stars
 import numpy as np
+
+from past.builtins import basestring
+
 # This is needed for tab completion, but is ignored if no IPython is installed
 try:
     # IPython 0.11 and above
@@ -313,7 +316,7 @@ class Catalogue(object):
             self.add(['%s, special' % (name,) for name in specials], tags)
             self.add('Zenith, azel, 0, 90', tags)
         if add_stars:
-            self.add(['%s, star' % (name,) for name in ephem.stars.stars.iterkeys()], tags)
+            self.add(['%s, star' % (name,) for name in sorted(ephem.stars.stars.keys())], tags)
         if targets is None:
             targets = []
         self.add(targets, tags)
@@ -393,7 +396,7 @@ class Catalogue(object):
     def __eq__(self, other):
         """Equality comparison operator."""
         # Use lookup dict instead of targets list, as it has a fixed order based on target name
-        return isinstance(other, Catalogue) and (self.lookup.values() == other.lookup.values())
+        return isinstance(other, Catalogue) and (tuple(self.lookup.values()) == tuple(other.lookup.values()))
 
     def __ne__(self, other):
         """Inequality comparison operator."""
@@ -597,7 +600,7 @@ class Catalogue(object):
             Name of file to write catalogue to (overwriting existing contents)
 
         """
-        file(filename, 'w').writelines([t.description + '\n' for t in self.targets])
+        open(filename, 'w').writelines([t.description + '\n' for t in self.targets])
 
     def closest_to(self, target, timestamp=None, antenna=None):
         """Determine target in catalogue that is closest to given target.
@@ -942,10 +945,10 @@ class Catalogue(object):
             title += ', with flux density (Jy) evaluated at %g MHz' % (flux_freq_MHz,)
         if antenna2 is not None:
             title += " and fringe period (s) toward antenna '%s' at same frequency" % (antenna2.name)
-        print title
-        print
-        print 'Target                        Azimuth    Elevation <    Flux Fringe period'
-        print '------                        -------    --------- -    ---- -------------'
+        print(title)
+        print()
+        print('Target                        Azimuth    Elevation <    Flux Fringe period')
+        print('------                        -------    --------- -    ---- -------------')
         for target in self.sort('el', timestamp=timestamp, antenna=antenna, ascending=False):
             az, el = target.azel(timestamp, antenna)
             delta_el = rad2deg(target.azel(timestamp + 30.0, antenna)[1] - target.azel(timestamp - 30.0, antenna)[1])
@@ -959,13 +962,13 @@ class Catalogue(object):
                 fringe_period = None
             if above_horizon and el < 0.0:
                 # Draw horizon line
-                print '--------------------------------------------------------------------------'
+                print('--------------------------------------------------------------------------')
                 above_horizon = False
             line = '%-24s %12s %12s %c' % (target.name, az.znorm, el, el_code)
             line = line + ' %7.1f' % (flux,) if not np.isnan(flux) else line + '        '
             if fringe_period is not None:
                 line += '    %10.2f' % (fringe_period,)
-            print line
+            print(line)
 
 # --------------------------------------------------------------------------------------------------
 # --- FUNCTION :  _catalogue_completer

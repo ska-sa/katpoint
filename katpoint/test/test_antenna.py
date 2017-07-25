@@ -19,7 +19,10 @@
 
 import unittest
 import time
-import cPickle
+try:
+    import cPickle as pickle  # python2
+except ImportError:
+    import pickle  # python3
 
 import katpoint
 import numpy as np
@@ -52,7 +55,7 @@ class TestAntennaConstruction(unittest.TestCase):
         valid_strings = [a.description for a in valid_antennas]
         for descr in valid_strings:
             ant = katpoint.Antenna(descr)
-            print str(ant), repr(ant)
+            print('%s %s' % (str(ant), repr(ant)))
             self.assertEqual(descr, ant.description, 'Antenna description differs from original string')
             self.assertEqual(ant.description, ant.format_katcp(), 'Antenna description differs from KATCP format')
         for descr in self.invalid_antennas:
@@ -72,7 +75,7 @@ class TestAntennaConstruction(unittest.TestCase):
         self.assertEqual(a1, a2.description, 'Antenna not equal to description string')
         self.assertEqual(a1, a2, 'Antennas not equal')
         self.assertEqual(a1, katpoint.Antenna(a2), 'Construction with antenna object failed')
-        self.assertEqual(a1, cPickle.loads(cPickle.dumps(a1)), 'Pickling failed')
+        self.assertEqual(a1, pickle.loads(pickle.dumps(a1)), 'Pickling failed')
         try:
             self.assertEqual(hash(a1), hash(a2), 'Antenna hashes not equal')
         except TypeError:

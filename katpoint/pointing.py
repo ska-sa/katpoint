@@ -95,9 +95,13 @@ class PointingModel(Model):
         # Fix docstrings to contain the number of parameters
         if '%d' in self.__class__.__doc__:
             self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
-        if '%d' in self.__class__.fit.im_func.__doc__:
-            self.__class__.fit.im_func.__doc__ = self.__class__.fit.im_func.__doc__ % \
-                (len(self), len(self))
+
+        try:
+            fit_func = self.__class__.fit.__func__  # python2
+        except AttributeError:
+            fit_func = self.__class__.fit  # python 3
+        if '%d' in fit_func.__doc__:
+            fit_func.__doc__ = fit_func.__doc__ % (len(self), len(self))
 
     # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
@@ -246,7 +250,7 @@ class PointingModel(Model):
         # Initial guess of uncorrected az/el is the corrected az/el minus fixed offsets
         az, el = pointed_az - self['P1'], pointed_el - self['P7']
         # Solve F(az, el) = apply(az, el) - (pointed_az, pointed_el) = 0 via Newton's method, should converge quickly
-        for iteration in xrange(30):
+        for iteration in range(30):
             # Set up linear system J dx = -F (or A x = b), where J is Jacobian matrix of apply()
             a11, a12, a21, a22 = self._jacobian(az, el)
             test_az, test_el = self.apply(az, el)

@@ -38,6 +38,6 @@ calibrators = json.loads(table_str)['calibrators']
 descriptions = [('%(name)s, radec atca_cal, %(ra)s, %(dec)s\n' % cal).encode('utf-8') for cal in calibrators
                 if cal['name'] not in ('uranus', 'jupiter')]
 # Save catalogue to CSV file
-with file('atca_calibrators.csv', 'w') as f:
+with open('atca_calibrators.csv', 'w') as f:
     f.write('# ATCA calibrator list retrieved on %s\n' % (time.strftime('%Y-%m-%d', time.localtime()),))
     f.writelines(descriptions)

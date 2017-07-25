@@ -51,7 +51,7 @@ class TestFluxDensityModel(unittest.TestCase):
                                 np.array([np.nan, np.nan]), 'Empty flux model leads to wrong empty flux shape')
         self.flux_target.flux_freq_MHz = 1.5
         self.assertEqual(self.flux_target.flux_density(), 100.0, 'Flux calculation for default freq wrong')
-        print self.flux_target
+        print(self.flux_target)
         unit_model2 = katpoint.FluxDensityModel(100., 200., [0.])
         self.assertEqual(unit_model, unit_model2, 'Flux models not equal')
         try:

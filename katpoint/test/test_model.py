@@ -17,7 +17,10 @@
 """Tests for the model module."""
 
 import unittest
-import StringIO
+try:
+    from StringIO import StringIO  # python2
+except ImportError:
+    from io import StringIO  # python3
 
 import katpoint
 
@@ -40,19 +43,19 @@ class TestModel(unittest.TestCase):
         m = katpoint.Model(self.new_params())
         m.header['date'] = '2014-01-15'
         # Exercise all string representations for coverage purposes
-        print repr(m), m, repr(m.params['POS_E'])
+        print('%r %s %r' % (m, m, m.params['POS_E']))
         # An empty file should lead to a BadModelFile exception
-        cfg_file = StringIO.StringIO()
+        cfg_file = StringIO()
         self.assertRaises(katpoint.BadModelFile, m.fromfile, cfg_file)
         m.tofile(cfg_file)
         cfg_str = cfg_file.getvalue()
         cfg_file.close()
         # Load the saved config file
-        cfg_file = StringIO.StringIO(cfg_str)
+        cfg_file = StringIO(cfg_str)
         m2 = katpoint.Model(self.new_params())
         m2.fromfile(cfg_file)
         self.assertEqual(m, m2, 'Saving model to file and loading it again failed')
-        cfg_file = StringIO.StringIO(cfg_str)
+        cfg_file = StringIO(cfg_str)
         m2.set(cfg_file)
         self.assertEqual(m, m2, 'Saving model to file and loading it again failed')
         # Build model from description string
@@ -68,10 +71,10 @@ class TestModel(unittest.TestCase):
         m4.set(m.values())
         self.assertEqual(m, m4, 'Saving model to list and loading it again failed')
         # Empty model
-        cfg_file = StringIO.StringIO('[header]\n[params]\n')
+        cfg_file = StringIO('[header]\n[params]\n')
         m5 = katpoint.Model(self.new_params())
         m5.fromfile(cfg_file)
-        print m5
+        print(m5)
         self.assertNotEqual(m, m5, 'Model should not be equal to an empty one')
         m6 = katpoint.Model(self.new_params())
         m6.set()
@@ -95,8 +98,8 @@ class TestModel(unittest.TestCase):
         values = [p.value for p in params]
         m = katpoint.Model(params)
         self.assertEqual(len(m), 6, 'Unexpected model length')
-        self.assertEqual(m.keys(), names, 'Parameter names do not match')
-        self.assertEqual(m.values(), values, 'Parameter values do not match')
+        self.assertEqual(list(m.keys()), names, 'Parameter names do not match')
+        self.assertEqual(list(m.values()), values, 'Parameter values do not match')
         m['NIAO'] = 6789.0
         self.assertEqual(m['NIAO'], 6789.0, 'Parameter setting via dict interface failed')
 
