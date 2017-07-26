@@ -23,6 +23,7 @@ delay correction for a correlator.
 """
 
 import logging
+import json
 
 import numpy as np
 
@@ -162,6 +163,21 @@ class DelayCorrection(object):
         max_delay_per_ant += self._params[:, 5]
         # Add a 1% safety margin to guarantee positive delay corrections
         return 1.01 * max(max_delay_per_ant) if self.ants else 0.0
+
+    @property
+    def description(self):
+        """Complete string representation of object that allows reconstruction."""
+        descr = {'ref_ant': self.ref_ant.description,
+                 'sky_centre_freq': self.sky_centre_freq}
+        # Don't use a dict for ant_models as we want to preserve ordering
+        ant_models = []
+        for inp, params in zip(self.inputs[::2], self._params):
+            ant_name = inp[:-1]
+            ant_model = DelayModel()
+            ant_model.fromdelays(params)
+            ant_models.append([ant_name, ant_model.description])
+        descr['ant_models'] = ant_models
+        return json.dumps(descr)
 
     def _calculate_delays(self, target, timestamp):
         """Calculate delays for all inputs / antennas for a given target.
