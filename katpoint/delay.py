@@ -26,10 +26,12 @@ import logging
 import json
 
 import numpy as np
+from past.builtins import basestring
 
 from .model import Parameter, Model
 from .conversion import azel_to_enu
-from .ephem_extra import lightspeed, is_iterable
+from .ephem_extra import lightspeed, is_iterable, _just_gimme_an_ascii_string
+
 
 # Speed of EM wave in fixed path (typically due to cables / clock distribution).
 # This number is not critical - only meant to convert delays to "nice" lengths.
@@ -106,10 +108,11 @@ class DelayCorrection(object):
 
     Parameters
     ----------
-    ants : sequence of *M* :class:`Antenna` objects
-        Sequence of antennas forming an array and connected to correlator
-    ref_ant : :class:`Antenna` object
-        Reference antenna for the array
+    ants : sequence of *M* :class:`Antenna` objects or string
+        Sequence of antennas forming an array and connected to correlator;
+        alternatively, a description string representing the entire object
+    ref_ant : :class:`Antenna` object or None, optional
+        Reference antenna for the array (only optional if `ants` is a string)
     sky_centre_freq : float, optional
         RF centre frequency that serves as reference for fringe phase
 
@@ -125,14 +128,37 @@ class DelayCorrection(object):
     Raises
     ------
     ValueError
-        If all antennas do not share the same reference position as ref_ant
+        If all antennas do not share the same reference position as `ref_ant`
+        or `ref_ant` was not specified
 
     """
 
     # Maximum size for delay cache
     CACHE_SIZE = 1000
 
-    def __init__(self, ants, ref_ant, sky_centre_freq=0.0):
+    def __init__(self, ants, ref_ant=None, sky_centre_freq=0.0):
+        # If given, unpack description string into parameters first
+        if isinstance(ants, basestring):
+            descr = json.loads(ants)
+            # JSON only returns Unicode, even on Python 2... Remedy this.
+            ref_ant_str = _just_gimme_an_ascii_string(descr['ref_ant'])
+            # Antenna needs DelayModel which also lives in this module...
+            # This is messy but avoids a circular dependency and having to
+            # split this file into two small bits.
+            from .antenna import Antenna
+            ref_ant = Antenna(ref_ant_str)
+            sky_centre_freq = descr['sky_centre_freq']
+            # Make some skeleton antennas - only name and delay_model required
+            ants = []
+            for ant_name, ant_model_str in descr['ant_models']:
+                skeleton_ant = Antenna(ref_ant_str)
+                skeleton_ant.name = _just_gimme_an_ascii_string(ant_name)
+                ant_model = DelayModel()
+                ant_model.fromstring(_just_gimme_an_ascii_string(ant_model_str))
+                skeleton_ant.delay_model = ant_model
+                ants.append(skeleton_ant)
+        if ref_ant is None:
+            raise ValueError('No reference antenna provided to DelayCorrection')
         self.ants = list(ants)
         self.ref_ant = ref_ant
         # These tolerances translate to micrometre differences (assume float64)

@@ -65,9 +65,19 @@ class TestDelayCorrection(unittest.TestCase):
         self.ts = katpoint.Timestamp('2013-08-14 08:25')
         self.delays = katpoint.DelayCorrection([self.ant2, self.ant3], self.ant1, 1.285e9)
 
+    def test_construction(self):
+        """Test construction of DelayCorrection object."""
+        descr = self.delays.description
+        delays2 = katpoint.DelayCorrection(descr)
+        self.assertEqual(delays2.description, descr, 'Description strings differ')
+        self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2], self.ant3)
+        self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2])
+        delays3 = katpoint.DelayCorrection([], self.ant1)
+        self.assertEqual(delays3._params.shape, (0, len(katpoint.DelayModel())),
+                         "Delay correction with no antennas should fail gracefully")
+
     def test_correction(self):
         """Test delay correction."""
-        self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2], self.ant3)
         max_delay = self.delays.max_delay
         delay0, phase0 = self.delays.corrections(self.target1, self.ts)
         delay1, phase1 = self.delays.corrections(self.target1, self.ts, self.ts + 1.0)
