@@ -31,6 +31,7 @@ from past.builtins import basestring
 from .model import Parameter, Model
 from .conversion import azel_to_enu
 from .ephem_extra import lightspeed, is_iterable, _just_gimme_an_ascii_string
+from .target import construct_radec_target
 
 
 # Speed of EM wave in fixed path (typically due to cables / clock distribution).
@@ -224,11 +225,18 @@ class DelayCorrection(object):
             Delays (one per correlator input) in seconds
 
         """
-        if offset:
-            az, el = target.plane_to_sphere(timestamp=timestamp,
-                                            antenna=self.ref_ant, **offset)
-        else:
+        if not offset:
             az, el = target.azel(timestamp, self.ref_ant)
+        else:
+            coord_system = offset.get('coord_system', 'azel')
+            if coord_system == 'radec':
+                ra, dec = target.plane_to_sphere(timestamp=timestamp,
+                                                 antenna=self.ref_ant, **offset)
+                offset_target = construct_radec_target(ra, dec)
+                az, el = offset_target.azel(timestamp, self.ref_ant)
+            else:
+                az, el = target.plane_to_sphere(timestamp=timestamp,
+                                                antenna=self.ref_ant, **offset)
         targetdir = np.array(azel_to_enu(az, el))
         cos_el = np.cos(el)
         design_mat = np.array([np.r_[-targetdir, 1.0, 0.0, cos_el],

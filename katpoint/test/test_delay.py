@@ -126,3 +126,22 @@ class TestDelayCorrection(unittest.TestCase):
         self.assertEqual(delay1['A2v'][0], max_delay, 'Delay for ant2v should be zero')
         self.assertEqual(delay1['A2h'][1], 0.0, 'Delay rate for ant2h should be zero')
         self.assertEqual(delay1['A2v'][1], 0.0, 'Delay rate for ant2v should be zero')
+        # Now try (ra, dec) coordinate system
+        ra, dec = self.target1.radec(self.ts, self.ant1)
+        offset = dict(projection_type='ARC', coord_system='radec')
+        target4 = katpoint.construct_radec_target(ra - katpoint.deg2rad(1.0),
+                                                  dec - katpoint.deg2rad(1.0))
+        x, y = target4.sphere_to_plane(ra, dec, self.ts, self.ant1, **offset)
+        offset['x'] = x
+        offset['y'] = y
+        max_delay = self.delays.max_delay
+        delay0, phase0 = self.delays.corrections(target4, self.ts, offset=offset)
+        delay1, phase1 = self.delays.corrections(target4, self.ts,
+                                                 self.ts + 1.0, offset)
+        # Conspire to return to special target1
+        np.testing.assert_almost_equal(delay0['A2h'], max_delay, decimal=15)
+        np.testing.assert_almost_equal(delay0['A2v'], max_delay, decimal=15)
+        np.testing.assert_almost_equal(delay1['A2h'][0], max_delay, decimal=15)
+        np.testing.assert_almost_equal(delay1['A2v'][0], max_delay, decimal=15)
+        np.testing.assert_almost_equal(delay1['A2h'][1], 0.0, decimal=15)
+        np.testing.assert_almost_equal(delay1['A2v'][1], 0.0, decimal=15)
