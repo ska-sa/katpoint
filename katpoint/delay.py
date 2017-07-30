@@ -205,15 +205,18 @@ class DelayCorrection(object):
         descr['ant_models'] = ant_models
         return json.dumps(descr)
 
-    def _calculate_delays(self, target, timestamp):
+    def _calculate_delays(self, target, timestamp, offset=None):
         """Calculate delays for all inputs / antennas for a given target.
 
         Parameters
         ----------
         target : :class:`Target` object
             Target providing direction for geometric delays
-        timestamp : :class:`Timestamp` object or equivalent, optional
+        timestamp : :class:`Timestamp` object or equivalent
             Timestamp in UTC seconds since Unix epoch
+        offset : dict or None, optional
+            Keyword arguments for :meth:`Target.plane_to_sphere` to offset
+            delay centre relative to target (see method for details)
 
         Returns
         -------
@@ -221,14 +224,18 @@ class DelayCorrection(object):
             Delays (one per correlator input) in seconds
 
         """
-        az, el = target.azel(timestamp, self.ref_ant)
+        if offset:
+            az, el = target.plane_to_sphere(timestamp=timestamp,
+                                            antenna=self.ref_ant, **offset)
+        else:
+            az, el = target.azel(timestamp, self.ref_ant)
         targetdir = np.array(azel_to_enu(az, el))
         cos_el = np.cos(el)
         design_mat = np.array([np.r_[-targetdir, 1.0, 0.0, cos_el],
                                np.r_[-targetdir, 0.0, 1.0, cos_el]])
         return np.dot(self._params, design_mat.T).ravel()
 
-    def _cached_delays(self, target, timestamp):
+    def _cached_delays(self, target, timestamp, offset=None):
         """Try to load delays from cache, else calculate it.
 
         This uses the timestamp to look up previously calculated delays in
@@ -242,14 +249,15 @@ class DelayCorrection(object):
         """
         delays = self._cache.pop(timestamp, None)
         if delays is None:
-            delays = self._calculate_delays(target, timestamp)
+            delays = self._calculate_delays(target, timestamp, offset)
             # Clean out the oldest timestamp if cache is full
             while len(self._cache) >= DelayCorrection.CACHE_SIZE:
                 self._cache.pop(min(self._cache.keys()))
             self._cache[timestamp] = delays
         return delays
 
-    def corrections(self, target, timestamp=None, next_timestamp=None):
+    def corrections(self, target, timestamp=None, next_timestamp=None,
+                    offset=None):
         """Delay and phase corrections for a given target and timestamp(s).
 
         Calculate delay and phase corrections for the direction towards
@@ -274,6 +282,9 @@ class DelayCorrection(object):
             Timestamp when next delay will be evaluated, used to determine
             a slope for linear interpolation (default is no slope). This is
             ignored if *timestamp* is a sequence.
+        offset : dict or None, optional
+            Keyword arguments for :meth:`Target.plane_to_sphere` to offset
+            delay centre relative to target (see method for details)
 
         Returns
         -------
@@ -297,12 +308,12 @@ class DelayCorrection(object):
             all_times = np.r_[timestamp, [timestamp[-1] + last_step]]
             next_timestamp = all_times[1:]
             # Don't use cache, as the next_times are included in all_delays
-            all_delays = np.array([self._calculate_delays(target, t)
+            all_delays = np.array([self._calculate_delays(target, t, offset)
                                    for t in all_times]).T
             delays, next_delays = all_delays[:, :-1], all_delays[:, 1:]
         else:
             # Use cache for a single timestamp
-            delays = self._cached_delays(target, timestamp)
+            delays = self._cached_delays(target, timestamp, offset)
 
         def phase(t0):
             """The phase associated with delay t0 at the centre frequency."""
@@ -315,7 +326,7 @@ class DelayCorrection(object):
         step = next_timestamp - timestamp
         # We still have to get next_delays in the single timestamp case
         if not is_iterable(next_timestamp):
-            next_delays = self._cached_delays(target, next_timestamp)
+            next_delays = self._cached_delays(target, next_timestamp, offset)
         next_delay_corrections = self.max_delay - next_delays
         next_phase_corrections = - phase(next_delays)
         delay_slopes = (next_delay_corrections - delay_corrections) / step

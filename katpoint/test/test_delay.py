@@ -105,3 +105,24 @@ class TestDelayCorrection(unittest.TestCase):
         for n in range(max_size + 10):
             delay0, phase0 = self.delays.corrections(self.target1, self.ts + n)
         self.assertEqual(len(self.delays._cache), max_size, 'Delay cache grew past limit')
+
+    def test_offset(self):
+        """Test target offset."""
+        az, el = self.target1.azel(self.ts, self.ant1)
+        offset = dict(projection_type='SIN')
+        target3 = katpoint.construct_azel_target(az - katpoint.deg2rad(1.0),
+                                                 el - katpoint.deg2rad(1.0))
+        x, y = target3.sphere_to_plane(az, el, self.ts, self.ant1, **offset)
+        offset['x'] = x
+        offset['y'] = y
+        max_delay = self.delays.max_delay
+        delay0, phase0 = self.delays.corrections(target3, self.ts, offset=offset)
+        delay1, phase1 = self.delays.corrections(target3, self.ts,
+                                                 self.ts + 1.0, offset)
+        # Conspire to return to special target1
+        self.assertEqual(delay0['A2h'], max_delay, 'Delay for ant2h should be zero')
+        self.assertEqual(delay0['A2v'], max_delay, 'Delay for ant2v should be zero')
+        self.assertEqual(delay1['A2h'][0], max_delay, 'Delay for ant2h should be zero')
+        self.assertEqual(delay1['A2v'][0], max_delay, 'Delay for ant2v should be zero')
+        self.assertEqual(delay1['A2h'][1], 0.0, 'Delay rate for ant2h should be zero')
+        self.assertEqual(delay1['A2v'][1], 0.0, 'Delay rate for ant2v should be zero')
