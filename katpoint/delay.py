@@ -119,9 +119,8 @@ class DelayCorrection(object):
 
     Attributes
     ----------
-    inputs : list of *2M* strings
-        List of correlator input names (typically 2 per antenna), aligned with
-        calculated delays
+    ant_models : dict mapping string to :class:`DelayModel` object
+        Dict mapping antenna name to corresponding delay model
     max_delay : float
         Maximum absolute delay achievable in array, in seconds, used to ensure
         strictly positive delay corrections
@@ -138,7 +137,7 @@ class DelayCorrection(object):
     CACHE_SIZE = 1000
 
     def __init__(self, ants, ref_ant=None, sky_centre_freq=0.0):
-        # If given, unpack description string into parameters first
+        # Unpack JSON-encoded description string
         if isinstance(ants, basestring):
             descr = json.loads(ants)
             # JSON only returns Unicode, even on Python 2... Remedy this.
@@ -149,33 +148,33 @@ class DelayCorrection(object):
             from .antenna import Antenna
             ref_ant = Antenna(ref_ant_str)
             sky_centre_freq = descr['sky_centre_freq']
-            # Make some skeleton antennas - only name and delay_model required
-            ants = []
-            for ant_name, ant_model_str in descr['ant_models']:
-                skeleton_ant = Antenna(ref_ant_str)
-                skeleton_ant.name = _just_gimme_an_ascii_string(ant_name)
+            ant_models = {}
+            for ant_name, ant_model_str in descr['ant_models'].items():
                 ant_model = DelayModel()
                 ant_model.fromstring(_just_gimme_an_ascii_string(ant_model_str))
-                skeleton_ant.delay_model = ant_model
-                ants.append(skeleton_ant)
-        if ref_ant is None:
-            raise ValueError('No reference antenna provided to DelayCorrection')
-        self.ants = list(ants)
+                ant_models[_just_gimme_an_ascii_string(ant_name)] = ant_model
+        else:
+            # `ants` is a sequence of Antennas - verify and extract delay models
+            if ref_ant is None:
+                raise ValueError('No reference antenna provided')
+            # Tolerances translate to micrometre differences (assume float64)
+            if any([not np.allclose(ant.ref_position_wgs84,
+                                    ref_ant.position_wgs84, rtol=0., atol=1e-14)
+                    for ant in list(ants) + [ref_ant]]):
+                msg = "Antennas '%s' do not all share the same reference " \
+                      "position of the reference antenna %r" % \
+                      ("', '".join(ant.description for ant in ants),
+                       ref_ant.description)
+                raise ValueError(msg)
+            ant_models = {ant.name: ant.delay_model for ant in ants}
+        self.ant_models = ant_models
         self.ref_ant = ref_ant
-        # These tolerances translate to micrometre differences (assume float64)
-        if any([not np.allclose(ant.ref_position_wgs84, ref_ant.position_wgs84,
-                                rtol=0., atol=1e-14)
-                for ant in self.ants + [ref_ant]]):
-            msg = "Antennas '%s' do not all share the same reference " \
-                  "position of the reference antenna %r" % \
-                  ("', '".join(ant.description for ant in self.ants),
-                   self.ref_ant.description)
-            raise ValueError(msg)
         self.sky_centre_freq = sky_centre_freq
-        self.inputs = [ant.name + pol for ant in ants for pol in ('h', 'v')]
-        self._params = np.array([ant.delay_model.delay_params for ant in ants])
+        self._inputs = [ant + pol for ant in ant_models for pol in 'hv']
+        self._params = np.array([ant_models[ant].delay_params
+                                 for ant in ant_models])
         # With no antennas, let params still have correct shape
-        if not self.ants:
+        if not ant_models:
             self._params = np.empty((0, len(DelayModel())))
         self._cache = {}
         self.max_delay = self._calculate_max_delay()
@@ -189,21 +188,15 @@ class DelayCorrection(object):
         # Worst case for NIAO is looking at the horizon
         max_delay_per_ant += self._params[:, 5]
         # Add a 1% safety margin to guarantee positive delay corrections
-        return 1.01 * max(max_delay_per_ant) if self.ants else 0.0
+        return 1.01 * max(max_delay_per_ant) if self.ant_models else 0.0
 
     @property
     def description(self):
         """Complete string representation of object that allows reconstruction."""
         descr = {'ref_ant': self.ref_ant.description,
-                 'sky_centre_freq': self.sky_centre_freq}
-        # Don't use a dict for ant_models as we want to preserve ordering
-        ant_models = []
-        for inp, params in zip(self.inputs[::2], self._params):
-            ant_name = inp[:-1]
-            ant_model = DelayModel()
-            ant_model.fromdelays(params)
-            ant_models.append([ant_name, ant_model.description])
-        descr['ant_models'] = ant_models
+                 'sky_centre_freq': self.sky_centre_freq,
+                 'ant_models': {ant: model.description
+                                for ant, model in self.ant_models.items()}}
         return json.dumps(descr)
 
     def _calculate_delays(self, target, timestamp, offset=None):
@@ -329,8 +322,8 @@ class DelayCorrection(object):
         delay_corrections = self.max_delay - delays
         phase_corrections = - phase(delays)
         if next_timestamp is None:
-            return (dict(zip(self.inputs, delay_corrections)),
-                    dict(zip(self.inputs, phase_corrections)))
+            return (dict(zip(self._inputs, delay_corrections)),
+                    dict(zip(self._inputs, phase_corrections)))
         step = next_timestamp - timestamp
         # We still have to get next_delays in the single timestamp case
         if not is_iterable(next_timestamp):
@@ -346,5 +339,5 @@ class DelayCorrection(object):
         # number of polynomial terms is 2 by design).
         delay_polys = np.dstack((delay_corrections, delay_slopes)).squeeze()
         phase_polys = np.dstack((phase_corrections, phase_slopes)).squeeze()
-        return (dict(zip(self.inputs, delay_polys)),
-                dict(zip(self.inputs, phase_polys)))
+        return (dict(zip(self._inputs, delay_polys)),
+                dict(zip(self._inputs, phase_polys)))
