@@ -116,14 +116,14 @@ class DelayCorrection(object):
         Reference antenna for the array (only optional if `ants` is a string)
     sky_centre_freq : float, optional
         RF centre frequency that serves as reference for fringe phase
+    extra_delay : None or float, optional
+        Additional delay, in seconds, added to all inputs to ensure strictly
+        positive delay corrections (automatically calculated if None)
 
     Attributes
     ----------
     ant_models : dict mapping string to :class:`DelayModel` object
         Dict mapping antenna name to corresponding delay model
-    max_delay : float
-        Maximum absolute delay achievable in array, in seconds, used to ensure
-        strictly positive delay corrections
 
     Raises
     ------
@@ -136,7 +136,7 @@ class DelayCorrection(object):
     # Maximum size for delay cache
     CACHE_SIZE = 1000
 
-    def __init__(self, ants, ref_ant=None, sky_centre_freq=0.0):
+    def __init__(self, ants, ref_ant=None, sky_centre_freq=0.0, extra_delay=None):
         # Unpack JSON-encoded description string
         if isinstance(ants, basestring):
             try:
@@ -152,6 +152,7 @@ class DelayCorrection(object):
             from .antenna import Antenna
             ref_ant = Antenna(ref_ant_str)
             sky_centre_freq = descr['sky_centre_freq']
+            extra_delay = descr['extra_delay']
             ant_models = {}
             for ant_name, ant_model_str in descr['ant_models'].items():
                 ant_model = DelayModel()
@@ -171,9 +172,8 @@ class DelayCorrection(object):
                        ref_ant.description)
                 raise ValueError(msg)
             ant_models = {ant.name: ant.delay_model for ant in ants}
-        self.ant_models = ant_models
-        self.ref_ant = ref_ant
-        self.sky_centre_freq = sky_centre_freq
+
+        # Initialise private attributes
         self._inputs = [ant + pol for ant in ant_models for pol in 'hv']
         self._params = np.array([ant_models[ant].delay_params
                                  for ant in ant_models])
@@ -181,9 +181,17 @@ class DelayCorrection(object):
         if not ant_models:
             self._params = np.empty((0, len(DelayModel())))
         self._cache = {}
-        self.max_delay = self._calculate_max_delay()
 
-    def _calculate_max_delay(self):
+        # Now calculate and store public attributes
+        self.ant_models = ant_models
+        self.ref_ant = ref_ant
+        self.sky_centre_freq = sky_centre_freq
+        # Add a 1% safety margin to guarantee positive delay corrections
+        self.extra_delay = 1.01 * self.max_delay \
+            if extra_delay is None else extra_delay
+
+    @property
+    def max_delay(self):
         """The maximum (absolute) delay achievable in the array, in seconds."""
         # Worst case is wavefront moving along baseline connecting ant to ref
         max_delay_per_ant = np.sqrt((self._params[:, :3] ** 2).sum(axis=1))
@@ -191,14 +199,14 @@ class DelayCorrection(object):
         max_delay_per_ant += self._params[:, 3:5].max(axis=1)
         # Worst case for NIAO is looking at the horizon
         max_delay_per_ant += self._params[:, 5]
-        # Add a 1% safety margin to guarantee positive delay corrections
-        return 1.01 * max(max_delay_per_ant) if self.ant_models else 0.0
+        return max(max_delay_per_ant) if self.ant_models else 0.0
 
     @property
     def description(self):
         """Complete string representation of object that allows reconstruction."""
         descr = {'ref_ant': self.ref_ant.description,
                  'sky_centre_freq': self.sky_centre_freq,
+                 'extra_delay': self.extra_delay,
                  'ant_models': {ant: model.description
                                 for ant, model in self.ant_models.items()}}
         return json.dumps(descr)
@@ -323,7 +331,7 @@ class DelayCorrection(object):
         def phase(t0):
             """The phase associated with delay t0 at the centre frequency."""
             return - 2.0 * np.pi * self.sky_centre_freq * t0
-        delay_corrections = self.max_delay - delays
+        delay_corrections = self.extra_delay - delays
         phase_corrections = - phase(delays)
         if next_timestamp is None:
             return (dict(zip(self._inputs, delay_corrections)),
@@ -332,7 +340,7 @@ class DelayCorrection(object):
         # We still have to get next_delays in the single timestamp case
         if not is_iterable(next_timestamp):
             next_delays = self._cached_delays(target, next_timestamp, offset)
-        next_delay_corrections = self.max_delay - next_delays
+        next_delay_corrections = self.extra_delay - next_delays
         next_phase_corrections = - phase(next_delays)
         delay_slopes = (next_delay_corrections - delay_corrections) / step
         phase_slopes = (next_phase_corrections - phase_corrections) / step
