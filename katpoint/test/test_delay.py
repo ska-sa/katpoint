@@ -16,6 +16,7 @@
 
 """Tests for the model module."""
 
+import json
 import unittest
 try:
     from StringIO import StringIO  # python2
@@ -69,7 +70,10 @@ class TestDelayCorrection(unittest.TestCase):
         """Test construction of DelayCorrection object."""
         descr = self.delays.description
         delays2 = katpoint.DelayCorrection(descr)
-        self.assertEqual(delays2.description, descr, 'Description strings differ')
+        delays_dict = json.loads(descr)
+        delays2_dict = json.loads(delays2.description)
+        self.assertEqual(delays2_dict, delays_dict,
+                         'Objects created through description strings differ')
         self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2], self.ant3)
         self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2])
         self.assertRaises(ValueError, katpoint.DelayCorrection, '')
