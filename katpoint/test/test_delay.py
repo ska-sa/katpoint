@@ -72,6 +72,7 @@ class TestDelayCorrection(unittest.TestCase):
         self.assertEqual(delays2.description, descr, 'Description strings differ')
         self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2], self.ant3)
         self.assertRaises(ValueError, katpoint.DelayCorrection, [self.ant1, self.ant2])
+        self.assertRaises(ValueError, katpoint.DelayCorrection, '')
         delays3 = katpoint.DelayCorrection([], self.ant1)
         self.assertEqual(delays3._params.shape, (0, len(katpoint.DelayModel())),
                          "Delay correction with no antennas should fail gracefully")

@@ -129,7 +129,7 @@ class DelayCorrection(object):
     ------
     ValueError
         If all antennas do not share the same reference position as `ref_ant`
-        or `ref_ant` was not specified
+        or `ref_ant` was not specified, or description string is invalid
 
     """
 
@@ -139,7 +139,11 @@ class DelayCorrection(object):
     def __init__(self, ants, ref_ant=None, sky_centre_freq=0.0):
         # Unpack JSON-encoded description string
         if isinstance(ants, basestring):
-            descr = json.loads(ants)
+            try:
+                descr = json.loads(ants)
+            except ValueError:
+                raise ValueError("Trying to construct DelayCorrection with an "
+                                 "invalid description string %r" % (ants,))
             # JSON only returns Unicode, even on Python 2... Remedy this.
             ref_ant_str = _just_gimme_an_ascii_string(descr['ref_ant'])
             # Antenna needs DelayModel which also lives in this module...
