@@ -23,12 +23,16 @@ delay correction for a correlator.
 """
 
 import logging
+import json
 
 import numpy as np
+from past.builtins import basestring
 
 from .model import Parameter, Model
 from .conversion import azel_to_enu
-from .ephem_extra import lightspeed, is_iterable
+from .ephem_extra import lightspeed, is_iterable, _just_gimme_an_ascii_string
+from .target import construct_radec_target
+
 
 # Speed of EM wave in fixed path (typically due to cables / clock distribution).
 # This number is not critical - only meant to convert delays to "nice" lengths.
@@ -105,54 +109,89 @@ class DelayCorrection(object):
 
     Parameters
     ----------
-    ants : sequence of *M* :class:`Antenna` objects
-        Sequence of antennas forming an array and connected to correlator
-    ref_ant : :class:`Antenna` object
-        Reference antenna for the array
+    ants : sequence of *M* :class:`Antenna` objects or string
+        Sequence of antennas forming an array and connected to correlator;
+        alternatively, a description string representing the entire object
+    ref_ant : :class:`Antenna` object or None, optional
+        Reference antenna for the array (only optional if `ants` is a string)
     sky_centre_freq : float, optional
         RF centre frequency that serves as reference for fringe phase
+    extra_delay : None or float, optional
+        Additional delay, in seconds, added to all inputs to ensure strictly
+        positive delay corrections (automatically calculated if None)
 
     Attributes
     ----------
-    inputs : list of *2M* strings
-        List of correlator input names (typically 2 per antenna), aligned with
-        calculated delays
-    max_delay : float
-        Maximum absolute delay achievable in array, in seconds, used to ensure
-        strictly positive delay corrections
+    ant_models : dict mapping string to :class:`DelayModel` object
+        Dict mapping antenna name to corresponding delay model
 
     Raises
     ------
     ValueError
-        If all antennas do not share the same reference position as ref_ant
+        If all antennas do not share the same reference position as `ref_ant`
+        or `ref_ant` was not specified, or description string is invalid
 
     """
 
     # Maximum size for delay cache
     CACHE_SIZE = 1000
 
-    def __init__(self, ants, ref_ant, sky_centre_freq=0.0):
-        self.ants = list(ants)
-        self.ref_ant = ref_ant
-        # These tolerances translate to micrometre differences (assume float64)
-        if any([not np.allclose(ant.ref_position_wgs84, ref_ant.position_wgs84,
-                                rtol=0., atol=1e-14)
-                for ant in self.ants + [ref_ant]]):
-            msg = "Antennas '%s' do not all share the same reference " \
-                  "position of the reference antenna %r" % \
-                  ("', '".join(ant.description for ant in self.ants),
-                   self.ref_ant.description)
-            raise ValueError(msg)
-        self.sky_centre_freq = sky_centre_freq
-        self.inputs = [ant.name + pol for ant in ants for pol in ('h', 'v')]
-        self._params = np.array([ant.delay_model.delay_params for ant in ants])
+    def __init__(self, ants, ref_ant=None, sky_centre_freq=0.0, extra_delay=None):
+        # Unpack JSON-encoded description string
+        if isinstance(ants, basestring):
+            try:
+                descr = json.loads(ants)
+            except ValueError:
+                raise ValueError("Trying to construct DelayCorrection with an "
+                                 "invalid description string %r" % (ants,))
+            # JSON only returns Unicode, even on Python 2... Remedy this.
+            ref_ant_str = _just_gimme_an_ascii_string(descr['ref_ant'])
+            # Antenna needs DelayModel which also lives in this module...
+            # This is messy but avoids a circular dependency and having to
+            # split this file into two small bits.
+            from .antenna import Antenna
+            ref_ant = Antenna(ref_ant_str)
+            sky_centre_freq = descr['sky_centre_freq']
+            extra_delay = descr['extra_delay']
+            ant_models = {}
+            for ant_name, ant_model_str in descr['ant_models'].items():
+                ant_model = DelayModel()
+                ant_model.fromstring(_just_gimme_an_ascii_string(ant_model_str))
+                ant_models[_just_gimme_an_ascii_string(ant_name)] = ant_model
+        else:
+            # `ants` is a sequence of Antennas - verify and extract delay models
+            if ref_ant is None:
+                raise ValueError('No reference antenna provided')
+            # Tolerances translate to micrometre differences (assume float64)
+            if any([not np.allclose(ant.ref_position_wgs84,
+                                    ref_ant.position_wgs84, rtol=0., atol=1e-14)
+                    for ant in list(ants) + [ref_ant]]):
+                msg = "Antennas '%s' do not all share the same reference " \
+                      "position of the reference antenna %r" % \
+                      ("', '".join(ant.description for ant in ants),
+                       ref_ant.description)
+                raise ValueError(msg)
+            ant_models = {ant.name: ant.delay_model for ant in ants}
+
+        # Initialise private attributes
+        self._inputs = [ant + pol for ant in ant_models for pol in 'hv']
+        self._params = np.array([ant_models[ant].delay_params
+                                 for ant in ant_models])
         # With no antennas, let params still have correct shape
-        if not self.ants:
+        if not ant_models:
             self._params = np.empty((0, len(DelayModel())))
         self._cache = {}
-        self.max_delay = self._calculate_max_delay()
 
-    def _calculate_max_delay(self):
+        # Now calculate and store public attributes
+        self.ant_models = ant_models
+        self.ref_ant = ref_ant
+        self.sky_centre_freq = sky_centre_freq
+        # Add a 1% safety margin to guarantee positive delay corrections
+        self.extra_delay = 1.01 * self.max_delay \
+            if extra_delay is None else extra_delay
+
+    @property
+    def max_delay(self):
         """The maximum (absolute) delay achievable in the array, in seconds."""
         # Worst case is wavefront moving along baseline connecting ant to ref
         max_delay_per_ant = np.sqrt((self._params[:, :3] ** 2).sum(axis=1))
@@ -160,18 +199,30 @@ class DelayCorrection(object):
         max_delay_per_ant += self._params[:, 3:5].max(axis=1)
         # Worst case for NIAO is looking at the horizon
         max_delay_per_ant += self._params[:, 5]
-        # Add a 1% safety margin to guarantee positive delay corrections
-        return 1.01 * max(max_delay_per_ant) if self.ants else 0.0
+        return max(max_delay_per_ant) if self.ant_models else 0.0
 
-    def _calculate_delays(self, target, timestamp):
+    @property
+    def description(self):
+        """Complete string representation of object that allows reconstruction."""
+        descr = {'ref_ant': self.ref_ant.description,
+                 'sky_centre_freq': self.sky_centre_freq,
+                 'extra_delay': self.extra_delay,
+                 'ant_models': {ant: model.description
+                                for ant, model in self.ant_models.items()}}
+        return json.dumps(descr, sort_keys=True)
+
+    def _calculate_delays(self, target, timestamp, offset=None):
         """Calculate delays for all inputs / antennas for a given target.
 
         Parameters
         ----------
         target : :class:`Target` object
             Target providing direction for geometric delays
-        timestamp : :class:`Timestamp` object or equivalent, optional
+        timestamp : :class:`Timestamp` object or equivalent
             Timestamp in UTC seconds since Unix epoch
+        offset : dict or None, optional
+            Keyword arguments for :meth:`Target.plane_to_sphere` to offset
+            delay centre relative to target (see method for details)
 
         Returns
         -------
@@ -179,14 +230,25 @@ class DelayCorrection(object):
             Delays (one per correlator input) in seconds
 
         """
-        az, el = target.azel(timestamp, self.ref_ant)
+        if not offset:
+            az, el = target.azel(timestamp, self.ref_ant)
+        else:
+            coord_system = offset.get('coord_system', 'azel')
+            if coord_system == 'radec':
+                ra, dec = target.plane_to_sphere(timestamp=timestamp,
+                                                 antenna=self.ref_ant, **offset)
+                offset_target = construct_radec_target(ra, dec)
+                az, el = offset_target.azel(timestamp, self.ref_ant)
+            else:
+                az, el = target.plane_to_sphere(timestamp=timestamp,
+                                                antenna=self.ref_ant, **offset)
         targetdir = np.array(azel_to_enu(az, el))
         cos_el = np.cos(el)
         design_mat = np.array([np.r_[-targetdir, 1.0, 0.0, cos_el],
                                np.r_[-targetdir, 0.0, 1.0, cos_el]])
         return np.dot(self._params, design_mat.T).ravel()
 
-    def _cached_delays(self, target, timestamp):
+    def _cached_delays(self, target, timestamp, offset=None):
         """Try to load delays from cache, else calculate it.
 
         This uses the timestamp to look up previously calculated delays in
@@ -200,14 +262,15 @@ class DelayCorrection(object):
         """
         delays = self._cache.pop(timestamp, None)
         if delays is None:
-            delays = self._calculate_delays(target, timestamp)
+            delays = self._calculate_delays(target, timestamp, offset)
             # Clean out the oldest timestamp if cache is full
             while len(self._cache) >= DelayCorrection.CACHE_SIZE:
                 self._cache.pop(min(self._cache.keys()))
             self._cache[timestamp] = delays
         return delays
 
-    def corrections(self, target, timestamp=None, next_timestamp=None):
+    def corrections(self, target, timestamp=None, next_timestamp=None,
+                    offset=None):
         """Delay and phase corrections for a given target and timestamp(s).
 
         Calculate delay and phase corrections for the direction towards
@@ -232,6 +295,9 @@ class DelayCorrection(object):
             Timestamp when next delay will be evaluated, used to determine
             a slope for linear interpolation (default is no slope). This is
             ignored if *timestamp* is a sequence.
+        offset : dict or None, optional
+            Keyword arguments for :meth:`Target.plane_to_sphere` to offset
+            delay centre relative to target (see method for details)
 
         Returns
         -------
@@ -255,26 +321,26 @@ class DelayCorrection(object):
             all_times = np.r_[timestamp, [timestamp[-1] + last_step]]
             next_timestamp = all_times[1:]
             # Don't use cache, as the next_times are included in all_delays
-            all_delays = np.array([self._calculate_delays(target, t)
+            all_delays = np.array([self._calculate_delays(target, t, offset)
                                    for t in all_times]).T
             delays, next_delays = all_delays[:, :-1], all_delays[:, 1:]
         else:
             # Use cache for a single timestamp
-            delays = self._cached_delays(target, timestamp)
+            delays = self._cached_delays(target, timestamp, offset)
 
         def phase(t0):
             """The phase associated with delay t0 at the centre frequency."""
             return - 2.0 * np.pi * self.sky_centre_freq * t0
-        delay_corrections = self.max_delay - delays
+        delay_corrections = self.extra_delay - delays
         phase_corrections = - phase(delays)
         if next_timestamp is None:
-            return (dict(zip(self.inputs, delay_corrections)),
-                    dict(zip(self.inputs, phase_corrections)))
+            return (dict(zip(self._inputs, delay_corrections)),
+                    dict(zip(self._inputs, phase_corrections)))
         step = next_timestamp - timestamp
         # We still have to get next_delays in the single timestamp case
         if not is_iterable(next_timestamp):
-            next_delays = self._cached_delays(target, next_timestamp)
-        next_delay_corrections = self.max_delay - next_delays
+            next_delays = self._cached_delays(target, next_timestamp, offset)
+        next_delay_corrections = self.extra_delay - next_delays
         next_phase_corrections = - phase(next_delays)
         delay_slopes = (next_delay_corrections - delay_corrections) / step
         phase_slopes = (next_phase_corrections - phase_corrections) / step
@@ -285,5 +351,5 @@ class DelayCorrection(object):
         # number of polynomial terms is 2 by design).
         delay_polys = np.dstack((delay_corrections, delay_slopes)).squeeze()
         phase_polys = np.dstack((phase_corrections, phase_slopes)).squeeze()
-        return (dict(zip(self.inputs, delay_polys)),
-                dict(zip(self.inputs, phase_polys)))
+        return (dict(zip(self._inputs, delay_polys)),
+                dict(zip(self._inputs, phase_polys)))
