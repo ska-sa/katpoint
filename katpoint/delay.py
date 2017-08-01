@@ -209,7 +209,7 @@ class DelayCorrection(object):
                  'extra_delay': self.extra_delay,
                  'ant_models': {ant: model.description
                                 for ant, model in self.ant_models.items()}}
-        return json.dumps(descr)
+        return json.dumps(descr, sort_keys=True)
 
     def _calculate_delays(self, target, timestamp, offset=None):
         """Calculate delays for all inputs / antennas for a given target.
