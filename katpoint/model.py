@@ -82,6 +82,8 @@ class Parameter(object):
         # an np.bool_ type for the expression (not allowed for __nonzero__)
         return bool(self.value != self.default_value)
 
+    __bool__ = __nonzero__      # For Python 3
+
     @property
     def value_str(self):
         """String form of parameter value used to convert it to/from a string."""
