@@ -72,6 +72,18 @@ class TestFluxDensityModel(unittest.TestCase):
                                       np.array([[200.0, 50.0, 25.0, -75.0],
                                                 [200.0, 50.0, 25.0, -75.0],
                                                 [np.nan, np.nan, np.nan, np.nan]]))
+        self.assertRaises(ValueError, self.no_flux_target.flux_density_stokes)
+        np.testing.assert_array_equal(self.no_flux_target.flux_density_stokes(1.5),
+                                np.array([np.nan, np.nan, np.nan, np.nan]),
+                                'Empty flux model leads to wrong empty flux shape')
+        np.testing.assert_array_equal(self.no_flux_target.flux_density_stokes([1.5, 1.5]),
+                                      np.array([[np.nan, np.nan, np.nan, np.nan],
+                                                [np.nan, np.nan, np.nan, np.nan]]),
+                                      'Empty flux model leads to wrong empty flux shape')
+        self.flux_target.flux_freq_MHz = 1.5
+        np.testing.assert_array_equal(self.flux_target.flux_density_stokes(),
+                                      np.array([200.0, 50.0, 25.0, -75.0]),
+                                      'Flux calculation for default freq wrong')
 
     def test_compare(self):
         self.assertEqual(self.unit_model, self.unit_model2, 'Flux models not equal')
