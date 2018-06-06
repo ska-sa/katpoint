@@ -718,6 +718,9 @@ class Target(object):
         frequency is out of range, a flux value of NaN is returned for that
         frequency.
 
+        This returns only Stokes I. Use :meth:`flux_density_stokes` to get
+        polarisation information.
+
         Parameters
         ----------
         freq_MHz : float or sequence, optional
@@ -741,8 +744,46 @@ class Target(object):
             raise ValueError('Please specify frequency at which to measure flux density')
         if self.flux_model is None:
             # Target has no specified flux density
-            return np.tile(np.nan, np.shape(flux_freq_MHz)) if is_iterable(flux_freq_MHz) else np.nan
+            return np.full(np.shape(flux_freq_MHz), np.nan) if is_iterable(flux_freq_MHz) else np.nan
         return self.flux_model.flux_density(flux_freq_MHz)
+
+    def flux_density_stokes(self, flux_freq_MHz=None):
+        """Calculate flux density for given observation frequency (or frequencies), full-Stokes.
+
+        See :meth:`flux_density`
+        This uses the stored flux density model to calculate the flux density at
+        a given frequency (or frequencies). See the documentation of
+        :class:`FluxDensityModel` for more details of this model. If the flux
+        frequency is unspecified, the default value supplied to the target object
+        during construction is used. If no flux density model is available or a
+        frequency is out of range, a flux value of NaN is returned for that
+        frequency.
+
+        Parameters
+        ----------
+        freq_MHz : float or sequence, optional
+            Frequency at which to evaluate flux density, in MHz
+
+        Returns
+        -------
+        flux_density : array of float
+            Flux density in Jy, or np.nan if frequency is out of range or target
+            does not have flux model. The shape matches the input with an extra
+            trailing dimension of size 4 containing Stokes I, Q, U, V.
+
+        Raises
+        ------
+        ValueError
+            If no frequency is specified, and no default frequency was set either
+
+        """
+        if flux_freq_MHz is None:
+            flux_freq_MHz = self.flux_freq_MHz
+        if flux_freq_MHz is None:
+            raise ValueError('Please specify frequency at which to measure flux density')
+        if self.flux_model is None:
+            return np.full(np.shape(flux_freq_MHz) + (4,), np.nan)
+        return self.flux_model.flux_density_stokes(flux_freq_MHz)
 
     def separation(self, other_target, timestamp=None, antenna=None):
         """Angular separation between this target and another one.

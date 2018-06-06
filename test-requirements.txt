@@ -1,2 +1,7 @@
+argparse               # via unittest2
 nose
 coverage
+linecache2             # via traceback2
+six                    # via unittest2
+traceback2             # via unittest2
+unittest2
