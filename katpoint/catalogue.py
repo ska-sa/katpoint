@@ -17,28 +17,11 @@
 """Target catalogue."""
 
 import logging
-import re
 
 import ephem.stars
 import numpy as np
 
 from past.builtins import basestring
-
-# This is needed for tab completion, but is ignored if no IPython is installed
-try:
-    # IPython 0.11 and above
-    from IPython.core.error import TryNext
-except ImportError:
-    try:
-        # IPython 0.10 and below
-        from IPython.ipapi import TryNext
-    except ImportError:
-        pass
-# The same goes for readline
-try:
-    import readline
-except ImportError:
-    readline = None
 
 from .target import Target
 from .timestamp import Timestamp
@@ -409,6 +392,10 @@ class Catalogue(object):
     def __iter__(self):
         """Iterate over targets in catalogue."""
         return iter(self.targets)
+
+    def _ipython_key_completions_(self):
+        """List of keys used in IPython (version >= 5) tab completion."""
+        return list(self.iternames())
 
     def iternames(self):
         """Iterator over known target names in catalogue which can be searched for.
@@ -969,43 +956,3 @@ class Catalogue(object):
             if fringe_period is not None:
                 line += '    %10.2f' % (fringe_period,)
             print(line)
-
-# --------------------------------------------------------------------------------------------------
-# --- FUNCTION :  _catalogue_completer
-# --------------------------------------------------------------------------------------------------
-
-dict_lookup_match = re.compile(r"""(?:.*\=)?(.*)\[(?P<quote>['|"])(?!.*(?P=quote))(.*)$""")
-
-
-def _catalogue_completer(context, event):
-    """Custom IPython completer for catalogue name lookups.
-
-    This is inspired by Darren Dale's custom dict-like completer for h5py.
-
-    """
-    # Parse command line as (ignored = )base['start_of_name
-    base, start_of_name = dict_lookup_match.split(event.line)[1:4:2]
-
-    # Avoid calling any functions during eval()...
-    if '(' in base:
-        raise TryNext
-
-    # Obtain catalogue object from user namespace
-    try:
-        cat = eval(base, context.user_ns)
-    except (NameError, AttributeError):
-        try:
-            # IPython version < 1.0
-            cat = eval(base, context.shell.user_ns)
-        except (NameError, AttributeError):
-            raise TryNext
-
-    # Only continue if this object is actually a Catalogue
-    if not isinstance(cat, Catalogue):
-        raise TryNext
-
-    if readline:
-        # Remove space and plus from delimiter list, so completion works past spaces and pluses in names
-        readline.set_completer_delims(readline.get_completer_delims().replace(' ', '').replace('+', ''))
-
-    return [name for name in cat.iternames() if name[:len(start_of_name)] == start_of_name]
