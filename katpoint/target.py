@@ -1145,3 +1145,134 @@ def construct_radec_target(ra, dec):
     body._ra = ra
     body._dec = dec
     return Target(body, 'radec')
+
+
+def validate_target(target_string):
+    """
+    Validate a target string using KatPoint.Target.
+
+    The target string will first be parsed for any unicode characters or invalid use of
+    separators (',') instead of decimal dot ('.') before parsing by KatPoint.
+    Unicode characters are shown as '?' and all errors positions are shown graphically.
+    Corrections need to be made explicitly before running the script again.
+
+    Parameters
+    ----------
+    target_string : string
+        A target string or a csv file with multiple target strings
+
+    Returns
+    -------
+
+    """
+    def find_markers(string, marker):
+        index = string.find(marker)
+        marker_indexes = []
+        while index >= 0:
+            marker_indexes.append(index)
+            index = string.find(marker, index+1)
+        return marker_indexes
+
+    def print_markers(marker_indexes, offset=0):
+        output = ''
+        offset_string = ''
+        marker_index = 0
+        for n in range(marker_indexes[-1]+1):
+            if n == marker_indexes[marker_index]:
+                character = u'\u26F0'
+                marker_index += 1
+            else:
+                character = u'\u002E'
+            output = u'{}{}'.format(output, character)
+
+        if offset:
+            offset_string = u'\u002E' * offset
+        print "{}{}".format(offset_string, output.encode('utf-8'))
+
+    def parse_angle(string, fields):
+
+        def find_angle(field):
+            # Angle should contain :
+            if ':' in field:
+                marker = find_markers(field, '.')
+                if not marker:
+                    return False
+
+            return True
+
+        markers = []
+        for field in fields:
+            if not find_angle(field):
+                index = string.find(field) + len(field)
+                markers.extend([index])
+
+        return markers
+
+    def parse_flux(string):
+        index = string.find('(')
+        markers = []
+        if index > 0:
+            flux = string[index:-1]
+            offset = string.find(flux)
+            # Add the offset to every marker in the flux
+            markers = [marker+offset for marker in find_markers(flux, ',')]
+
+        return markers
+
+    def invalid_separator_in_target(string):
+        fields = string.split(',')
+        angle_status = False
+        flux_status = False
+        all_markers = []
+        # There should be no more than 4 separators
+        if len(fields) > 4:
+            markers = parse_angle(string, fields)
+            if markers:
+                all_markers.extend(markers)
+                angle_status = True
+            markers = parse_flux(string)
+            if markers:
+                all_markers.extend(markers)
+                flux_status = True
+
+            if angle_status or flux_status:
+                print '\nReplace "," with a "."'
+                print string
+                print_markers(all_markers)
+                return True
+
+        return False
+
+    def unicode_in_target(string, show_unicode=True):
+        try:
+            # Test if the string is ascii
+            string.encode("ascii")
+            return False
+        except ValueError:
+            # Force string to unicode
+            target_uni = string.decode('utf-8')
+            # Now convert to ascii and mark all unicode with '?'
+            target_uni = target_uni.encode('ascii', errors='replace')
+            print '\nUnicode found in target string!'
+            print target_uni
+            print_markers(find_markers(target_uni, '?'))
+            return True
+
+    def iter_target_list(targets):
+        for line in targets:
+            if not line.startswith('#'):
+                if not unicode_in_target(line):
+                    if not invalid_separator_in_target(line):
+                        try:
+                            Target(line)
+                        except ValueError:
+                            print 'Unknown target %r' % (line)
+
+    if target_string:
+        if ',' in target_string:
+            iter_target_list([target_string])
+        elif target_string.endswith('.csv'):
+            with open(target_string, 'r') as csv_file:
+                iter_target_list(csv_file)
+        else:
+            print 'Invalid input file!'
