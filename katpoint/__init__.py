@@ -28,7 +28,7 @@ and CASA.
 
 import logging as _logging
 
-from .target import Target, construct_azel_target, construct_radec_target
+from .target import Target, construct_azel_target, construct_radec_target, validate_target
 from .antenna import Antenna
 from .timestamp import Timestamp
 from .flux import FluxDensityModel
