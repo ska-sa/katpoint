@@ -28,10 +28,10 @@ and CASA.
 
 import logging as _logging
 
-from .target import Target, construct_azel_target, construct_radec_target
+from .target import Target, construct_azel_target, construct_radec_target, NonAsciiError
 from .antenna import Antenna
 from .timestamp import Timestamp
-from .flux import FluxDensityModel
+from .flux import FluxDensityModel, FluxError
 from .catalogue import Catalogue, specials
 from .ephem_extra import lightspeed, rad2deg, deg2rad, wrap_angle, is_iterable
 from .conversion import (lla_to_ecef, ecef_to_lla, enu_to_ecef, ecef_to_enu,
