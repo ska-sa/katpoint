@@ -25,6 +25,11 @@ from past.builtins import basestring
 from .ephem_extra import is_iterable
 
 
+class FluxError(ValueError):
+    """Exception for a flux parsing error."""
+    pass
+
+
 class FluxDensityModel(object):
     """Spectral flux density model.
 
@@ -102,9 +107,12 @@ class FluxDensityModel(object):
                 raise ValueError("First parameter '%s' is description string - cannot have other parameters" %
                                  (min_freq_MHz,))
             # Split description string on spaces and turn into numbers (discarding any parentheses)
-            flux_info = [float(num) for num in min_freq_MHz.strip(' ()').split()]
+            try:
+                flux_info = [float(num) for num in min_freq_MHz.strip(' ()').split()]
+            except ValueError:
+                raise FluxError("Invalid floating point number")
             if len(flux_info) < 2:
-                raise ValueError("Flux density description string '%s' is invalid" % (min_freq_MHz,))
+                raise FluxError("Flux density description string '%s' is invalid" % (min_freq_MHz,))
             min_freq_MHz, max_freq_MHz, coefs = flux_info[0], flux_info[1], tuple(flux_info[2:])
         self.min_freq_MHz = min_freq_MHz
         self.max_freq_MHz = max_freq_MHz
