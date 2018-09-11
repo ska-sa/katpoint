@@ -136,11 +136,10 @@ def validate_target(target_file):
 def parse_cmd_line():
     """Parse the script command line arguments."""
     parser = argparse.ArgumentParser(
-        description="""Validate all target strings from the supplied csv file using katPoint.Target.\n
-            Non-Ascii characters are shown as '?' and their positions are shown graphically.\n
-            All separators are shown graphically if the maximum field count is exceeded.\n
-            \tUse it like this: \n
-            \tpython validate_targets.py --use-file example.csv""")
+        description="""
+            Validate all target strings from the supplied csv file using
+            katPoint.Target.
+        """)
     parser.add_argument(
         'filename', help="csv file with list of target strings")
     config = parser.parse_args()
