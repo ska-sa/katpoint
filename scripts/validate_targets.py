@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 ################################################################################
 # Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
 #
@@ -19,6 +18,7 @@
 from __future__ import print_function
 import argparse
 import os
+import sys
 import katpoint
 
 
@@ -43,19 +43,19 @@ def find_markers(body, marker):
 
 def print_markers(marker_indices):
     """
-    Show the markers graphically with '▲', all other positions are shown with '.'.
+    Show the markers graphically with '^', all other positions are shown with '.'.
 
     Parameters
     ----------
     marker_indices : list
         Marker positions.
     """
-    output = [u'.'] * (max(marker_indices) + 1)
+    output = ['.'] * (max(marker_indices) + 1)
     for pos in marker_indices:
-        output[pos] = u'▲'
-    output = u''.join(output)
+        output[pos] = '^'
+    output = ''.join(output)
 
-    print(output.encode('utf-8'))
+    print(output)
 
 
 def show_separators(body, separator, exception):
@@ -68,7 +68,7 @@ def show_separators(body, separator, exception):
         Input string to parse.
     separator : character
         Search parameter
-    exception: string
+    exception : string
         Exception error.
     """
     print('\nPotential invalid separator - {}!'.format(exception))
@@ -78,16 +78,16 @@ def show_separators(body, separator, exception):
 
 def show_non_ascii(body):
     """
-    Show the non-ascii graphically.
+    Show the non-ASCII graphically.
 
     Parameters
     ----------
     body : string
         Input string to parse.
     """
-    # Force body string to unicode
+    # Force body string to non-ASCII
     target_uni = body.decode('utf-8')
-    # Now convert to ascii and mark all unicode with '?'
+    # Now convert to ASCII and mark all non-ASCII with '?'
     target_uni = target_uni.encode('ascii', errors='replace')
     print ('\nNon ASCII characters found!')
     print(target_uni)
@@ -96,7 +96,7 @@ def show_non_ascii(body):
 
 def validate_target(target_file):
     """
-    Validate all target strings from the supplied csv file using katPoint.Target.
+    Validate all target strings from the supplied CSV file using katpoint.Target.
 
     Non-Ascii characters are shown as '?' and their positions are shown graphically.
     All separators are shown graphically if the maximum field count is exceeded.
@@ -104,17 +104,19 @@ def validate_target(target_file):
     Parameters
     ----------
     target_file : string
-        A csv file with multiple target strings
+        A CSV file with multiple target strings
 
     Returns
     -------
-    target_validation_pass: bool
+    target_validation_pass : bool
         Target validation status.
     """
     target_validation_pass = True
     with open(target_file, 'r') as csv_file:
         for line in csv_file:
-            if not line.strip().startswith('#'):
+            if line.strip().startswith('#') or (len(line.strip()) == 0):
+                continue
+            else:
                 try:
                     katpoint.Target(line)
                 except katpoint.NonAsciiError:
@@ -127,36 +129,43 @@ def validate_target(target_file):
                     if line.strip() in str(exception):
                         print("\nParsing Error!\n{}".format(exception))
                     else:
-                        print("\nParsing Error!!\n{}\n{}".format(line, exception))
+                        print("\nParsing Error!\n{}\n{}".format(line, exception))
                     target_validation_pass = False
 
     return target_validation_pass
 
 
 def parse_cmd_line():
-    """Parse the script command line arguments."""
+    """
+    Parse the script command-line arguments.
+    
+    Returns
+    -------
+    config : argparse.Namespace
+        Command-line arguments
+    """
     parser = argparse.ArgumentParser(
         description="""
-            Validate all target strings from the supplied csv file using
-            katPoint.Target.
+            Validate all target strings from the supplied CSV file using
+            katpoint.Target.
         """)
     parser.add_argument(
-        'filename', help="csv file with list of target strings")
+        'filename', help="CSV file with list of target strings")
     config = parser.parse_args()
 
     if not os.path.exists(config.filename):
-        print("\nFile {} does not exist!\n".format(
+        parser.error("\nFile {} does not exist!\n".format(
             config.filename))
-        parser.print_help()
-        exit(-1)
 
-    return vars(config)
+    return config
 
 
 def main():
     config = parse_cmd_line()
-    if validate_target(config['filename']):
-        print("\nNo errors found in {}".format(config['filename']))
+    if validate_target(config.filename):
+        print("No errors found in {}".format(config.filename))
+    else:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
