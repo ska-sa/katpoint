@@ -110,7 +110,7 @@ class FluxDensityModel(object):
             try:
                 flux_info = [float(num) for num in min_freq_MHz.strip(' ()').split()]
             except ValueError:
-                raise FluxError("Invalid floating point number")
+                raise FluxError("Floating point number '%s' is invalid" % (min_freq_MHz))
             if len(flux_info) < 2:
                 raise FluxError("Flux density description string '%s' is invalid" % (min_freq_MHz,))
             min_freq_MHz, max_freq_MHz, coefs = flux_info[0], flux_info[1], tuple(flux_info[2:])
