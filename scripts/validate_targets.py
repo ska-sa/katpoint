@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
-###############################################################################
-# SKA South Africa (http://ska.ac.za/)                                        #
-# Author: cam@ska.ac.za                                                       #
-# Copyright @ 2013 SKA SA. All rights reserved.                               #
-#                                                                             #
-# THIS SOFTWARE MAY NOT BE COPIED OR DISTRIBUTED IN ANY FORM WITHOUT THE      #
-# WRITTEN PERMISSION OF SKA SA.                                               #
-###############################################################################
+################################################################################
+# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+#
+# Licensed under the BSD 3-Clause License (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy
+# of the License at
+#
+#   https://opensource.org/licenses/BSD-3-Clause
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
 
 from __future__ import print_function
 import argparse
@@ -15,13 +22,13 @@ import os
 import katpoint
 
 
-def find_markers(input, marker):
+def find_markers(body, marker):
     """
-    Find all the markers in input.
+    Find all the markers in body.
 
     Parameters
     ----------
-    input : string
+    body : string
         Input string to parse.
     marker : character
         Search parameter
@@ -31,7 +38,7 @@ def find_markers(input, marker):
     list
         Input position where the marker was found.
     """
-    return [i for i, ch in enumerate(input) if ch == marker]
+    return [i for i, ch in enumerate(body) if ch == marker]
 
 
 def print_markers(marker_indices):
@@ -51,13 +58,13 @@ def print_markers(marker_indices):
     print(output.encode('utf-8'))
 
 
-def show_separators(input, separator, exception):
+def show_separators(body, separator, exception):
     """
     Show the separators graphically.
 
     Parameters
     ----------
-    input : string
+    body : string
         Input string to parse.
     separator : character
         Search parameter
@@ -65,21 +72,21 @@ def show_separators(input, separator, exception):
         Exception error.
     """
     print('\nPotential invalid separator - {}!'.format(exception))
-    print(input)
-    print_markers(find_markers(input, separator))
+    print(body)
+    print_markers(find_markers(body, separator))
 
 
-def show_non_ascii(input):
+def show_non_ascii(body):
     """
     Show the non-ascii graphically.
 
     Parameters
     ----------
-    input : string
+    body : string
         Input string to parse.
     """
-    # Force input string to unicode
-    target_uni = input.decode('utf-8')
+    # Force body string to unicode
+    target_uni = body.decode('utf-8')
     # Now convert to ascii and mark all unicode with '?'
     target_uni = target_uni.encode('ascii', errors='replace')
     print ('\nNon ASCII characters found!')
@@ -98,6 +105,11 @@ def validate_target(target_file):
     ----------
     target_file : string
         A csv file with multiple target strings
+
+    Returns
+    -------
+    target_validation_pass: bool
+        Target validation status.
     """
     target_validation_pass = True
     with open(target_file, 'r') as csv_file:
@@ -130,14 +142,12 @@ def parse_cmd_line():
             \tUse it like this: \n
             \tpython validate_targets.py --use-file example.csv""")
     parser.add_argument(
-        '--use-file',
-        required=True,
-        help="target csv input file")
+        'filename', help="csv file with list of target strings")
     config = parser.parse_args()
 
-    if not os.path.exists(config.use_file):
+    if not os.path.exists(config.filename):
         print("\nFile {} does not exist!\n".format(
-            config.use_file))
+            config.filename))
         parser.print_help()
         exit(-1)
 
@@ -146,7 +156,8 @@ def parse_cmd_line():
 
 def main():
     config = parse_cmd_line()
-    validate_target(config['use_file'])
+    if validate_target(config['filename']):
+        print("\nNo errors found in {}".format(config['filename']))
 
 
 if __name__ == "__main__":
