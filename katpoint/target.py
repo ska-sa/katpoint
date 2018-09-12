@@ -29,6 +29,11 @@ from .conversion import azel_to_enu
 from .projection import sphere_to_plane, sphere_to_ortho, plane_to_sphere
 
 
+class NonAsciiError(ValueError):
+    """Exception when non-ascii characters are found."""
+    pass
+
+
 class Target(object):
     """A target which can be pointed at by an antenna.
 
@@ -939,7 +944,7 @@ def construct_target_params(description):
     try:
         description.encode('ascii')
     except UnicodeError:
-        raise ValueError("Target description %r contains non-ASCII characters" % description)
+        raise NonAsciiError("Target description %r contains non-ASCII characters" % description)
     fields = [s.strip() for s in description.split(',')]
     if len(fields) < 2:
         raise ValueError("Target description '%s' must have at least two fields" % description)
