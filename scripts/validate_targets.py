@@ -114,9 +114,7 @@ def validate_target(target_file):
     target_validation_pass = True
     with open(target_file, 'r') as csv_file:
         for line in csv_file:
-            if line.strip().startswith('#') or (len(line.strip()) == 0):
-                continue
-            else:
+            if not line.strip().startswith('#') and (len(line.strip()) != 0):
                 try:
                     katpoint.Target(line)
                 except katpoint.NonAsciiError:
