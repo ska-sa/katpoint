@@ -104,10 +104,3 @@ class TestModel(unittest.TestCase):
         self.assertEqual(list(m.values()), values, 'Parameter values do not match')
         m['NIAO'] = 6789.0
         self.assertEqual(m['NIAO'], 6789.0, 'Parameter setting via dict interface failed')
-
-    def test_writable_docstring(self):
-        """Check that model class docstring is writable."""
-        params = self.new_params()
-        katpoint.Model(params)
-        katpoint.Model.__doc__ = 'Hooray'
-        self.assertEqual(katpoint.Model.__doc__, 'Hooray', 'Class docstring not writable')

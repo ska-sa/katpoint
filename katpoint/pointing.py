@@ -37,7 +37,7 @@ class PointingModel(Model):
 
     The pointing model is the one found in the VLBI Field System and has the
     standard terms found in most pointing models, including the DSN and TPOINT
-    models. These terms are numbered P1 to P%d. The first 8 have a standard
+    models. These terms are numbered P1 to P22. The first 8 have a standard
     physical interpretation related to misalignment of the mount coordinate
     system and gravitational deformation, while the rest are ad hoc parameters
     that model remaining systematic effects in the pointing error residuals.
@@ -46,7 +46,7 @@ class PointingModel(Model):
 
     Parameters
     ----------
-    model : file-like object, sequence of %d floats, or string, optional
+    model : file-like object, sequence of 22 floats, or string, optional
         Model specification. If this is a file-like object, load the model
         from it. If this is a sequence of floats, accept it directly as the
         model parameters (defaults to sequence of zeroes). If it is a string,
@@ -94,15 +94,6 @@ class PointingModel(Model):
         params.append(angle_param('P22', 'elevation nod once per az revolution [tpoint HESA]'))
         Model.__init__(self, params)
         self.set(model)
-        # Fix docstrings to contain the number of parameters
-        if '%d' in self.__class__.__doc__:
-            self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
-        try:
-            fit_func = self.__class__.fit.__func__  # python2
-        except AttributeError:
-            fit_func = self.__class__.fit  # python 3
-        if '%d' in fit_func.__doc__:
-            fit_func.__doc__ = fit_func.__doc__ % (len(self), len(self))
 
     # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
@@ -301,9 +292,9 @@ class PointingModel(Model):
 
         Returns
         -------
-        params : float array, shape (%d,)
+        params : float array, shape (22,)
             Fitted model parameters (full model), in radians
-        sigma_params : float array, shape (%d,)
+        sigma_params : float array, shape (22,)
             Standard errors on fitted parameters, in radians
 
         Notes

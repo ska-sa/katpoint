@@ -100,20 +100,8 @@ class BadModelFile(Exception):
     pass
 
 
-# Use metaclass trick to make Model class docstrings writable.
-# This is unnecessary in Python 3.3 and above.
-# For more info, see Python issue 12773 (http://bugs.python.org/issue12773)
-# and discussion on python-dev:
-# https://mail.python.org/pipermail/python-dev/2012-January/115656.html
-class WritableDocstring(type):
-    """Metaclass with the sole purpose of enabling writable class docstrings."""
-
-
 class Model(object):
-
-    __metaclass__ = WritableDocstring
-
-    __doc__ = """Base class for models (e.g. pointing and delay models).
+    """Base class for models (e.g. pointing and delay models).
 
     The base class handles the construction / loading, saving, display and
     comparison of models. A Model consists of a sequence of Parameters and
@@ -134,7 +122,6 @@ class Model(object):
         Full set of model parameters in the expected order
 
     """
-
     def __init__(self, params):
         self.header = {}
         self.params = OrderedDict((p.name, p) for p in params)
