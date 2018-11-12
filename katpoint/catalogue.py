@@ -15,7 +15,8 @@
 ################################################################################
 
 """Target catalogue."""
-
+from __future__ import print_function, division, absolute_import
+from builtins import object
 from past.builtins import basestring
 
 import logging

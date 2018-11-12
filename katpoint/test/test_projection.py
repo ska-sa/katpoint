@@ -16,6 +16,7 @@
 
 """Tests for the projection module."""
 # pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 

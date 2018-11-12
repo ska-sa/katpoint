@@ -25,6 +25,7 @@ Currently it only caters for PyEphem, but it could be extended to include ACSM
 and CASA.
 
 """
+from __future__ import print_function, division, absolute_import
 
 import logging as _logging
 

@@ -20,6 +20,8 @@ This provides a base class for pointing and delay models, handling the loading,
 saving and display of parameters.
 
 """
+from __future__ import print_function, division, absolute_import
+from builtins import object, zip
 from past.builtins import basestring
 
 try:
@@ -76,13 +78,11 @@ class Parameter(object):
         self.value = value if value is not None else default_value
         self.default_value = default_value
 
-    def __nonzero__(self):
+    def __bool__(self):
         """True if parameter is active, i.e. its value differs from default."""
         # Do explicit cast to bool, as value can be a NumPy type, resulting in
-        # an np.bool_ type for the expression (not allowed for __nonzero__)
+        # an np.bool_ type for the expression (not allowed for __bool__)
         return bool(self.value != self.default_value)
-
-    __bool__ = __nonzero__      # For Python 3
 
     @property
     def value_str(self):
@@ -147,7 +147,7 @@ class Model(object):
         """Number of parameters in full model."""
         return len(self.params)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """True if model contains any active (non-default) parameters."""
         return any(p for p in self)
 

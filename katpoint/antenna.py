@@ -21,6 +21,8 @@ feeds. The :class:`Antenna` object wraps the antenna's location, dish diameter
 and other parameters that affect pointing and delay calculations.
 
 """
+from __future__ import print_function, division, absolute_import
+from builtins import object
 
 import numpy as np
 import ephem

@@ -16,16 +16,15 @@
 
 """Tests for the antenna module."""
 # pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 import time
-try:
-    import cPickle as pickle  # python2
-except ImportError:
-    import pickle  # python3
+import pickle
+
+import numpy as np
 
 import katpoint
-import numpy as np
 
 
 def assert_angles_almost_equal(x, y, decimal):
