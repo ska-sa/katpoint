@@ -129,7 +129,6 @@ class StationaryBody(object):
         given *observer*, while its (az, el) coordinates remain unchanged.
 
         """
-        # pylint: disable-msg=W0201
         if isinstance(observer, ephem.Observer):
             ra, dec = observer.radec_of(self.az, self.el)
             self.ra = ra

@@ -138,7 +138,6 @@ class Target(object):
             descr += ' (%s)' % (', '.join(self.aliases),)
         descr += ', tags=%s' % (' '.join(self.tags),)
         if 'radec' in self.tags:
-            # pylint: disable-msg=W0212
             descr += ', %s %s' % (self.body._ra, self.body._dec)
         if self.body_type == 'azel':
             descr += ', %s %s' % (self.body.az, self.body.el)
@@ -242,7 +241,6 @@ class Target(object):
             # Check if it's an unnamed target with a default name
             if names.startswith('Ra:'):
                 fields = [tags]
-            # pylint: disable-msg=W0212
             fields += [str(self.body._ra), str(self.body._dec)]
             if fluxinfo:
                 fields += [fluxinfo]

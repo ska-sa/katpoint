@@ -306,7 +306,6 @@ class Catalogue(object):
         self.add(targets, tags)
 
     # Provide properties so that default antenna or flux frequency changes are passed on to targets
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
     def antenna():
         """Class method which creates antenna property."""
         doc = 'Default antenna used to calculate target positions.'
@@ -321,7 +320,6 @@ class Catalogue(object):
         return locals()
     antenna = property(**antenna())
 
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212,C0103
     def flux_freq_MHz():
         """Class method which creates flux_freq_MHz property."""
         doc = 'Default frequency at which to evaluate flux density, in MHz.'

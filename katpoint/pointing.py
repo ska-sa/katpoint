@@ -95,7 +95,6 @@ class PointingModel(Model):
         Model.__init__(self, params)
         self.set(model)
 
-    # pylint: disable-msg=R0914,C0103,W0612
     def offset(self, az, el):
         """Obtain pointing offset at requested (az, el) position(s).
 

@@ -45,7 +45,6 @@ from .delay import DelayModel, DelayCorrection
 
 # Hide submodules in module namespace, to avoid confusion with corresponding class names
 # If the module is reloaded, this will fail - ignore the resulting NameError
-# pylint: disable-msg=E0601
 try:
     _target, _antenna, _timestamp, _flux, _catalogue, _ephem_extra, \
         _conversion, _projection, _pointing, _refraction, _delay = \

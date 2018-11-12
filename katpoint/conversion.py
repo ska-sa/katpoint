@@ -49,7 +49,6 @@ def lla_to_ecef(lat_rad, long_rad, alt_m):
        Geodetic System 1984," NIMA TR8350.2, Page 4-4, last updated June, 2004.
 
     """
-    # pylint: disable-msg=C0103
     # WGS84 Defining Parameters
     a = 6378137.0                           # semi-major axis of Earth in m
     f = 1.0 / 298.257223563                 # flattening of Earth
@@ -102,7 +101,6 @@ def ecef_to_lla(x_m, y_m, z_m):
     .. [geo] Wikipedia entry, "Geodetic system", 2009.
 
     """
-    # pylint: disable-msg=C0103
     # WGS84 Defining Parameters
     a = 6378137.0                           # semi-major axis of Earth in m
     f = 1.0 / 298.257223563                 # flattening of Earth

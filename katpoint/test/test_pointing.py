@@ -15,7 +15,6 @@
 ################################################################################
 
 """Tests for the pointing module."""
-# pylint: disable-msg=C0103,W0212
 from __future__ import print_function, division, absolute_import
 
 import unittest
@@ -84,7 +83,6 @@ class TestPointingModel(unittest.TestCase):
         # Comment out these removes, thereby testing more code paths in PointingModel
         # enabled_params.remove(2)
         # enabled_params.remove(10)
-        # pylint: disable-msg=W0612
         fitted_params, sigma_params = pm.fit(self.az, self.el, delta_az, delta_el, enabled_params=[])
         np.testing.assert_equal(fitted_params, np.zeros(self.num_params))
         fitted_params, sigma_params = pm.fit(self.az, self.el, delta_az, delta_el, enabled_params=enabled_params)
