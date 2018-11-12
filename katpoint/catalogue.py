@@ -305,34 +305,28 @@ class Catalogue(object):
             targets = []
         self.add(targets, tags)
 
-    # Provide properties so that default antenna or flux frequency changes are passed on to targets
-    def antenna():
-        """Class method which creates antenna property."""
-        doc = 'Default antenna used to calculate target positions.'
+    # Provide properties to pass default antenna or flux frequency changes on to targets
+    @property
+    def antenna(self):
+        """Default antenna used to calculate target positions."""
+        return self._antenna
 
-        def fget(self):
-            return self._antenna
+    @antenna.setter
+    def antenna(self, ant):
+        self._antenna = ant
+        for target in self.targets:
+            target.antenna = ant
 
-        def fset(self, value):
-            self._antenna = value
-            for target in self.targets:
-                target.antenna = self._antenna
-        return locals()
-    antenna = property(**antenna())
+    @property
+    def flux_freq_MHz(self):
+        """Default frequency at which to evaluate flux density, in MHz."""
+        return self._flux_freq_MHz
 
-    def flux_freq_MHz():
-        """Class method which creates flux_freq_MHz property."""
-        doc = 'Default frequency at which to evaluate flux density, in MHz.'
-
-        def fget(self):
-            return self._flux_freq_MHz
-
-        def fset(self, value):
-            self._flux_freq_MHz = value
-            for target in self.targets:
-                target.flux_freq_MHz = self._flux_freq_MHz
-        return locals()
-    flux_freq_MHz = property(**flux_freq_MHz())
+    @flux_freq_MHz.setter
+    def flux_freq_MHz(self, freq):
+        self._flux_freq_MHz = freq
+        for target in self.targets:
+            target.flux_freq_MHz = freq
 
     def __str__(self):
         """Verbose human-friendly string representation of catalogue object."""
