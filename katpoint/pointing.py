@@ -97,7 +97,6 @@ class PointingModel(Model):
         # Fix docstrings to contain the number of parameters
         if '%d' in self.__class__.__doc__:
             self.__class__.__doc__ = self.__class__.__doc__ % (len(self), len(self))
-
         try:
             fit_func = self.__class__.fit.__func__  # python2
         except AttributeError:

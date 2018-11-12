@@ -21,6 +21,7 @@ saving and display of parameters.
 
 """
 from __future__ import print_function, division, absolute_import
+import future.utils
 from builtins import object, zip
 from past.builtins import basestring
 
@@ -28,14 +29,9 @@ try:
     import ConfigParser as configparser  # python2
 except ImportError:
     import configparser  # python3
-
-import sys
 from collections import OrderedDict
 
 import numpy as np
-
-
-py2 = sys.version[0] == '2'
 
 
 class Parameter(object):
@@ -267,7 +263,7 @@ class Model(object):
 
         """
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
-        if py2:
+        if future.utils.PY2:
             cfg = configparser.SafeConfigParser(defaults)
         else:
             cfg = configparser.ConfigParser(defaults, inline_comment_prefixes=(';', '#'))
