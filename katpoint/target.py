@@ -16,10 +16,10 @@
 
 """Target object used for pointing and flux density calculation."""
 
+from past.builtins import basestring
+
 import numpy as np
 import ephem
-
-from past.builtins import basestring
 
 from .timestamp import Timestamp
 from .flux import FluxDensityModel

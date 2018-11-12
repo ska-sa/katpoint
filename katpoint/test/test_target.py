@@ -32,6 +32,7 @@ import katpoint
 # Use the current year in TLE epochs to avoid pyephem crash due to expired TLEs
 YY = time.localtime().tm_year % 100
 
+
 class TestTargetConstruction(unittest.TestCase):
     """Test construction of targets from strings and vice versa."""
     def setUp(self):
@@ -60,7 +61,7 @@ class TestTargetConstruction(unittest.TestCase):
                               'Betelgeuse | Maitland, star orion',
                               'xephem star, Sadr~f|S|F8~20:22:13.7|2.43~40:15:24|-0.93~2.23~2000~0',
                               'Acamar | Theta Eridani, xephem, HIC 13847~f|S|A4~2:58:16.03~-40:18:17.1~2.906~2000~0',
-                              'Kakkab | Alpha Lupi, xephem, HIC 71860 | SAO 225128~f|S|B1~14:41:55.768~-47:23:17.51~2.304~2000~0']
+                              'Kakkab | A Lupi, xephem, H71860 | S225128~f|S|B1~14:41:55.768~-47:23:17.51~2.304~2000~0']
         self.invalid_targets = ['Sun',
                                 'Sun, ',
                                 '-30.0, 90.0',
@@ -158,6 +159,7 @@ class TestTargetConstruction(unittest.TestCase):
         tag_target.add_tags('pulsar')
         tag_target.add_tags(['SNR', 'GPS'])
         self.assertEqual(tag_target.tags, ['azel', 'J2000', 'GPS', 'pulsar', 'SNR'], 'Added tags not correct')
+
 
 class TestTargetCalculations(unittest.TestCase):
     """Test various calculations involving antennas and timestamps."""

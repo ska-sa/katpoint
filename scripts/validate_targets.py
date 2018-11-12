@@ -16,9 +16,11 @@
 ################################################################################
 
 from __future__ import print_function
+
 import argparse
 import os
 import sys
+
 import katpoint
 
 
@@ -89,7 +91,7 @@ def show_non_ascii(body):
     target_uni = body.decode('utf-8')
     # Now convert to ASCII and mark all non-ASCII with '?'
     target_uni = target_uni.encode('ascii', errors='replace')
-    print ('\nNon ASCII characters found!')
+    print('\nNon ASCII characters found!')
     print(target_uni)
     print_markers(find_markers(target_uni, '?'))
 
@@ -136,7 +138,7 @@ def validate_target(target_file):
 def parse_cmd_line():
     """
     Parse the script command-line arguments.
-    
+
     Returns
     -------
     config : argparse.Namespace

@@ -16,12 +16,12 @@
 
 """Target catalogue."""
 
+from past.builtins import basestring
+
 import logging
 
 import ephem.stars
 import numpy as np
-
-from past.builtins import basestring
 
 from .target import Target
 from .timestamp import Timestamp

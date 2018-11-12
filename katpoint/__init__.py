@@ -55,11 +55,14 @@ try:
 except NameError:
     pass
 
+
 # Setup library logger and add a print-like handler used when no logging is configured
 class _NoConfigFilter(_logging.Filter):
     """Filter which only allows event if top-level logging is not configured."""
     def filter(self, record):
         return 1 if not _logging.root.handlers else 0
+
+
 _no_config_handler = _logging.StreamHandler()
 _no_config_handler.setFormatter(_logging.Formatter(_logging.BASIC_FORMAT))
 _no_config_handler.addFilter(_NoConfigFilter())

@@ -22,11 +22,12 @@ delay correction for a correlator.
 
 """
 
+from past.builtins import basestring
+
 import logging
 import json
 
 import numpy as np
-from past.builtins import basestring
 
 from .model import Parameter, Model
 from .conversion import azel_to_enu

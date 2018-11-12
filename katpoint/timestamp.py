@@ -16,6 +16,8 @@
 
 """A Timestamp object."""
 
+from past.builtins import basestring
+
 import time
 import math
 
@@ -23,8 +25,6 @@ from functools import total_ordering
 
 import numpy as np
 import ephem
-
-from past.builtins import basestring
 
 
 @total_ordering

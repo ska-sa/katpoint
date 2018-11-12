@@ -35,7 +35,8 @@ plt.clf()
 
 for n, src in enumerate(old):
     names = [src.name] + src.aliases
-    print('OLD: %s %s' % (names, ('%.1f Jy' % (src.flux_density(freq),)) if not np.isnan(src.flux_density(freq)) else ''))
+    print('OLD: %s %s' % (names, ('%.1f Jy' % (src.flux_density(freq),))
+                          if not np.isnan(src.flux_density(freq)) else ''))
     print(src.description)
     plt.subplot(5, 6, n + 1)
     plt.plot(np.log10(freq_range), np.log10(src.flux_density(freq_range)), 'b')

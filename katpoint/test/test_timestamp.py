@@ -23,6 +23,7 @@ import ephem
 
 import katpoint
 
+
 class TestTimestamp(unittest.TestCase):
     """Test timestamp creation and conversion."""
     def setUp(self):

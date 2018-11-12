@@ -20,18 +20,18 @@ This provides a base class for pointing and delay models, handling the loading,
 saving and display of parameters.
 
 """
-import sys
+from past.builtins import basestring
 
 try:
     import ConfigParser as configparser  # python2
 except ImportError:
     import configparser  # python3
 
+import sys
 from collections import OrderedDict
 
 import numpy as np
 
-from past.builtins import basestring
 
 py2 = sys.version[0] == '2'
 

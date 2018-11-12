@@ -26,12 +26,13 @@ import katpoint
 # Use the current year in TLE epochs to avoid pyephem crash due to expired TLEs
 YY = time.localtime().tm_year % 100
 
+
 class TestCatalogueConstruction(unittest.TestCase):
     """Test construction of catalogues."""
     def setUp(self):
         self.tle_lines = ['GPS BIIA-21 (PRN 09)    \n',
                           '1 22700U 93042A   %02d266.32333151  .00000012  00000-0  10000-3 0  805%1d\n' %
-                           (YY, (YY // 10 + YY - 7 + 4) % 10),
+                          (YY, (YY // 10 + YY - 7 + 4) % 10),
                           '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n']
         self.edb_lines = ['HIC 13847,f|S|A4,2:58:16.03,-40:18:17.1,2.906,2000,\n']
         self.antenna = katpoint.Antenna('XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0')
@@ -61,6 +62,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.assertEqual(closest_target.description, test_target.description, 'Closest target incorrect')
 # Reinstate this test once separation() can handle angles on top of each other (currently produces NaNs)
 #        self.assertAlmostEqual(dist, 0.0, places=5, msg='Target should be on top of itself')
+
 
 class TestCatalogueFilterSort(unittest.TestCase):
     """Test filtering and sorting of catalogues."""
@@ -99,13 +101,13 @@ class TestCatalogueFilterSort(unittest.TestCase):
         self.assertEqual(cat1, cat, 'Catalogue equality failed')
         self.assertEqual(cat1.targets[0].name, 'Achernar', 'Sorting on name failed')
         cat2 = cat.sort(key='ra', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(cat2.targets[0].name, 'Sirrah', 'Sorting on ra failed') # RA: 0:08:53.09
+        self.assertEqual(cat2.targets[0].name, 'Sirrah', 'Sorting on ra failed')  # RA: 0:08:53.09
         cat3 = cat.sort(key='dec', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(cat3.targets[0].name, 'Agena', 'Sorting on dec failed') # DEC: -60:25:27.3
+        self.assertEqual(cat3.targets[0].name, 'Agena', 'Sorting on dec failed')  # DEC: -60:25:27.3
         cat4 = cat.sort(key='az', timestamp=self.timestamp, antenna=self.antenna, ascending=False)
-        self.assertEqual(cat4.targets[0].name, 'Polaris', 'Sorting on az failed') # az: 359:25:07.3
+        self.assertEqual(cat4.targets[0].name, 'Polaris', 'Sorting on az failed')  # az: 359:25:07.3
         cat5 = cat.sort(key='el', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(cat5.targets[-1].name, 'Zenith', 'Sorting on el failed') # el: 90:00:00.0
+        self.assertEqual(cat5.targets[-1].name, 'Zenith', 'Sorting on el failed')  # el: 90:00:00.0
         cat.add(self.flux_target)
         cat6 = cat.sort(key='flux', ascending=False, flux_freq_MHz=1.5)
         self.assertTrue('flux' in (cat6.targets[0].name, cat6.targets[-1].name),
