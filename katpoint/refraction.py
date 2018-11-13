@@ -219,7 +219,7 @@ class RefractionCorrection(object):
                 lower = np.where(test_el < refracted_el, el, lower)
                 upper = np.where(test_el > refracted_el, el, upper)
         else:
-            logger.warning('Reverse refraction correction did not converge' +
-                           ' in %d iterations - elevation differs by at most %f arcsecs' %
-                           (iteration + 1, rad2deg(np.abs(test_el - refracted_el).max()) * 3600.))
+            logger.warning('Reverse refraction correction did not converge in '
+                           '%d iterations - elevation differs by at most %f arcsecs',
+                           iteration + 1, rad2deg(np.abs(test_el - refracted_el).max()) * 3600.)
         return el

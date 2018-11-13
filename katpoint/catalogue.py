@@ -439,7 +439,8 @@ class Catalogue(object):
             if not isinstance(target, Target):
                 raise ValueError('List of targets should either contain Target objects or description strings')
             if _hash(target.name) in self.lookup:
-                logger.warn("Skipped '%s' [%s] (already in catalogue)" % (target.name, target.tags[0]))
+                logger.warn("Skipped '%s' [%s] (already in catalogue)",
+                            target.name, target.tags[0])
             else:
                 target.add_tags(tags)
                 target.antenna = self.antenna
@@ -447,8 +448,8 @@ class Catalogue(object):
                 self.targets.append(target)
                 for name in [target.name] + target.aliases:
                     self.lookup[_hash(name)] = target
-                logger.debug("Added '%s' [%s] (and %d aliases)" %
-                             (target.name, target.tags[0], len(target.aliases)))
+                logger.debug("Added '%s' [%s] (and %d aliases)",
+                             target.name, target.tags[0], len(target.aliases))
 
     def add_tle(self, lines, tags=None):
         """Add NORAD Two-Line Element (TLE) targets to catalogue.
@@ -517,8 +518,8 @@ class Catalogue(object):
                             (name, epoch_diff_days, direction)
                     max_epoch_diff_days = epoch_diff_days
         if num_outdated > 0:
-            logger.warning('%d of %d TLE set(s) are outdated, probably making them inaccurate for use right now' %
-                           (num_outdated, len(targets)))
+            logger.warning('%d of %d TLE set(s) are outdated, probably making them inaccurate for use right now',
+                           num_outdated, len(targets))
             logger.warning(worst)
         self.add(targets, tags)
 

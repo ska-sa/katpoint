@@ -258,9 +258,9 @@ class PointingModel(Model):
             el = el + (a11 * b2 - a21 * b1) / det_J
         else:
             max_error, max_az, max_el = np.vstack((sky_error, pointed_az, pointed_el))[:, np.argmax(sky_error)]
-            logger.warning('Reverse pointing correction did not converge in ' +
-                           '%d iterations - maximum error is %f arcsecs at (az, el) = (%f, %f) radians' %
-                           (iteration + 1, rad2deg(max_error) * 3600., max_az, max_el))
+            logger.warning('Reverse pointing correction did not converge in %d iterations - '
+                           'maximum error is %f arcsecs at (az, el) = (%f, %f) radians',
+                           iteration + 1, rad2deg(max_error) * 3600., max_az, max_el)
         return az, el
 
     def fit(self, az, el, delta_az, delta_el, sigma_daz=None, sigma_del=None, enabled_params=None):
@@ -368,6 +368,6 @@ class PointingModel(Model):
         self.fromlist(param_vector)
         # Also obtain standard errors of parameters (see NRinC, 2nd ed, Eq. 15.4.19)
         sigma_params[enabled_params - 1] = np.sqrt(np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1))
-#        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f' % (N, M, s[0] / s[-1]))
+#        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f', N, M, s[0] / s[-1])
 
         return param_vector, sigma_params
