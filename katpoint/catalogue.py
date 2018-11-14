@@ -54,7 +54,8 @@ class Catalogue(object):
     - A list of targets, which can be filtered, sorted, pretty-printed and
       iterated over. The list is accessible as :meth:`Catalogue.targets`, and
       the catalogue itself is iterable, returning the next target on each
-      iteration. An example is::
+      iteration. The targets are assumed to be unique, but may have the same
+      name. An example is::
 
         cat = katpoint.Catalogue()
         cat.add(some_targets)
@@ -62,10 +63,11 @@ class Catalogue(object):
         for t in cat:
             # Do something with target t
 
-    - Lookup by name, by using the catalogue as if it were a dictionary. This is
-      simpler for the user, who does not have to remember all the target details.
-      The named lookup supports tab completion in IPython, which further
-      simplifies finding a target in the catalogue. An example is::
+    - Lookup by name, by using the catalogue as if it were a dictionary. This
+      is simpler for the user, who does not have to remember all the target
+      details. The named lookup supports tab completion in IPython, which
+      further simplifies finding a target in the catalogue. The most recently
+      added target with the specified name is returned. An example is::
 
         cat = katpoint.Catalogue(add_specials=True)
         t = cat['Sun']
@@ -77,8 +79,8 @@ class Catalogue(object):
 
         cat = katpoint.Catalogue()
 
-    which produces an empty catalogue. The standard *special* targets, which are
-    the Sun, Moon, planets and Zenith, can be added as follows::
+    which produces an empty catalogue. The standard *special* targets, which
+    are the Sun, Moon, planets and Zenith, can be added as follows::
 
         cat = katpoint.Catalogue(add_specials=True)
 
@@ -97,17 +99,17 @@ class Catalogue(object):
         cat2 = katpoint.Catalogue([t1, t2])
 
     Alternatively, the list of targets may be replaced by a list of target
-    description strings (or a single description string). The target objects are
-    then constructed before being added, as in::
+    description strings (or a single description string). The target objects
+    are then constructed before being added, as in::
 
         cat1 = katpoint.Catalogue('Takreem, azel, 20, 30')
         cat2 = katpoint.Catalogue(['Ganymede, special', 'Takreem, azel, 20, 30'])
 
-    Taking this one step further, the list may be replaced by any iterable object
-    that returns strings. A very useful example of such an object is the Python
-    :class:`file` object, which iterates over the lines of a text file. If the
-    catalogue file contains one target description string per line (with comments
-    and blank lines allowed too), it may be loaded as::
+    Taking this one step further, the list may be replaced by any iterable
+    object that returns strings. A very useful example of such an object is the
+    Python :class:`file` object, which iterates over the lines of a text file.
+    If the catalogue file contains one target description string per line
+    (with comments and blank lines allowed too), it may be loaded as::
 
         cat = katpoint.Catalogue(file('catalogue.csv'))
 
@@ -154,14 +156,9 @@ class Catalogue(object):
         cat.add(file('source_list.csv'), tags='calibrator')
         cat.add_edb(file('hipparcos.edb'), tags='star')
 
-    Finally, targets may be removed from the catalogue. This is useful when a
-    target is to be updated, as adding a target which is already in the catalogue
-    will silently fail. The reasoning behind this is that a target object is
-    added once to the target list, but may have multiple references in the lookup
-    dictionary, one per alias. When updating a target, it is not clear what to do
-    with all the alternate names. For now, the user has to explicitly remove a
-    target by name before loading a new version of the target into the catalogue.
-    The target may be removed via any of its names::
+    Finally, targets may be removed from the catalogue. The most recently added
+    target with the specified name is removed from the targets list as well as
+    the lookup dict. The target may be removed via any of its names::
 
         cat = katpoint.Catalogue(add_specials=True)
         cat.remove('Sun')
@@ -253,14 +250,14 @@ class Catalogue(object):
         cat = katpoint.Catalogue(file('source_list.csv'))
         strong_sources = cat.filter(flux_limit_Jy=10.0, flux_freq_MHz=1500)
 
-    - An iterator filter, implemented by the :meth:`Catalogue.iterfilter` method.
-      This is a Python *generator function*, which returns a *generator iterator*,
-      to be more precise. Each time the returned iterator's .next() method is
-      invoked, the next suitable :class:`Target` object is returned. If no
-      timestamp is provided, the criteria are re-evaluated at the time instant
-      of the .next() call, which makes it easy to cycle through a list of
-      targets over an extended period of time (as during observation). The
-      iterator filter is typically used in a for-loop::
+    - An iterator filter, implemented by the :meth:`Catalogue.iterfilter`
+      method. This is a Python *generator function*, which returns a
+      *generator iterator*, to be more precise. Each time the returned
+      iterator's .next() method is invoked, the next suitable :class:`Target`
+      object is returned. If no timestamp is provided, the criteria are
+      re-evaluated at the time instant of the .next() call, which makes it easy
+      to cycle through a list of targets over an extended period of time (as
+      during observation). The iterator filter is typically used in a for-loop::
 
         cat = katpoint.Catalogue(file('source_list.csv'))
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
