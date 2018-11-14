@@ -20,6 +20,7 @@ from builtins import object
 from past.builtins import basestring
 
 import logging
+from collections import defaultdict
 
 import ephem.stars
 import numpy as np
@@ -292,7 +293,7 @@ class Catalogue(object):
     """
     def __init__(self, targets=None, tags=None, add_specials=False, add_stars=False,
                  antenna=None, flux_freq_MHz=None):
-        self.lookup = {}
+        self.lookup = defaultdict(list)
         self.targets = []
         self._antenna = antenna
         self._flux_freq_MHz = flux_freq_MHz
@@ -341,11 +342,16 @@ class Catalogue(object):
         """Number of targets in catalogue."""
         return len(self.targets)
 
+    def _targets_with_name(self, name):
+        """List of targets in catalogue with given name (or alias)."""
+        return self.lookup.get(_hash(name), [])
+
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object.
 
-        The name string may be tab-completed in IPython to simplify finding a
-        target.
+        This returns the most recently added target with the given name.
+        The name string may be tab-completed in IPython to simplify finding
+        a target.
 
         Parameters
         ----------
@@ -359,15 +365,16 @@ class Catalogue(object):
 
         """
         try:
-            return self.lookup[_hash(name)]
-        except KeyError:
+            return self._targets_with_name(name)[-1]
+        except IndexError:
             return None
 
     def __contains__(self, obj):
         """Test whether catalogue contains exact target, or target with given name."""
-        name = obj.name if isinstance(obj, Target) else obj
-        target = self[name]
-        return target is not None and (not isinstance(obj, Target) or target == obj)
+        if isinstance(obj, Target):
+            return obj in self._targets_with_name(obj.name)
+        else:
+            return _hash(obj) in self.lookup
 
     def __eq__(self, other):
         """Equality comparison operator."""
@@ -432,24 +439,32 @@ class Catalogue(object):
             targets = [targets]
         for target in targets:
             if isinstance(target, basestring):
-                # Ignore strings starting with a hash (assumed to be comments) or only containing whitespace
+                # Ignore strings starting with a hash (assumed to be comments)
+                # or only containing whitespace
                 if (target[0] == '#') or (len(target.strip()) == 0):
                     continue
                 target = Target(target)
             if not isinstance(target, Target):
-                raise ValueError('List of targets should either contain Target objects or description strings')
-            if _hash(target.name) in self.lookup:
+                raise ValueError('List of targets should either contain '
+                                 'Target objects or description strings')
+            # Add tags first since they affect target identity / description
+            target.add_tags(tags)
+            if target in self:
                 logger.warn("Skipped '%s' [%s] (already in catalogue)",
                             target.name, target.tags[0])
-            else:
-                target.add_tags(tags)
-                target.antenna = self.antenna
-                target.flux_freq_MHz = self.flux_freq_MHz
-                self.targets.append(target)
-                for name in [target.name] + target.aliases:
-                    self.lookup[_hash(name)] = target
-                logger.debug("Added '%s' [%s] (and %d aliases)",
-                             target.name, target.tags[0], len(target.aliases))
+                continue
+            target_names = [target.name] + target.aliases
+            existing_names = [name for name in target_names if name in self]
+            if existing_names:
+                logger.warn("Found different targets with same name(s) '%s' "
+                            "in catalogue", ', '.join(existing_names))
+            target.antenna = self.antenna
+            target.flux_freq_MHz = self.flux_freq_MHz
+            self.targets.append(target)
+            for name in target_names:
+                self.lookup[_hash(name)].append(target)
+            logger.debug("Added '%s' [%s] (and %d aliases)",
+                         target.name, target.tags[0], len(target.aliases))
 
     def add_tle(self, lines, tags=None):
         """Add NORAD Two-Line Element (TLE) targets to catalogue.
@@ -559,17 +574,22 @@ class Catalogue(object):
     def remove(self, name):
         """Remove target from catalogue.
 
+        This removes the most recently added target with the given name
+        from the catalogue. If the target is not in the catalogue, do nothing.
+
         Parameters
         ----------
         name : string
             Name of target to remove (may also be an alternate name of target)
 
         """
-        if _hash(name) in self.lookup:
-            target = self[name]
-            self.lookup.pop(_hash(target.name))
-            for alias in target.aliases:
-                self.lookup.pop(_hash(alias))
+        target = self[name]
+        if target is not None:
+            for name in [target.name] + target.aliases:
+                targets_with_name = self.lookup[_hash(name)]
+                targets_with_name.remove(target)
+                if not targets_with_name:
+                    del self.lookup[_hash(name)]
             self.targets.remove(target)
 
     def save(self, filename):
