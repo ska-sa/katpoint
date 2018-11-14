@@ -57,6 +57,7 @@ class Catalogue(object):
       iteration. An example is::
 
         cat = katpoint.Catalogue()
+        cat.add(some_targets)
         t = cat.targets[0]
         for t in cat:
             # Do something with target t
@@ -66,7 +67,7 @@ class Catalogue(object):
       The named lookup supports tab completion in IPython, which further
       simplifies finding a target in the catalogue. An example is::
 
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         t = cat['Sun']
 
     Construction
@@ -117,7 +118,7 @@ class Catalogue(object):
 
         t1 = katpoint.Target('Ganymede, special')
         t2 = katpoint.Target('Takreem, azel, 20, 30')
-        cat = katpoint.Catalogue(add_specials=False)
+        cat = katpoint.Catalogue()
         cat.add(t1)
         cat.add([t1, t2])
         cat.add('Ganymede, special')
@@ -137,7 +138,7 @@ class Catalogue(object):
     cumbersome, especially in the case of TLE files which are regularly updated.
     Two special methods simplify the loading of targets from these files::
 
-        cat = katpoint.Catalogue(add_specials=False)
+        cat = katpoint.Catalogue()
         cat.add_tle(file('gps-ops.txt'))
         cat.add_edb(file('hipparcos.edb'))
 
@@ -162,7 +163,7 @@ class Catalogue(object):
     target by name before loading a new version of the target into the catalogue.
     The target may be removed via any of its names::
 
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat.remove('Sun')
 
     Filtering and sorting
@@ -204,7 +205,7 @@ class Catalogue(object):
       stored in each target. An example is::
 
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat1 = cat.filter(az_limit_deg=[0, 90], timestamp='2009-10-10', antenna=ant)
         cat = katpoint.Catalogue(antenna=ant)
         cat1 = cat.filter(az_limit_deg=[90, 0])
@@ -215,7 +216,7 @@ class Catalogue(object):
       is required (or defaults will be used). An example is::
 
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat1 = cat.filter(el_limit_deg=[10, 30], timestamp='2009-10-10', antenna=ant)
         cat = katpoint.Catalogue(antenna=ant)
         cat1 = cat.filter(el_limit_deg=10)
@@ -229,7 +230,7 @@ class Catalogue(object):
       required (or defaults will be used). An example is::
 
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat.add_tle(file('geo.txt'))
         sun = cat['Sun']
         afristar = cat['AFRISTAR']
@@ -280,15 +281,15 @@ class Catalogue(object):
     tags : string or sequence of strings, optional
         Tag or list of tags to add to *targets* (strings will be split on
         whitespace)
-    add_specials: {False, True}, optional
+    add_specials: bool, optional
         True if *special* bodies specified in :data:`specials` (and 'Zenith')
         should be added
-    add_stars:  {False, True}, optional
+    add_stars:  bool, optional
         True if *star* bodies from PyEphem star catalogue should be added
     antenna : :class:`Antenna` object, optional
         Default antenna to use for position calculations for all targets
     flux_freq_MHz : float, optional
-        Default frequency at which to evaluate flux density of all targets, in MHz
+        Default frequency at which to evaluate flux density of all targets (MHz)
 
     """
     def __init__(self, targets=None, tags=None, add_specials=False, add_stars=False,
@@ -431,7 +432,7 @@ class Catalogue(object):
         >>> cat = Catalogue()
         >>> cat.add(file('source_list.csv'), tags='cal')
         >>> cat.add('Sun, special')
-        >>> cat2 = Catalogue(add_specials=False)
+        >>> cat2 = Catalogue()
         >>> cat2.add(cat.targets)
 
         """
