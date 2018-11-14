@@ -393,19 +393,7 @@ class Catalogue(object):
 
     def _ipython_key_completions_(self):
         """List of keys used in IPython (version >= 5) tab completion."""
-        return list(self.iternames())
-
-    def iternames(self):
-        """Iterator over known target names in catalogue which can be searched for.
-
-        There are potentially more names than targets in the catalogue, as the
-        same target can have many names.
-
-        """
-        for target in self.targets:
-            yield target.name
-            for alias in target.aliases:
-                yield alias
+        return list(self.lookup.keys())
 
     def add(self, targets, tags=None):
         """Add targets to catalogue.
