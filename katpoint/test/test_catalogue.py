@@ -37,12 +37,33 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.edb_lines = ['HIC 13847,f|S|A4,2:58:16.03,-40:18:17.1,2.906,2000,\n']
         self.antenna = katpoint.Antenna('XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0')
 
+    def test_catalogue_same_name(self):
+        """"Test add() and remove() of targets with the same name."""
+        cat = katpoint.Catalogue()
+        cat.add('Sun, special')
+        self.assertEqual(cat['Sun'].description, 'Sun, special')
+        cat.add('Sun, special')
+        self.assertEqual(len(cat), 1, 'Did not ignore duplicate target')
+        cat.add('Sun | Sol, special')
+        self.assertEqual(cat['Sun'].description, 'Sun | Sol, special')
+        cat.add('Sun, special hot')
+        self.assertEqual(cat['Sun'].description, 'Sun, special hot')
+        cat.remove('Sun')
+        self.assertEqual(cat['Sun'].description, 'Sun | Sol, special')
+        cat.remove('Sun')
+        self.assertEqual(cat['Sun'].description, 'Sun, special')
+        cat.remove('Sun')
+        self.assertTrue(len(cat) == len(cat.targets) == len(cat.lookup) == 0, 'Catalogue not empty')
+
     def test_construct_catalogue(self):
         """Test construction of catalogues."""
         cat = katpoint.Catalogue(add_specials=True, add_stars=True, antenna=self.antenna)
+        num_targets_original = len(cat)
+        self.assertEqual(num_targets_original, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
+        # Add target already in catalogue - no action
         cat.add(katpoint.Target('Sun, special'))
         num_targets = len(cat)
-        self.assertEqual(num_targets, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
+        self.assertEqual(num_targets, num_targets_original, 'Number of targets incorrect')
         cat2 = katpoint.Catalogue(add_specials=True, add_stars=True)
         cat2.add(katpoint.Target('Sun, special'))
         self.assertEqual(cat, cat2, 'Catalogues not equal')
@@ -50,7 +71,14 @@ class TestCatalogueConstruction(unittest.TestCase):
             self.assertEqual(hash(cat), hash(cat2), 'Catalogue hashes not equal')
         except TypeError:
             self.fail('Catalogue object not hashable')
-        test_target = cat.targets[0]
+        # Add different targets with the same name
+        cat2.add(katpoint.Target('Sun, special hot'))
+        cat2.add(katpoint.Target('Sun | Sol, special'))
+        self.assertEqual(len(cat2), num_targets_original + 2, 'Number of targets incorrect')
+        cat2.remove('Sol')
+        self.assertEqual(len(cat2), num_targets_original + 1, 'Number of targets incorrect')
+        self.assertTrue(cat != cat2, 'Catalogues should not be equal')
+        test_target = cat.targets[-1]
         self.assertEqual(test_target.description, cat[test_target.name].description, 'Lookup failed')
         self.assertEqual(cat['Non-existent'], None, 'Lookup of non-existent target failed')
         cat.add_tle(self.tle_lines, 'tle')
