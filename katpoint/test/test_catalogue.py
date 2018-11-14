@@ -88,8 +88,7 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.assertEqual(len(cat.targets), num_targets + 1, 'Number of targets incorrect')
         closest_target, dist = cat.closest_to(test_target)
         self.assertEqual(closest_target.description, test_target.description, 'Closest target incorrect')
-# Reinstate this test once separation() can handle angles on top of each other (currently produces NaNs)
-#        self.assertAlmostEqual(dist, 0.0, places=5, msg='Target should be on top of itself')
+        self.assertAlmostEqual(dist, 0.0, places=5, msg='Target should be on top of itself')
 
 
 class TestCatalogueFilterSort(unittest.TestCase):
