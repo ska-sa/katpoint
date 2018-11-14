@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
 
 
-def _hash(name):
+def _normalised(name):
     """Normalise string to make name lookup more robust."""
     return name.strip().lower().replace(' ', '').replace('_', '')
 
@@ -344,7 +344,7 @@ class Catalogue(object):
 
     def _targets_with_name(self, name):
         """List of targets in catalogue with given name (or alias)."""
-        return self.lookup.get(_hash(name), [])
+        return self.lookup.get(_normalised(name), [])
 
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object.
@@ -374,7 +374,7 @@ class Catalogue(object):
         if isinstance(obj, Target):
             return obj in self._targets_with_name(obj.name)
         else:
-            return _hash(obj) in self.lookup
+            return _normalised(obj) in self.lookup
 
     def __eq__(self, other):
         """Equality comparison operator (implemented via hash)."""
@@ -462,7 +462,7 @@ class Catalogue(object):
             target.flux_freq_MHz = self.flux_freq_MHz
             self.targets.append(target)
             for name in target_names:
-                self.lookup[_hash(name)].append(target)
+                self.lookup[_normalised(name)].append(target)
             logger.debug("Added '%s' [%s] (and %d aliases)",
                          target.name, target.tags[0], len(target.aliases))
 
@@ -586,10 +586,10 @@ class Catalogue(object):
         target = self[name]
         if target is not None:
             for name in [target.name] + target.aliases:
-                targets_with_name = self.lookup[_hash(name)]
+                targets_with_name = self.lookup[_normalised(name)]
                 targets_with_name.remove(target)
                 if not targets_with_name:
-                    del self.lookup[_hash(name)]
+                    del self.lookup[_normalised(name)]
             self.targets.remove(target)
 
     def save(self, filename):
