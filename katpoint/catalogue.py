@@ -436,14 +436,14 @@ class Catalogue(object):
             # Add tags first since they affect target identity / description
             target.add_tags(tags)
             if target in self:
-                logger.warn("Skipped '%s' [%s] (already in catalogue)",
-                            target.name, target.tags[0])
+                logger.warning("Skipped '%s' [%s] (already in catalogue)",
+                               target.name, target.tags[0])
                 continue
             target_names = [target.name] + target.aliases
             existing_names = [name for name in target_names if name in self]
             if existing_names:
-                logger.warn("Found different targets with same name(s) '%s' "
-                            "in catalogue", ', '.join(existing_names))
+                logger.warning("Found different targets with same name(s) "
+                               "'%s' in catalogue", ', '.join(existing_names))
             target.antenna = self.antenna
             target.flux_freq_MHz = self.flux_freq_MHz
             self.targets.append(target)
