@@ -487,7 +487,7 @@ class TestProjectionCAR(unittest.TestCase):
         assert_angles_almost_equal(el, ee, decimal=12)
 
 
-def sphere_to_plane_mattieu(target_az, target_el, scan_az, scan_el):
+def sphere_to_plane_original_ssn(target_az, target_el, scan_az, scan_el):
     """Mattieu's original version of SSN projection."""
     ll = np.cos(target_el) * np.sin(target_az - scan_az)
     mm = np.cos(target_el) * np.sin(scan_el) * np.cos(
@@ -495,7 +495,7 @@ def sphere_to_plane_mattieu(target_az, target_el, scan_az, scan_el):
     return ll, mm
 
 
-def plane_to_sphere_mattieu(target_az, target_el, ll, mm):
+def plane_to_sphere_original_ssn(target_az, target_el, ll, mm):
     """Mattieu's original version of SSN projection."""
     scan_az = target_az - np.arcsin(np.clip(ll / np.cos(target_el), -1.0, 1.0))
     scan_el = np.arcsin(np.clip(
@@ -533,11 +533,11 @@ class TestProjectionSSN(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=10)
         assert_angles_almost_equal(el, ee, decimal=10)
 
-    def test_vs_mattieu(self):
+    def test_vs_original_ssn(self):
         """SSN projection: compare against Mattieu's original version."""
         az, el = self.plane_to_sphere(self.az0, self.el0, self.x, self.y)
-        ll, mm = sphere_to_plane_mattieu(self.az0, self.el0, az, el)
-        aa, ee = plane_to_sphere_mattieu(self.az0, self.el0, ll, mm)
+        ll, mm = sphere_to_plane_original_ssn(self.az0, self.el0, az, el)
+        aa, ee = plane_to_sphere_original_ssn(self.az0, self.el0, ll, mm)
         np.testing.assert_almost_equal(self.x, ll, decimal=10)
         np.testing.assert_almost_equal(self.y, -mm, decimal=10)
         assert_angles_almost_equal(az, aa, decimal=10)
