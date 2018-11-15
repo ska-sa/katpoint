@@ -487,25 +487,21 @@ class TestProjectionCAR(unittest.TestCase):
         assert_angles_almost_equal(el, ee, decimal=12)
 
 
-def sphere_to_plane_mattieu(targetaz, targetel, scanaz, scanel):
-    # produces direction cosine coordinates from scanning antenna azimuth,elevation coordinates
-    # see _coordinate options.py for derivation
-    ll = np.cos(targetel) * np.sin(targetaz - scanaz)
-    mm = np.cos(targetel) * np.sin(scanel) * np.cos(
-        targetaz - scanaz) - np.cos(scanel) * np.sin(targetel)
+def sphere_to_plane_mattieu(target_az, target_el, scan_az, scan_el):
+    """Mattieu's original version of SSN projection."""
+    ll = np.cos(target_el) * np.sin(target_az - scan_az)
+    mm = np.cos(target_el) * np.sin(scan_el) * np.cos(
+        target_az - scan_az) - np.cos(scan_el) * np.sin(target_el)
     return ll, mm
 
 
-def plane_to_sphere_mattieu(targetaz, targetel, ll, mm):
-    scanaz = targetaz - np.arcsin(np.clip(ll / np.cos(targetel), -1.0, 1.0))
-    scanel = np.arcsin(np.clip((np.sqrt(1.0 - ll**2 - mm**2) * np.sin(targetel) +
-                                np.sqrt(np.cos(targetel)**2 - ll**2)*mm) / (1.0 - ll**2), -1.0, 1.0))
-    # alternate equations which gives same result
-    # scanel_alternate1=np.arcsin((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.cos(targetel)*np.cos(targetaz-scanaz)*mm)/(1.0-ll**2))
-    # num=np.cos(targetel)*np.cos(targetaz-scanaz)#or num=np.sqrt(np.cos(targetel)**2-ll**2)
-    # den=np.sin(targetel)**2+num**2
-    # scanel_alternate2=np.arcsin((np.sqrt(((den-mm**2)*(den-num**2)))+num*mm)/den)
-    return scanaz, scanel
+def plane_to_sphere_mattieu(target_az, target_el, ll, mm):
+    """Mattieu's original version of SSN projection."""
+    scan_az = target_az - np.arcsin(np.clip(ll / np.cos(target_el), -1.0, 1.0))
+    scan_el = np.arcsin(np.clip(
+        (np.sqrt(1.0 - ll**2 - mm**2) * np.sin(target_el) +
+         np.sqrt(np.cos(target_el)**2 - ll**2) * mm) / (1.0 - ll**2), -1.0, 1.0))
+    return scan_az, scan_el
 
 
 class TestProjectionSSN(unittest.TestCase):
