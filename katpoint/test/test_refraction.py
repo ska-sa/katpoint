@@ -15,7 +15,7 @@
 ################################################################################
 
 """Tests for the refraction module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 
@@ -23,8 +23,10 @@ import numpy as np
 
 import katpoint
 
+
 def assert_angles_almost_equal(x, y, **kwargs):
-    primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
+    def primary_angle(x):
+        return x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), **kwargs)
 
 

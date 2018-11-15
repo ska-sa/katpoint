@@ -122,6 +122,7 @@ Alternatively they can be called directly::
    FITS. II," Astronomy & Astrophysics, vol. 395, pp. 1077-1122, 2002.
 
 """
+from __future__ import print_function, division, absolute_import
 
 import numpy as np
 
@@ -766,6 +767,7 @@ def plane_to_sphere_ssn(az0, el0, x, y):
         raise ValueError('The y coordinate causes el to be outside range of +- pi/2 radians')
     el = np.arctan2(num, den)
     return az, el
+
 
 # --------------------------------------------------------------------------------------------------
 # --- Top-level projection routines

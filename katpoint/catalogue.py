@@ -15,13 +15,14 @@
 ################################################################################
 
 """Target catalogue."""
+from __future__ import print_function, division, absolute_import
+from builtins import object
+from past.builtins import basestring
 
 import logging
 
 import ephem.stars
 import numpy as np
-
-from past.builtins import basestring
 
 from .target import Target
 from .timestamp import Timestamp
@@ -304,36 +305,28 @@ class Catalogue(object):
             targets = []
         self.add(targets, tags)
 
-    # Provide properties so that default antenna or flux frequency changes are passed on to targets
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212
-    def antenna():
-        """Class method which creates antenna property."""
-        doc = 'Default antenna used to calculate target positions.'
+    # Provide properties to pass default antenna or flux frequency changes on to targets
+    @property
+    def antenna(self):
+        """Default antenna used to calculate target positions."""
+        return self._antenna
 
-        def fget(self):
-            return self._antenna
+    @antenna.setter
+    def antenna(self, ant):
+        self._antenna = ant
+        for target in self.targets:
+            target.antenna = ant
 
-        def fset(self, value):
-            self._antenna = value
-            for target in self.targets:
-                target.antenna = self._antenna
-        return locals()
-    antenna = property(**antenna())
+    @property
+    def flux_freq_MHz(self):
+        """Default frequency at which to evaluate flux density, in MHz."""
+        return self._flux_freq_MHz
 
-    # pylint: disable-msg=E0211,E0202,W0612,W0142,W0212,C0103
-    def flux_freq_MHz():
-        """Class method which creates flux_freq_MHz property."""
-        doc = 'Default frequency at which to evaluate flux density, in MHz.'
-
-        def fget(self):
-            return self._flux_freq_MHz
-
-        def fset(self, value):
-            self._flux_freq_MHz = value
-            for target in self.targets:
-                target.flux_freq_MHz = self._flux_freq_MHz
-        return locals()
-    flux_freq_MHz = property(**flux_freq_MHz())
+    @flux_freq_MHz.setter
+    def flux_freq_MHz(self, freq):
+        self._flux_freq_MHz = freq
+        for target in self.targets:
+            target.flux_freq_MHz = freq
 
     def __str__(self):
         """Verbose human-friendly string representation of catalogue object."""
@@ -446,7 +439,8 @@ class Catalogue(object):
             if not isinstance(target, Target):
                 raise ValueError('List of targets should either contain Target objects or description strings')
             if _hash(target.name) in self.lookup:
-                logger.warn("Skipped '%s' [%s] (already in catalogue)" % (target.name, target.tags[0]))
+                logger.warn("Skipped '%s' [%s] (already in catalogue)",
+                            target.name, target.tags[0])
             else:
                 target.add_tags(tags)
                 target.antenna = self.antenna
@@ -454,8 +448,8 @@ class Catalogue(object):
                 self.targets.append(target)
                 for name in [target.name] + target.aliases:
                     self.lookup[_hash(name)] = target
-                logger.debug("Added '%s' [%s] (and %d aliases)" %
-                             (target.name, target.tags[0], len(target.aliases)))
+                logger.debug("Added '%s' [%s] (and %d aliases)",
+                             target.name, target.tags[0], len(target.aliases))
 
     def add_tle(self, lines, tags=None):
         """Add NORAD Two-Line Element (TLE) targets to catalogue.
@@ -524,8 +518,8 @@ class Catalogue(object):
                             (name, epoch_diff_days, direction)
                     max_epoch_diff_days = epoch_diff_days
         if num_outdated > 0:
-            logger.warning('%d of %d TLE set(s) are outdated, probably making them inaccurate for use right now' %
-                           (num_outdated, len(targets)))
+            logger.warning('%d of %d TLE set(s) are outdated, probably making them inaccurate for use right now',
+                           num_outdated, len(targets))
             logger.warning(worst)
         self.add(targets, tags)
 

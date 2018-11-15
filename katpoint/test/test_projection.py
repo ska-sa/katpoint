@@ -15,7 +15,7 @@
 ################################################################################
 
 """Tests for the projection module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 
@@ -29,6 +29,7 @@ try:
 except ImportError:
     found_aips = False
 
+
 def skip(reason=''):
     """Use nose to skip a test."""
     try:
@@ -39,7 +40,8 @@ def skip(reason=''):
 
 
 def assert_angles_almost_equal(x, y, decimal):
-    primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
+    def primary_angle(x):
+        return x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
 
 
@@ -79,10 +81,10 @@ class TestProjectionSIN(unittest.TestCase):
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
         for n in range(len(az)):
-            az_aips[n], el_aips[n], ierr = \
-            newpos(2, self.az0[n], self.el0[n], self.x[n], self.y[n])
-            x_aips[n], y_aips[n], ierr = \
-            dircos(2, self.az0[n], self.el0[n], az[n], el[n])
+            az_aips[n], el_aips[n], ierr = newpos(
+                2, self.az0[n], self.el0[n], self.x[n], self.y[n])
+            x_aips[n], y_aips[n], ierr = dircos(
+                2, self.az0[n], self.el0[n], az[n], el[n])
         self.assertEqual(ierr, 0)
         assert_angles_almost_equal(az, az_aips, decimal=9)
         assert_angles_almost_equal(el, el_aips, decimal=9)
@@ -185,10 +187,10 @@ class TestProjectionTAN(unittest.TestCase):
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
         for n in range(len(az)):
-            az_aips[n], el_aips[n], ierr = \
-            newpos(3, az0[n], el0[n], x[n], y[n])
-            x_aips[n], y_aips[n], ierr = \
-            dircos(3, az0[n], el0[n], az[n], el[n])
+            az_aips[n], el_aips[n], ierr = newpos(
+                3, az0[n], el0[n], x[n], y[n])
+            x_aips[n], y_aips[n], ierr = dircos(
+                3, az0[n], el0[n], az[n], el[n])
         self.assertEqual(ierr, 0)
         assert_angles_almost_equal(az, az_aips, decimal=10)
         assert_angles_almost_equal(el, el_aips, decimal=10)
@@ -284,10 +286,10 @@ class TestProjectionARC(unittest.TestCase):
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
         for n in range(len(az)):
-            az_aips[n], el_aips[n], ierr = \
-            newpos(4, self.az0[n], self.el0[n], self.x[n], self.y[n])
-            x_aips[n], y_aips[n], ierr = \
-            dircos(4, self.az0[n], self.el0[n], az[n], el[n])
+            az_aips[n], el_aips[n], ierr = newpos(
+                4, self.az0[n], self.el0[n], self.x[n], self.y[n])
+            x_aips[n], y_aips[n], ierr = dircos(
+                4, self.az0[n], self.el0[n], az[n], el[n])
         self.assertEqual(ierr, 0)
         assert_angles_almost_equal(az, az_aips, decimal=8)
         assert_angles_almost_equal(el, el_aips, decimal=8)
@@ -398,10 +400,10 @@ class TestProjectionSTG(unittest.TestCase):
         az_aips, el_aips = np.zeros(az.shape), np.zeros(el.shape)
         x_aips, y_aips = np.zeros(xx.shape), np.zeros(yy.shape)
         for n in range(len(az)):
-            az_aips[n], el_aips[n], ierr = \
-            newpos(6, self.az0[n], self.el0[n], self.x[n], self.y[n])
-            x_aips[n], y_aips[n], ierr = \
-            dircos(6, self.az0[n], self.el0[n], az[n], el[n])
+            az_aips[n], el_aips[n], ierr = newpos(
+                6, self.az0[n], self.el0[n], self.x[n], self.y[n])
+            x_aips[n], y_aips[n], ierr = dircos(
+                6, self.az0[n], self.el0[n], az[n], el[n])
         self.assertEqual(ierr, 0)
         # AIPS NEWPOS STG has poor accuracy on azimuth angle (large closure errors by itself)
         # assert_angles_almost_equal(az, az_aips, decimal=9)
@@ -485,22 +487,21 @@ class TestProjectionCAR(unittest.TestCase):
         assert_angles_almost_equal(el, ee, decimal=12)
 
 
-def sphere_to_plane_mattieu(targetaz,targetel,scanaz,scanel):
-    #produces direction cosine coordinates from scanning antenna azimuth,elevation coordinates
-    #see _coordinate options.py for derivation
-    ll=np.cos(targetel)*np.sin(targetaz-scanaz)
-    mm=np.cos(targetel)*np.sin(scanel)*np.cos(targetaz-scanaz)-np.cos(scanel)*np.sin(targetel)
-    return ll,mm
+def sphere_to_plane_original_ssn(target_az, target_el, scan_az, scan_el):
+    """Mattieu's original version of SSN projection."""
+    ll = np.cos(target_el) * np.sin(target_az - scan_az)
+    mm = np.cos(target_el) * np.sin(scan_el) * np.cos(
+        target_az - scan_az) - np.cos(scan_el) * np.sin(target_el)
+    return ll, mm
 
-def plane_to_sphere_mattieu(targetaz,targetel,ll,mm):
-    scanaz=targetaz-np.arcsin(np.clip(ll/np.cos(targetel),-1.0,1.0))
-    scanel=np.arcsin(np.clip((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.sqrt(np.cos(targetel)**2-ll**2)*mm)/(1.0-ll**2),-1.0,1.0))
-    #alternate equations which gives same result
-    # scanel_alternate1=np.arcsin((np.sqrt(1.0-ll**2-mm**2)*np.sin(targetel)+np.cos(targetel)*np.cos(targetaz-scanaz)*mm)/(1.0-ll**2))
-    # num=np.cos(targetel)*np.cos(targetaz-scanaz)#or num=np.sqrt(np.cos(targetel)**2-ll**2)
-    # den=np.sin(targetel)**2+num**2
-    # scanel_alternate2=np.arcsin((np.sqrt(((den-mm**2)*(den-num**2)))+num*mm)/den)
-    return scanaz,scanel
+
+def plane_to_sphere_original_ssn(target_az, target_el, ll, mm):
+    """Mattieu's original version of SSN projection."""
+    scan_az = target_az - np.arcsin(np.clip(ll / np.cos(target_el), -1.0, 1.0))
+    scan_el = np.arcsin(np.clip(
+        (np.sqrt(1.0 - ll**2 - mm**2) * np.sin(target_el) +
+         np.sqrt(np.cos(target_el)**2 - ll**2) * mm) / (1.0 - ll**2), -1.0, 1.0))
+    return scan_az, scan_el
 
 
 class TestProjectionSSN(unittest.TestCase):
@@ -532,11 +533,11 @@ class TestProjectionSSN(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=10)
         assert_angles_almost_equal(el, ee, decimal=10)
 
-    def test_vs_mattieu(self):
+    def test_vs_original_ssn(self):
         """SSN projection: compare against Mattieu's original version."""
         az, el = self.plane_to_sphere(self.az0, self.el0, self.x, self.y)
-        ll, mm = sphere_to_plane_mattieu(self.az0, self.el0, az, el)
-        aa, ee = plane_to_sphere_mattieu(self.az0, self.el0, ll, mm)
+        ll, mm = sphere_to_plane_original_ssn(self.az0, self.el0, az, el)
+        aa, ee = plane_to_sphere_original_ssn(self.az0, self.el0, ll, mm)
         np.testing.assert_almost_equal(self.x, ll, decimal=10)
         np.testing.assert_almost_equal(self.y, -mm, decimal=10)
         assert_angles_almost_equal(az, aa, decimal=10)

@@ -15,6 +15,7 @@
 ################################################################################
 
 """Tests for the model module."""
+from __future__ import print_function, division, absolute_import
 
 import unittest
 try:
@@ -82,6 +83,7 @@ class TestModel(unittest.TestCase):
         m7 = katpoint.Model(self.new_params())
         m7.set(m)
         self.assertEqual(m, m7, 'Construction from model object failed')
+
         class OtherModel(katpoint.Model):
             pass
         m8 = OtherModel(self.new_params())
@@ -102,10 +104,3 @@ class TestModel(unittest.TestCase):
         self.assertEqual(list(m.values()), values, 'Parameter values do not match')
         m['NIAO'] = 6789.0
         self.assertEqual(m['NIAO'], 6789.0, 'Parameter setting via dict interface failed')
-
-    def test_writable_docstring(self):
-        """Check that model class docstring is writable."""
-        params = self.new_params()
-        m = katpoint.Model(params)
-        katpoint.Model.__doc__ = 'Hooray'
-        self.assertEqual(katpoint.Model.__doc__, 'Hooray', 'Class docstring not writable')

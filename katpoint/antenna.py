@@ -21,6 +21,8 @@ feeds. The :class:`Antenna` object wraps the antenna's location, dish diameter
 and other parameters that affect pointing and delay calculations.
 
 """
+from __future__ import print_function, division, absolute_import
+from builtins import object
 
 import numpy as np
 import ephem
@@ -313,7 +315,6 @@ class Antenna(object):
         def _scalar_local_sidereal_time(t):
             """Calculate local sidereal time at a single time instant."""
             self.observer.date = Timestamp(t).to_ephem_date()
-            # pylint: disable-msg=E1101
             return self.observer.sidereal_time()
         if is_iterable(timestamp):
             return np.array([_scalar_local_sidereal_time(t) for t in timestamp])

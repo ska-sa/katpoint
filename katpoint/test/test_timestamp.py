@@ -15,13 +15,14 @@
 ################################################################################
 
 """Tests for the timestamp module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 
 import ephem
 
 import katpoint
+
 
 class TestTimestamp(unittest.TestCase):
     """Test timestamp creation and conversion."""

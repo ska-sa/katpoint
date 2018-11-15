@@ -15,6 +15,7 @@
 ################################################################################
 
 """Coordinate conversions not found in PyEphem."""
+from __future__ import print_function, division, absolute_import
 
 import numpy as np
 
@@ -48,7 +49,6 @@ def lla_to_ecef(lat_rad, long_rad, alt_m):
        Geodetic System 1984," NIMA TR8350.2, Page 4-4, last updated June, 2004.
 
     """
-    # pylint: disable-msg=C0103
     # WGS84 Defining Parameters
     a = 6378137.0                           # semi-major axis of Earth in m
     f = 1.0 / 298.257223563                 # flattening of Earth
@@ -101,7 +101,6 @@ def ecef_to_lla(x_m, y_m, z_m):
     .. [geo] Wikipedia entry, "Geodetic system", 2009.
 
     """
-    # pylint: disable-msg=C0103
     # WGS84 Defining Parameters
     a = 6378137.0                           # semi-major axis of Earth in m
     f = 1.0 / 298.257223563                 # flattening of Earth
@@ -222,7 +221,7 @@ def enu_to_ecef(ref_lat_rad, ref_long_rad, ref_alt_m, e_m, n_m, u_m):
 
     x_m = ref_x_m - sin_long*e_m - sin_lat*cos_long*n_m + cos_lat*cos_long*u_m
     y_m = ref_y_m + cos_long*e_m - sin_lat*sin_long*n_m + cos_lat*sin_long*u_m
-    z_m = ref_z_m +                         cos_lat*n_m +          sin_lat*u_m
+    z_m = ref_z_m + cos_lat*n_m + sin_lat*u_m
 
     return x_m, y_m, z_m
 
@@ -256,9 +255,9 @@ def ecef_to_enu(ref_lat_rad, ref_long_rad, ref_alt_m, x_m, y_m, z_m):
     sin_lat, cos_lat = np.sin(ref_lat_rad), np.cos(ref_lat_rad)
     sin_long, cos_long = np.sin(ref_long_rad), np.cos(ref_long_rad)
 
-    e_m =         -sin_long*delta_x_m +         cos_long*delta_y_m
+    e_m = -sin_long*delta_x_m + cos_long*delta_y_m
     n_m = -sin_lat*cos_long*delta_x_m - sin_lat*sin_long*delta_y_m + cos_lat*delta_z_m
-    u_m =  cos_lat*cos_long*delta_x_m + cos_lat*sin_long*delta_y_m + sin_lat*delta_z_m
+    u_m = cos_lat*cos_long*delta_x_m + cos_lat*sin_long*delta_y_m + sin_lat*delta_z_m
 
     return e_m, n_m, u_m
 

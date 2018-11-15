@@ -55,5 +55,6 @@ def suite():
     testsuite.addTests(loader.loadTestsFromModule(test_delay))
     return testsuite
 
+
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

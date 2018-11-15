@@ -15,12 +15,13 @@
 ################################################################################
 
 """Flux density model."""
+from __future__ import print_function, division, absolute_import
+from builtins import object
+from past.builtins import basestring
 
 import warnings
 
 import numpy as np
-
-from past.builtins import basestring
 
 from .ephem_extra import is_iterable
 

@@ -25,6 +25,7 @@ Currently it only caters for PyEphem, but it could be extended to include ACSM
 and CASA.
 
 """
+from __future__ import print_function, division, absolute_import
 
 import logging as _logging
 
@@ -44,7 +45,6 @@ from .delay import DelayModel, DelayCorrection
 
 # Hide submodules in module namespace, to avoid confusion with corresponding class names
 # If the module is reloaded, this will fail - ignore the resulting NameError
-# pylint: disable-msg=E0601
 try:
     _target, _antenna, _timestamp, _flux, _catalogue, _ephem_extra, \
         _conversion, _projection, _pointing, _refraction, _delay = \
@@ -55,11 +55,14 @@ try:
 except NameError:
     pass
 
+
 # Setup library logger and add a print-like handler used when no logging is configured
 class _NoConfigFilter(_logging.Filter):
     """Filter which only allows event if top-level logging is not configured."""
     def filter(self, record):
         return 1 if not _logging.root.handlers else 0
+
+
 _no_config_handler = _logging.StreamHandler()
 _no_config_handler.setFormatter(_logging.Formatter(_logging.BASIC_FORMAT))
 _no_config_handler.addFilter(_NoConfigFilter())

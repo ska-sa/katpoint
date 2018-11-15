@@ -15,7 +15,7 @@
 ################################################################################
 
 """Tests for the flux module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest2 as unittest
 
@@ -31,7 +31,8 @@ class TestFluxDensityModel(unittest.TestCase):
         self.unit_model2 = katpoint.FluxDensityModel(100., 200., [0.])
         self.flux_model = katpoint.FluxDensityModel('(1.0 2.0 2.0 0.0 0.0 0.0 0.0 0.0 2.0 0.5 0.25 -0.75)')
         with self.assertWarns(FutureWarning):
-            self.too_many_params = katpoint.FluxDensityModel('(1.0 2.0 2.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0)')
+            self.too_many_params = katpoint.FluxDensityModel(
+                '(1.0 2.0 2.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0)')
         self.too_few_params = katpoint.FluxDensityModel('(1.0 2.0 2.0)')
         self.flux_target = katpoint.Target('radec, 0.0, 0.0, ' + self.flux_model.description)
         self.no_flux_target = katpoint.Target('radec, 0.0, 0.0')
@@ -74,8 +75,8 @@ class TestFluxDensityModel(unittest.TestCase):
                                                 [np.nan, np.nan, np.nan, np.nan]]))
         self.assertRaises(ValueError, self.no_flux_target.flux_density_stokes)
         np.testing.assert_array_equal(self.no_flux_target.flux_density_stokes(1.5),
-                                np.array([np.nan, np.nan, np.nan, np.nan]),
-                                'Empty flux model leads to wrong empty flux shape')
+                                      np.array([np.nan, np.nan, np.nan, np.nan]),
+                                      'Empty flux model leads to wrong empty flux shape')
         np.testing.assert_array_equal(self.no_flux_target.flux_density_stokes([1.5, 1.5]),
                                       np.array([[np.nan, np.nan, np.nan, np.nan],
                                                 [np.nan, np.nan, np.nan, np.nan]]),

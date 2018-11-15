@@ -20,20 +20,18 @@ This provides a base class for pointing and delay models, handling the loading,
 saving and display of parameters.
 
 """
-import sys
+from __future__ import print_function, division, absolute_import
+import future.utils
+from builtins import object, zip
+from past.builtins import basestring
 
 try:
     import ConfigParser as configparser  # python2
 except ImportError:
     import configparser  # python3
-
 from collections import OrderedDict
 
 import numpy as np
-
-from past.builtins import basestring
-
-py2 = sys.version[0] == '2'
 
 
 class Parameter(object):
@@ -76,13 +74,11 @@ class Parameter(object):
         self.value = value if value is not None else default_value
         self.default_value = default_value
 
-    def __nonzero__(self):
+    def __bool__(self):
         """True if parameter is active, i.e. its value differs from default."""
         # Do explicit cast to bool, as value can be a NumPy type, resulting in
-        # an np.bool_ type for the expression (not allowed for __nonzero__)
+        # an np.bool_ type for the expression (not allowed for __bool__)
         return bool(self.value != self.default_value)
-
-    __bool__ = __nonzero__      # For Python 3
 
     @property
     def value_str(self):
@@ -104,20 +100,8 @@ class BadModelFile(Exception):
     pass
 
 
-# Use metaclass trick to make Model class docstrings writable.
-# This is unnecessary in Python 3.3 and above.
-# For more info, see Python issue 12773 (http://bugs.python.org/issue12773)
-# and discussion on python-dev:
-# https://mail.python.org/pipermail/python-dev/2012-January/115656.html
-class WritableDocstring(type):
-    """Metaclass with the sole purpose of enabling writable class docstrings."""
-
-
 class Model(object):
-
-    __metaclass__ = WritableDocstring
-
-    __doc__ = """Base class for models (e.g. pointing and delay models).
+    """Base class for models (e.g. pointing and delay models).
 
     The base class handles the construction / loading, saving, display and
     comparison of models. A Model consists of a sequence of Parameters and
@@ -138,7 +122,6 @@ class Model(object):
         Full set of model parameters in the expected order
 
     """
-
     def __init__(self, params):
         self.header = {}
         self.params = OrderedDict((p.name, p) for p in params)
@@ -147,7 +130,7 @@ class Model(object):
         """Number of parameters in full model."""
         return len(self.params)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """True if model contains any active (non-default) parameters."""
         return any(p for p in self)
 
@@ -267,7 +250,7 @@ class Model(object):
 
         """
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
-        if py2:
+        if future.utils.PY2:
             cfg = configparser.SafeConfigParser(defaults)
         else:
             cfg = configparser.ConfigParser(defaults, inline_comment_prefixes=(';', '#'))

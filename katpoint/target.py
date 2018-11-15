@@ -15,11 +15,12 @@
 ################################################################################
 
 """Target object used for pointing and flux density calculation."""
+from __future__ import print_function, division, absolute_import
+from builtins import object, range
+from past.builtins import basestring
 
 import numpy as np
 import ephem
-
-from past.builtins import basestring
 
 from .timestamp import Timestamp
 from .flux import FluxDensityModel
@@ -137,7 +138,6 @@ class Target(object):
             descr += ' (%s)' % (', '.join(self.aliases),)
         descr += ', tags=%s' % (' '.join(self.tags),)
         if 'radec' in self.tags:
-            # pylint: disable-msg=W0212
             descr += ', %s %s' % (self.body._ra, self.body._dec)
         if self.body_type == 'azel':
             descr += ', %s %s' % (self.body.az, self.body.el)
@@ -241,7 +241,6 @@ class Target(object):
             # Check if it's an unnamed target with a default name
             if names.startswith('Ra:'):
                 fields = [tags]
-            # pylint: disable-msg=W0212
             fields += [str(self.body._ra), str(self.body._dec)]
             if fluxinfo:
                 fields += [fluxinfo]
@@ -481,7 +480,8 @@ class Target(object):
                 return l, b
         ra, dec = self.astrometric_radec(timestamp, antenna)
         if is_iterable(ra):
-            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get() for n in range(len(ra))])
+            lb = np.array([ephem.Galactic(ephem.Equatorial(ra[n], dec[n])).get()
+                           for n in range(len(ra))])
             return lb[:, 0], lb[:, 1]
         else:
             return ephem.Galactic(ephem.Equatorial(ra, dec)).get()

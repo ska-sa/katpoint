@@ -15,16 +15,20 @@
 ################################################################################
 
 """Tests for the conversion module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
+
 import numpy as np
 
 import katpoint
 
+
 def assert_angles_almost_equal(x, y, decimal):
-    primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
+    def primary_angle(x):
+        return x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
+
 
 class TestGeodetic(unittest.TestCase):
     """Closure tests for geodetic coordinate transformations."""
@@ -59,6 +63,7 @@ class TestGeodetic(unittest.TestCase):
         np.testing.assert_almost_equal(new_x, x, decimal=8)
         np.testing.assert_almost_equal(new_y, y, decimal=8)
         np.testing.assert_almost_equal(new_z, z, decimal=8)
+
 
 class TestSpherical(unittest.TestCase):
     """Closure tests for spherical coordinate transformations."""

@@ -15,21 +15,22 @@
 ################################################################################
 
 """Tests for the antenna module."""
-# pylint: disable-msg=C0103,W0212
+from __future__ import print_function, division, absolute_import
 
 import unittest
 import time
-try:
-    import cPickle as pickle  # python2
-except ImportError:
-    import pickle  # python3
+import pickle
 
-import katpoint
 import numpy as np
 
+import katpoint
+
+
 def assert_angles_almost_equal(x, y, decimal):
-    primary_angle = lambda x: x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
+    def primary_angle(x):
+        return x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
+
 
 class TestAntennaConstruction(unittest.TestCase):
     """Test construction of antennas from strings and vice versa."""
@@ -37,15 +38,12 @@ class TestAntennaConstruction(unittest.TestCase):
         self.valid_antennas = [
             'XDM, -25:53:23.0, 27:41:03.0, 1406.1086, 15.0',
             'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7 0.0',
-            'FF2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 86.2 25.5 0.0, '
-                  '-0:06:39.6 0 0 0 0 0 0:09:48.9, 1.16'
+            ('FF2, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 86.2 25.5 0.0, '
+             '-0:06:39.6 0 0 0 0 0 0:09:48.9, 1.16')
             ]
         self.invalid_antennas = [
             'XDM, -25:53:23.05075, 27:41:03.0',
             '',
-            # Delay model can now have any number of terms (not 3 minimum)
-#           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4 -8.7',
-#           'FF1, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, 18.4, -8.7, 0.0'
             ]
         self.timestamp = '2009/07/07 08:36:20'
 
