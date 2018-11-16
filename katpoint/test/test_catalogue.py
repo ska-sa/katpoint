@@ -102,6 +102,18 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.assertEqual(closest_target.description, test_target.description, 'Closest target incorrect')
         self.assertAlmostEqual(dist, 0.0, places=5, msg='Target should be on top of itself')
 
+    def test_that_equality_and_hash_ignore_order(self):
+        a = katpoint.Catalogue()
+        b = katpoint.Catalogue()
+        t1 = katpoint.Target('Nothing, special')
+        t2 = katpoint.Target('Sun, special')
+        a.add(t1)
+        a.add(t2)
+        b.add(t2)
+        b.add(t1)
+        self.assertEqual(a, b, 'Shuffled catalogues are not equal')
+        self.assertEqual(hash(a), hash(b), 'Shuffled catalogues have different hashes')
+
 
 class TestCatalogueFilterSort(unittest.TestCase):
     """Test filtering and sorting of catalogues."""

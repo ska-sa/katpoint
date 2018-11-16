@@ -375,8 +375,8 @@ class Catalogue(object):
             return _normalised(obj) in self.lookup
 
     def __eq__(self, other):
-        """Equality comparison operator (implemented via hash)."""
-        return isinstance(other, Catalogue) and hash(self) == hash(other)
+        """Equality comparison operator (ignores order of targets)."""
+        return isinstance(other, Catalogue) and set(self.targets) == set(other.targets)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
@@ -384,8 +384,7 @@ class Catalogue(object):
 
     def __hash__(self):
         """Hash value is independent of order of targets in catalogue."""
-        # Use lookup dict instead of targets list, as it has a fixed order based on target name
-        return hash(tuple(tuple(v) for v in self.lookup.values()))
+        return hash(frozenset(self.targets))
 
     def __iter__(self):
         """Iterate over targets in catalogue."""
