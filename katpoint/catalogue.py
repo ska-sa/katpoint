@@ -288,6 +288,15 @@ class Catalogue(object):
     flux_freq_MHz : float, optional
         Default frequency at which to evaluate flux density of all targets (MHz)
 
+    Notes
+    -----
+    The catalogue object has an interesting relationship with orderedness.
+    While it is nominally an ordered list of targets, it is considered equal to
+    another catalogue with the same targets in a different order. This is
+    because the catalogue may be conveniently reordered in many ways (e.g.
+    based on elevation, declination, flux, etc.) while remaining essentially
+    the *same* catalogue. It also allows us to preserve the order in which the
+    catalogue was assembled, which seems the most natural.
     """
     def __init__(self, targets=None, tags=None, add_specials=False, add_stars=False,
                  antenna=None, flux_freq_MHz=None):
