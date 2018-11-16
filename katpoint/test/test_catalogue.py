@@ -47,7 +47,13 @@ class TestCatalogueConstruction(unittest.TestCase):
         cat.add('# Comments will be ignored')
         with self.assertRaises(ValueError):
             cat.add([1])
-        self.assertEqual(len(cat._ipython_key_completions_()), len(cat))
+
+    def test_catalogue_tab_completion(self):
+        cat = katpoint.Catalogue()
+        cat.add('Nothing, special')
+        cat.add('Earth | Terra Incognita, azel, 0, 0')
+        self.assertEqual(set(cat._ipython_key_completions_()),
+                         set(['Earth', 'Terra Incognita', 'Nothing']))
 
     def test_catalogue_same_name(self):
         """"Test add() and remove() of targets with the same name."""

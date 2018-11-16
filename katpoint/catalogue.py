@@ -392,7 +392,12 @@ class Catalogue(object):
 
     def _ipython_key_completions_(self):
         """List of keys used in IPython (version >= 5) tab completion."""
-        return list(self.lookup.keys())
+        names = set()
+        for target in self.targets:
+            names.add(target.name)
+            for alias in target.aliases:
+                names.add(alias)
+        return sorted(names)
 
     def add(self, targets, tags=None):
         """Add targets to catalogue.
