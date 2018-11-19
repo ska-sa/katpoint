@@ -52,26 +52,40 @@ class TestCatalogueConstruction(unittest.TestCase):
         cat = katpoint.Catalogue()
         cat.add('Nothing, special')
         cat.add('Earth | Terra Incognita, azel, 0, 0')
-        self.assertEqual(set(cat._ipython_key_completions_()),
-                         set(['Earth', 'Terra Incognita', 'Nothing']))
+        cat.add('Earth | Sky, azel, 0, 90')
+        # Check that it returns a sorted list
+        self.assertEqual(cat._ipython_key_completions_(),
+                         ['Earth', 'Nothing', 'Sky', 'Terra Incognita'])
 
     def test_catalogue_same_name(self):
         """"Test add() and remove() of targets with the same name."""
         cat = katpoint.Catalogue()
-        cat.add('Sun, special')
-        self.assertEqual(cat['Sun'].description, 'Sun, special')
-        cat.add('Sun, special')
+        targets = ['Sun, special', 'Sun | Sol, special', 'Sun, special hot']
+        # Add various targets called Sun
+        cat.add(targets[0])
+        self.assertEqual(cat['Sun'].description, targets[0])
+        cat.add(targets[0])
         self.assertEqual(len(cat), 1, 'Did not ignore duplicate target')
-        cat.add('Sun | Sol, special')
-        self.assertEqual(cat['Sun'].description, 'Sun | Sol, special')
-        cat.add('Sun, special hot')
-        self.assertEqual(cat['Sun'].description, 'Sun, special hot')
+        cat.add(targets[1])
+        self.assertEqual(cat['Sun'].description, targets[1])
+        cat.add(targets[2])
+        self.assertEqual(cat['Sun'].description, targets[2])
+        # Check length, iteration, membership
+        self.assertEqual(len(cat), len(targets))
+        for n, t in enumerate(cat):
+            self.assertEqual(t.description, targets[n])
+        self.assertIn('Sun', cat)
+        self.assertIn('Sol', cat)
+        for t in targets:
+            self.assertIn(katpoint.Target(t), cat)
+        # Remove targets one by one
         cat.remove('Sun')
-        self.assertEqual(cat['Sun'].description, 'Sun | Sol, special')
+        self.assertEqual(cat['Sun'].description, targets[1])
         cat.remove('Sun')
-        self.assertEqual(cat['Sun'].description, 'Sun, special')
+        self.assertEqual(cat['Sun'].description, targets[0])
         cat.remove('Sun')
-        self.assertTrue(len(cat) == len(cat.targets) == len(cat.lookup) == 0, 'Catalogue not empty')
+        self.assertTrue(len(cat) == len(cat.targets) == len(cat.lookup) == 0,
+                        'Catalogue not empty')
 
     def test_construct_catalogue(self):
         """Test construction of catalogues."""
