@@ -30,19 +30,72 @@ YY = time.localtime().tm_year % 100
 class TestCatalogueConstruction(unittest.TestCase):
     """Test construction of catalogues."""
     def setUp(self):
-        self.tle_lines = ['GPS BIIA-21 (PRN 09)    \n',
+        self.tle_lines = ['# Comment ignored\n',
+                          'GPS BIIA-21 (PRN 09)    \n',
                           '1 22700U 93042A   %02d266.32333151  .00000012  00000-0  10000-3 0  805%1d\n' %
                           (YY, (YY // 10 + YY - 7 + 4) % 10),
                           '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n']
-        self.edb_lines = ['HIC 13847,f|S|A4,2:58:16.03,-40:18:17.1,2.906,2000,\n']
+        self.edb_lines = ['# Comment ignored\n',
+                          'HIC 13847,f|S|A4,2:58:16.03,-40:18:17.1,2.906,2000,\n']
         self.antenna = katpoint.Antenna('XDM, -25:53:23.05075, 27:41:03.36453, 1406.1086, 15.0')
+
+    def test_catalogue_basic(self):
+        """Basic catalogue tests."""
+        cat = katpoint.Catalogue(add_specials=True)
+        repr(cat)
+        str(cat)
+        cat.add('# Comments will be ignored')
+        with self.assertRaises(ValueError):
+            cat.add([1])
+
+    def test_catalogue_tab_completion(self):
+        cat = katpoint.Catalogue()
+        cat.add('Nothing, special')
+        cat.add('Earth | Terra Incognita, azel, 0, 0')
+        cat.add('Earth | Sky, azel, 0, 90')
+        # Check that it returns a sorted list
+        self.assertEqual(cat._ipython_key_completions_(),
+                         ['Earth', 'Nothing', 'Sky', 'Terra Incognita'])
+
+    def test_catalogue_same_name(self):
+        """"Test add() and remove() of targets with the same name."""
+        cat = katpoint.Catalogue()
+        targets = ['Sun, special', 'Sun | Sol, special', 'Sun, special hot']
+        # Add various targets called Sun
+        cat.add(targets[0])
+        self.assertEqual(cat['Sun'].description, targets[0])
+        cat.add(targets[0])
+        self.assertEqual(len(cat), 1, 'Did not ignore duplicate target')
+        cat.add(targets[1])
+        self.assertEqual(cat['Sun'].description, targets[1])
+        cat.add(targets[2])
+        self.assertEqual(cat['Sun'].description, targets[2])
+        # Check length, iteration, membership
+        self.assertEqual(len(cat), len(targets))
+        for n, t in enumerate(cat):
+            self.assertEqual(t.description, targets[n])
+        self.assertIn('Sun', cat)
+        self.assertIn('Sol', cat)
+        for t in targets:
+            self.assertIn(katpoint.Target(t), cat)
+        # Remove targets one by one
+        cat.remove('Sun')
+        self.assertEqual(cat['Sun'].description, targets[1])
+        cat.remove('Sun')
+        self.assertEqual(cat['Sun'].description, targets[0])
+        cat.remove('Sun')
+        self.assertTrue(len(cat) == len(cat.targets) == len(cat.lookup) == 0,
+                        'Catalogue not empty')
 
     def test_construct_catalogue(self):
         """Test construction of catalogues."""
         cat = katpoint.Catalogue(add_specials=True, add_stars=True, antenna=self.antenna)
+        num_targets_original = len(cat)
+        self.assertEqual(num_targets_original, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
+        # Add target already in catalogue - no action
         cat.add(katpoint.Target('Sun, special'))
         num_targets = len(cat)
-        self.assertEqual(num_targets, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
+        self.assertEqual(num_targets, num_targets_original, 'Number of targets incorrect')
         cat2 = katpoint.Catalogue(add_specials=True, add_stars=True)
         cat2.add(katpoint.Target('Sun, special'))
         self.assertEqual(cat, cat2, 'Catalogues not equal')
@@ -50,7 +103,14 @@ class TestCatalogueConstruction(unittest.TestCase):
             self.assertEqual(hash(cat), hash(cat2), 'Catalogue hashes not equal')
         except TypeError:
             self.fail('Catalogue object not hashable')
-        test_target = cat.targets[0]
+        # Add different targets with the same name
+        cat2.add(katpoint.Target('Sun, special hot'))
+        cat2.add(katpoint.Target('Sun | Sol, special'))
+        self.assertEqual(len(cat2), num_targets_original + 2, 'Number of targets incorrect')
+        cat2.remove('Sol')
+        self.assertEqual(len(cat2), num_targets_original + 1, 'Number of targets incorrect')
+        self.assertTrue(cat != cat2, 'Catalogues should not be equal')
+        test_target = cat.targets[-1]
         self.assertEqual(test_target.description, cat[test_target.name].description, 'Lookup failed')
         self.assertEqual(cat['Non-existent'], None, 'Lookup of non-existent target failed')
         cat.add_tle(self.tle_lines, 'tle')
@@ -60,8 +120,19 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.assertEqual(len(cat.targets), num_targets + 1, 'Number of targets incorrect')
         closest_target, dist = cat.closest_to(test_target)
         self.assertEqual(closest_target.description, test_target.description, 'Closest target incorrect')
-# Reinstate this test once separation() can handle angles on top of each other (currently produces NaNs)
-#        self.assertAlmostEqual(dist, 0.0, places=5, msg='Target should be on top of itself')
+        self.assertAlmostEqual(dist, 0.0, places=5, msg='Target should be on top of itself')
+
+    def test_that_equality_and_hash_ignore_order(self):
+        a = katpoint.Catalogue()
+        b = katpoint.Catalogue()
+        t1 = katpoint.Target('Nothing, special')
+        t2 = katpoint.Target('Sun, special')
+        a.add(t1)
+        a.add(t2)
+        b.add(t2)
+        b.add(t1)
+        self.assertEqual(a, b, 'Shuffled catalogues are not equal')
+        self.assertEqual(hash(a), hash(b), 'Shuffled catalogues have different hashes')
 
 
 class TestCatalogueFilterSort(unittest.TestCase):

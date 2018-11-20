@@ -20,6 +20,7 @@ from builtins import object
 from past.builtins import basestring
 
 import logging
+from collections import defaultdict
 
 import ephem.stars
 import numpy as np
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 specials = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
 
 
-def _hash(name):
+def _normalised(name):
     """Normalise string to make name lookup more robust."""
     return name.strip().lower().replace(' ', '').replace('_', '')
 
@@ -53,19 +54,22 @@ class Catalogue(object):
     - A list of targets, which can be filtered, sorted, pretty-printed and
       iterated over. The list is accessible as :meth:`Catalogue.targets`, and
       the catalogue itself is iterable, returning the next target on each
-      iteration. An example is::
+      iteration. The targets are assumed to be unique, but may have the same
+      name. An example is::
 
         cat = katpoint.Catalogue()
+        cat.add(some_targets)
         t = cat.targets[0]
         for t in cat:
             # Do something with target t
 
-    - Lookup by name, by using the catalogue as if it were a dictionary. This is
-      simpler for the user, who does not have to remember all the target details.
-      The named lookup supports tab completion in IPython, which further
-      simplifies finding a target in the catalogue. An example is::
+    - Lookup by name, by using the catalogue as if it were a dictionary. This
+      is simpler for the user, who does not have to remember all the target
+      details. The named lookup supports tab completion in IPython, which
+      further simplifies finding a target in the catalogue. The most recently
+      added target with the specified name is returned. An example is::
 
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         t = cat['Sun']
 
     Construction
@@ -75,8 +79,8 @@ class Catalogue(object):
 
         cat = katpoint.Catalogue()
 
-    which produces an empty catalogue. The standard *special* targets, which are
-    the Sun, Moon, planets and Zenith, can be added as follows::
+    which produces an empty catalogue. The standard *special* targets, which
+    are the Sun, Moon, planets and Zenith, can be added as follows::
 
         cat = katpoint.Catalogue(add_specials=True)
 
@@ -95,17 +99,17 @@ class Catalogue(object):
         cat2 = katpoint.Catalogue([t1, t2])
 
     Alternatively, the list of targets may be replaced by a list of target
-    description strings (or a single description string). The target objects are
-    then constructed before being added, as in::
+    description strings (or a single description string). The target objects
+    are then constructed before being added, as in::
 
         cat1 = katpoint.Catalogue('Takreem, azel, 20, 30')
         cat2 = katpoint.Catalogue(['Ganymede, special', 'Takreem, azel, 20, 30'])
 
-    Taking this one step further, the list may be replaced by any iterable object
-    that returns strings. A very useful example of such an object is the Python
-    :class:`file` object, which iterates over the lines of a text file. If the
-    catalogue file contains one target description string per line (with comments
-    and blank lines allowed too), it may be loaded as::
+    Taking this one step further, the list may be replaced by any iterable
+    object that returns strings. A very useful example of such an object is the
+    Python :class:`file` object, which iterates over the lines of a text file.
+    If the catalogue file contains one target description string per line
+    (with comments and blank lines allowed too), it may be loaded as::
 
         cat = katpoint.Catalogue(file('catalogue.csv'))
 
@@ -116,7 +120,7 @@ class Catalogue(object):
 
         t1 = katpoint.Target('Ganymede, special')
         t2 = katpoint.Target('Takreem, azel, 20, 30')
-        cat = katpoint.Catalogue(add_specials=False)
+        cat = katpoint.Catalogue()
         cat.add(t1)
         cat.add([t1, t2])
         cat.add('Ganymede, special')
@@ -136,7 +140,7 @@ class Catalogue(object):
     cumbersome, especially in the case of TLE files which are regularly updated.
     Two special methods simplify the loading of targets from these files::
 
-        cat = katpoint.Catalogue(add_specials=False)
+        cat = katpoint.Catalogue()
         cat.add_tle(file('gps-ops.txt'))
         cat.add_edb(file('hipparcos.edb'))
 
@@ -152,16 +156,11 @@ class Catalogue(object):
         cat.add(file('source_list.csv'), tags='calibrator')
         cat.add_edb(file('hipparcos.edb'), tags='star')
 
-    Finally, targets may be removed from the catalogue. This is useful when a
-    target is to be updated, as adding a target which is already in the catalogue
-    will silently fail. The reasoning behind this is that a target object is
-    added once to the target list, but may have multiple references in the lookup
-    dictionary, one per alias. When updating a target, it is not clear what to do
-    with all the alternate names. For now, the user has to explicitly remove a
-    target by name before loading a new version of the target into the catalogue.
-    The target may be removed via any of its names::
+    Finally, targets may be removed from the catalogue. The most recently added
+    target with the specified name is removed from the targets list as well as
+    the lookup dict. The target may be removed via any of its names::
 
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat.remove('Sun')
 
     Filtering and sorting
@@ -203,7 +202,7 @@ class Catalogue(object):
       stored in each target. An example is::
 
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat1 = cat.filter(az_limit_deg=[0, 90], timestamp='2009-10-10', antenna=ant)
         cat = katpoint.Catalogue(antenna=ant)
         cat1 = cat.filter(az_limit_deg=[90, 0])
@@ -214,7 +213,7 @@ class Catalogue(object):
       is required (or defaults will be used). An example is::
 
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat1 = cat.filter(el_limit_deg=[10, 30], timestamp='2009-10-10', antenna=ant)
         cat = katpoint.Catalogue(antenna=ant)
         cat1 = cat.filter(el_limit_deg=10)
@@ -228,7 +227,7 @@ class Catalogue(object):
       required (or defaults will be used). An example is::
 
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
-        cat = katpoint.Catalogue()
+        cat = katpoint.Catalogue(add_specials=True)
         cat.add_tle(file('geo.txt'))
         sun = cat['Sun']
         afristar = cat['AFRISTAR']
@@ -251,14 +250,14 @@ class Catalogue(object):
         cat = katpoint.Catalogue(file('source_list.csv'))
         strong_sources = cat.filter(flux_limit_Jy=10.0, flux_freq_MHz=1500)
 
-    - An iterator filter, implemented by the :meth:`Catalogue.iterfilter` method.
-      This is a Python *generator function*, which returns a *generator iterator*,
-      to be more precise. Each time the returned iterator's .next() method is
-      invoked, the next suitable :class:`Target` object is returned. If no
-      timestamp is provided, the criteria are re-evaluated at the time instant
-      of the .next() call, which makes it easy to cycle through a list of
-      targets over an extended period of time (as during observation). The
-      iterator filter is typically used in a for-loop::
+    - An iterator filter, implemented by the :meth:`Catalogue.iterfilter`
+      method. This is a Python *generator function*, which returns a
+      *generator iterator*, to be more precise. Each time the returned
+      iterator's .next() method is invoked, the next suitable :class:`Target`
+      object is returned. If no timestamp is provided, the criteria are
+      re-evaluated at the time instant of the .next() call, which makes it easy
+      to cycle through a list of targets over an extended period of time (as
+      during observation). The iterator filter is typically used in a for-loop::
 
         cat = katpoint.Catalogue(file('source_list.csv'))
         ant = katpoint.Antenna('XDM, -25:53:23, 27:41:03, 1406, 15.0')
@@ -279,20 +278,29 @@ class Catalogue(object):
     tags : string or sequence of strings, optional
         Tag or list of tags to add to *targets* (strings will be split on
         whitespace)
-    add_specials: {False, True}, optional
+    add_specials: bool, optional
         True if *special* bodies specified in :data:`specials` (and 'Zenith')
         should be added
-    add_stars:  {False, True}, optional
+    add_stars:  bool, optional
         True if *star* bodies from PyEphem star catalogue should be added
     antenna : :class:`Antenna` object, optional
         Default antenna to use for position calculations for all targets
     flux_freq_MHz : float, optional
-        Default frequency at which to evaluate flux density of all targets, in MHz
+        Default frequency at which to evaluate flux density of all targets (MHz)
 
+    Notes
+    -----
+    The catalogue object has an interesting relationship with orderedness.
+    While it is nominally an ordered list of targets, it is considered equal to
+    another catalogue with the same targets in a different order. This is
+    because the catalogue may be conveniently reordered in many ways (e.g.
+    based on elevation, declination, flux, etc.) while remaining essentially
+    the *same* catalogue. It also allows us to preserve the order in which the
+    catalogue was assembled, which seems the most natural.
     """
     def __init__(self, targets=None, tags=None, add_specials=False, add_stars=False,
                  antenna=None, flux_freq_MHz=None):
-        self.lookup = {}
+        self.lookup = defaultdict(list)
         self.targets = []
         self._antenna = antenna
         self._flux_freq_MHz = flux_freq_MHz
@@ -341,11 +349,16 @@ class Catalogue(object):
         """Number of targets in catalogue."""
         return len(self.targets)
 
+    def _targets_with_name(self, name):
+        """List of targets in catalogue with given name (or alias)."""
+        return self.lookup.get(_normalised(name), [])
+
     def __getitem__(self, name):
         """Look up target name in catalogue and return target object.
 
-        The name string may be tab-completed in IPython to simplify finding a
-        target.
+        This returns the most recently added target with the given name.
+        The name string may be tab-completed in IPython to simplify finding
+        a target.
 
         Parameters
         ----------
@@ -359,28 +372,28 @@ class Catalogue(object):
 
         """
         try:
-            return self.lookup[_hash(name)]
-        except KeyError:
+            return self._targets_with_name(name)[-1]
+        except IndexError:
             return None
 
     def __contains__(self, obj):
         """Test whether catalogue contains exact target, or target with given name."""
-        name = obj.name if isinstance(obj, Target) else obj
-        target = self[name]
-        return target is not None and (not isinstance(obj, Target) or target == obj)
+        if isinstance(obj, Target):
+            return obj in self._targets_with_name(obj.name)
+        else:
+            return _normalised(obj) in self.lookup
 
     def __eq__(self, other):
-        """Equality comparison operator."""
-        # Use lookup dict instead of targets list, as it has a fixed order based on target name
-        return isinstance(other, Catalogue) and (tuple(self.lookup.values()) == tuple(other.lookup.values()))
+        """Equality comparison operator (ignores order of targets)."""
+        return isinstance(other, Catalogue) and set(self.targets) == set(other.targets)
 
     def __ne__(self, other):
         """Inequality comparison operator."""
         return not (self == other)
 
     def __hash__(self):
-        """Hash value matches behaviour of equality comparison operator."""
-        return hash(tuple(self.lookup.values()))
+        """Hash value is independent of order of targets in catalogue."""
+        return hash(frozenset(self.targets))
 
     def __iter__(self):
         """Iterate over targets in catalogue."""
@@ -388,19 +401,12 @@ class Catalogue(object):
 
     def _ipython_key_completions_(self):
         """List of keys used in IPython (version >= 5) tab completion."""
-        return list(self.iternames())
-
-    def iternames(self):
-        """Iterator over known target names in catalogue which can be searched for.
-
-        There are potentially more names than targets in the catalogue, as the
-        same target can have many names.
-
-        """
+        names = set()
         for target in self.targets:
-            yield target.name
+            names.add(target.name)
             for alias in target.aliases:
-                yield alias
+                names.add(alias)
+        return sorted(names)
 
     def add(self, targets, tags=None):
         """Add targets to catalogue.
@@ -424,7 +430,7 @@ class Catalogue(object):
         >>> cat = Catalogue()
         >>> cat.add(file('source_list.csv'), tags='cal')
         >>> cat.add('Sun, special')
-        >>> cat2 = Catalogue(add_specials=False)
+        >>> cat2 = Catalogue()
         >>> cat2.add(cat.targets)
 
         """
@@ -432,24 +438,32 @@ class Catalogue(object):
             targets = [targets]
         for target in targets:
             if isinstance(target, basestring):
-                # Ignore strings starting with a hash (assumed to be comments) or only containing whitespace
+                # Ignore strings starting with a hash (assumed to be comments)
+                # or only containing whitespace
                 if (target[0] == '#') or (len(target.strip()) == 0):
                     continue
                 target = Target(target)
             if not isinstance(target, Target):
-                raise ValueError('List of targets should either contain Target objects or description strings')
-            if _hash(target.name) in self.lookup:
-                logger.warn("Skipped '%s' [%s] (already in catalogue)",
-                            target.name, target.tags[0])
-            else:
-                target.add_tags(tags)
-                target.antenna = self.antenna
-                target.flux_freq_MHz = self.flux_freq_MHz
-                self.targets.append(target)
-                for name in [target.name] + target.aliases:
-                    self.lookup[_hash(name)] = target
-                logger.debug("Added '%s' [%s] (and %d aliases)",
-                             target.name, target.tags[0], len(target.aliases))
+                raise ValueError('List of targets should either contain '
+                                 'Target objects or description strings')
+            # Add tags first since they affect target identity / description
+            target.add_tags(tags)
+            if target in self:
+                logger.warning("Skipped '%s' [%s] (already in catalogue)",
+                               target.name, target.tags[0])
+                continue
+            target_names = [target.name] + target.aliases
+            existing_names = [name for name in target_names if name in self]
+            if existing_names:
+                logger.warning("Found different targets with same name(s) "
+                               "'%s' in catalogue", ', '.join(existing_names))
+            target.antenna = self.antenna
+            target.flux_freq_MHz = self.flux_freq_MHz
+            self.targets.append(target)
+            for name in target_names:
+                self.lookup[_normalised(name)].append(target)
+            logger.debug("Added '%s' [%s] (and %d aliases)",
+                         target.name, target.tags[0], len(target.aliases))
 
     def add_tle(self, lines, tags=None):
         """Add NORAD Two-Line Element (TLE) targets to catalogue.
@@ -559,17 +573,22 @@ class Catalogue(object):
     def remove(self, name):
         """Remove target from catalogue.
 
+        This removes the most recently added target with the given name
+        from the catalogue. If the target is not in the catalogue, do nothing.
+
         Parameters
         ----------
         name : string
             Name of target to remove (may also be an alternate name of target)
 
         """
-        if _hash(name) in self.lookup:
-            target = self[name]
-            self.lookup.pop(_hash(target.name))
-            for alias in target.aliases:
-                self.lookup.pop(_hash(alias))
+        target = self[name]
+        if target is not None:
+            for name in [target.name] + target.aliases:
+                targets_with_name = self.lookup[_normalised(name)]
+                targets_with_name.remove(target)
+                if not targets_with_name:
+                    del self.lookup[_normalised(name)]
             self.targets.remove(target)
 
     def save(self, filename):
