@@ -164,6 +164,7 @@ class TestTargetCalculations(unittest.TestCase):
         self.ant1 = katpoint.Antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0 0.0 0.0')
         self.ant2 = katpoint.Antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0 -10.0 0.0')
         self.ts = katpoint.Timestamp('2013-08-14 08:25')
+        self.uvw = [10.822902530598125, -9.103009437168168, -2.220446049250313e-16]
 
     def test_coords(self):
         """Test coordinate conversions for coverage."""
@@ -185,16 +186,39 @@ class TestTargetCalculations(unittest.TestCase):
     def test_uvw(self):
         """Test uvw calculation."""
         u, v, w = self.target.uvw(self.ant2, self.ts, self.ant1)
-        np.testing.assert_almost_equal(u, 10.821750916197391, decimal=5)
-        np.testing.assert_almost_equal(v, -9.1043784587765906, decimal=5)
-        np.testing.assert_almost_equal(w, 4.7781625336985198e-10, decimal=5)
+        np.testing.assert_almost_equal(u, self.uvw[0], decimal=5)
+        np.testing.assert_almost_equal(v, self.uvw[1], decimal=5)
+        np.testing.assert_almost_equal(w, self.uvw[2], decimal=5)
 
     def test_uvw_array(self):
         """Test uvw calculation on an array."""
         u, v, w = self.target.uvw(self.ant2, np.array([self.ts, self.ts]), self.ant1)
-        np.testing.assert_array_almost_equal(u, np.array([10.821750916197391] * 2), decimal=5)
-        np.testing.assert_array_almost_equal(v, np.array([-9.1043784587765906] * 2), decimal=5)
-        np.testing.assert_array_almost_equal(w, np.array([4.7781625336985198e-10] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(u, np.array([self.uvw[0]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([self.uvw[1]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([self.uvw[2]] * 2), decimal=5)
+
+    def test_uvw_array_radec(self):
+        """Test uvw calculation on an array when the target is a radec target."""
+        ra, dec = self.target.radec(self.ts, self.ant1)
+        target = katpoint.construct_radec_target(ra, dec)
+        u, v, w = target.uvw(self.ant2, np.array([self.ts, self.ts]), self.ant1)
+        np.testing.assert_array_almost_equal(u, np.array([self.uvw[0]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([self.uvw[1]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([self.uvw[2]] * 2), decimal=5)
+
+    def test_uvw_hemispheres(self):
+        """Test uvw calculation near the equator.
+
+        The implementation behaves differently depending on the sign of
+        declination. This test is to catch sign flip errors.
+        """
+        target1 = katpoint.construct_radec_target(0.0, -1e-9)
+        target2 = katpoint.construct_radec_target(0.0, +1e-9)
+        u1, v1, w1 = target1.uvw(self.ant2, self.ts, self.ant1)
+        u2, v2, w2 = target2.uvw(self.ant2, self.ts, self.ant1)
+        np.testing.assert_almost_equal(u1, u2, decimal=5)
+        np.testing.assert_almost_equal(v1, v2, decimal=5)
+        np.testing.assert_almost_equal(w1, w2, decimal=5)
 
     def test_lmn(self):
         """Test lmn calculation."""
