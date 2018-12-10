@@ -641,7 +641,7 @@ class Target(object):
             ra, dec = self.radec(None, antenna)
         else:
             ra, dec = self.radec(timestamp, antenna)
-        offset_sign = -1 if dec > 0 else -1
+        offset_sign = -1 if dec > 0 else 1
         offset = construct_radec_target(ra, dec + 0.03 * offset_sign)
         # Get offset az-el vector at current epoch pointed to by reference antenna
         offset_az, offset_el = offset.azel(timestamp, antenna)
