@@ -164,7 +164,7 @@ class TestTargetCalculations(unittest.TestCase):
         self.ant1 = katpoint.Antenna('A1, -31.0, 18.0, 0.0, 12.0, 0.0 0.0 0.0')
         self.ant2 = katpoint.Antenna('A2, -31.0, 18.0, 0.0, 12.0, 10.0 -10.0 0.0')
         self.ts = katpoint.Timestamp('2013-08-14 08:25')
-        self.uvw = [10.822902530598125, -9.103009437168168, -2.220446049250313e-16]
+        self.uvw = [10.822861713680807, -9.103057965680664, -2.220446049250313e-16]
 
     def test_coords(self):
         """Test coordinate conversions for coverage."""
@@ -216,9 +216,9 @@ class TestTargetCalculations(unittest.TestCase):
         target2 = katpoint.construct_radec_target(0.0, +1e-9)
         u1, v1, w1 = target1.uvw(self.ant2, self.ts, self.ant1)
         u2, v2, w2 = target2.uvw(self.ant2, self.ts, self.ant1)
-        np.testing.assert_almost_equal(u1, u2, decimal=5)
-        np.testing.assert_almost_equal(v1, v2, decimal=5)
-        np.testing.assert_almost_equal(w1, w2, decimal=5)
+        np.testing.assert_almost_equal(u1, u2, decimal=3)
+        np.testing.assert_almost_equal(v1, v2, decimal=3)
+        np.testing.assert_almost_equal(w1, w2, decimal=3)
 
     def test_lmn(self):
         """Test lmn calculation."""
