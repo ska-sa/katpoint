@@ -618,24 +618,42 @@ class Target(object):
             dimension to the timestamp.
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        # NCP vector is J2000 NCP
-        ncp = construct_radec_target(0.0, np.pi / 2.0)
-        # Get J2000 NCP az-el vector at current epoch pointed to by reference antenna
-        ncp_az, ncp_el = ncp.azel(timestamp, antenna)
+        if is_iterable(timestamp) and self.body_type != 'radec':
+            # Some calculations depend on ra/dec in a way that won't easily
+            # vectorise.
+            bases = [self.uvw_basis(t, antenna) for t in timestamp]
+            return np.stack(bases, axis=-1)
+
+        # Offset the target slightly in declination to approximate the
+        # derivative of ENU in the direction of increasing declination. This
+        # used to just use the NCP, but the astrometric-to-topocentric
+        # conversion doesn't simply rotate the celestial sphere, but also
+        # distorts it, and so that introduced errors.
+        #
+        # To avoid issues close to the poles, we always offset towards the
+        # equator. We also can't offset by too little, as ephem uses only
+        # single precision and this method suffers from loss of precision.
+        # 0.03 was found by experimentation (albeit on a single data set) to
+        # to be large enough to avoid the numeric instability.
+        if is_iterable(timestamp):
+            # Due to the test above, this is a radec target and so timestamp
+            # doesn't matter. But we want a scalar.
+            ra, dec = self.radec(None, antenna)
+        else:
+            ra, dec = self.radec(timestamp, antenna)
+        offset_sign = -1 if dec > 0 else 1
+        offset = construct_radec_target(ra, dec + 0.03 * offset_sign)
+        # Get offset az-el vector at current epoch pointed to by reference antenna
+        offset_az, offset_el = offset.azel(timestamp, antenna)
         # Obtain direction vector(s) from reference antenna to target
         az, el = self.azel(timestamp, antenna)
         # w axis points toward target
         w = np.array(azel_to_enu(az, el))
-        # enu vector pointing from reference antenna to north celestial pole
-        z = np.array(azel_to_enu(ncp_az, ncp_el))
-        # u axis is orthogonal to z and w, and row_stack makes it 2-D array of column vectors (for finding poles)
-        u = np.row_stack(np.cross(z, w, axis=0))
+        # enu vector pointing from reference antenna to offset point
+        z = np.array(azel_to_enu(offset_az, offset_el))
+        # u axis is orthogonal to z and w, and row_stack makes it 2-D array of column vectors
+        u = np.row_stack(np.cross(z, w, axis=0)) * offset_sign
         u_norm = np.sqrt(np.sum(u ** 2, axis=0))
-        # If the target is a celestial pole (so that w equals z or -z), u and v become degenerate
-        poles = u_norm < 1e-12
-        # Arbitrarily pick east vector of ENU system as u in this case
-        u[:, poles] = [[1.0], [0.0], [0.0]]
-        u_norm[poles] = 1.0
         # Ensure that u and w (and therefore v) have the same shape to handle scalar vs array output correctly
         u = u.reshape(w.shape) / u_norm
         v = np.cross(w, u, axis=0)
