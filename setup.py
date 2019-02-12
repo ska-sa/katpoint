@@ -16,11 +16,15 @@
 # limitations under the License.
 ################################################################################
 
+import os
+
 from setuptools import setup, find_packages
 
 
-with open('README.rst') as readme:
-    long_description = readme.read()
+here = os.path.abspath(os.path.dirname(__file__))
+readme = open(os.path.join(here, 'README.rst')).read()
+news = open(os.path.join(here, 'NEWS.rst')).read()
+long_description = readme + '\n\n' + news
 
 setup(name="katpoint",
       description="Karoo Array Telescope pointing coordinate library",
@@ -29,7 +33,7 @@ setup(name="katpoint",
       author_email="ludwig@ska.ac.za",
       packages=find_packages(),
       url='https://github.com/ska-sa/katpoint',
-      license="BSD",
+      license="Modified BSD",
       classifiers=[
           "Development Status :: 4 - Beta",
           "Intended Audience :: Developers",
