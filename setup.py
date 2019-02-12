@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ################################################################################
-# Copyright (c) 2009-2016, National Research Foundation (Square Kilometre Array)
+# Copyright (c) 2009-2019, National Research Foundation (Square Kilometre Array)
 #
 # Licensed under the BSD 3-Clause License (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy
@@ -16,11 +16,15 @@
 # limitations under the License.
 ################################################################################
 
+import os.path
+
 from setuptools import setup, find_packages
 
 
-with open('README.rst') as readme:
-    long_description = readme.read()
+here = os.path.dirname(__file__)
+readme = open(os.path.join(here, 'README.rst')).read()
+news = open(os.path.join(here, 'NEWS.rst')).read()
+long_description = readme + '\n\n' + news
 
 setup(name="katpoint",
       description="Karoo Array Telescope pointing coordinate library",
@@ -29,7 +33,7 @@ setup(name="katpoint",
       author_email="ludwig@ska.ac.za",
       packages=find_packages(),
       url='https://github.com/ska-sa/katpoint',
-      license="BSD",
+      license="Modified BSD",
       classifiers=[
           "Development Status :: 4 - Beta",
           "Intended Audience :: Developers",
