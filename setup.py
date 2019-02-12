@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-import os
+import os.path
 
 from setuptools import setup, find_packages
 
