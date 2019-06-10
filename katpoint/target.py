@@ -516,14 +516,12 @@ class Target(object):
 
         Notes
         -----
-        The formula can be found in the AIPS++ glossary [1]_ or in the SLALIB
+        The formula can be found in the `AIPS++ glossary`_ or in the SLALIB
         source code (file pa.f, function sla_PA) which is part of the now
-        defunct Starlink project [2]_.
+        defunct `Starlink project`_.
 
-        References
-        ----------
-        .. [1] "AIPS++ Glossary," `<http://www.astron.nl/aips++/docs/glossary/p.html>`_
-        .. [2] "Starlink Project," `<http://www.starlink.rl.ac.uk>`_
+        .. _`AIPS++ Glossary`: http://www.astron.nl/aips++/docs/glossary/p.html
+        .. _`Starlink Project`: http://www.starlink.rl.ac.uk
 
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)

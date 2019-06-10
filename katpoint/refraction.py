@@ -62,15 +62,9 @@ def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
     The code is based on poclb/refrwn.c in Field System version 9.9.2, which
     was added on 2006-11-15. This is a C version (with typos fixed) of the
     Fortran version in polb/refr.f. As noted in the Field System
-    documentation [1]_, the refraction model originated with the Haystack
+    documentation [Him1993]_, the refraction model originated with the Haystack
     pointing system, but the documentation for this algorithm seems to have
     been lost. It agrees well with the DSN refraction model, though.
-
-    References
-    ----------
-    .. [1] Himwich, "Station Programs," Mark IV Field System Reference Manual,
-       Version 8.2, 1 September 1993, available at
-       `<ftp://gemini.gsfc.nasa.gov/pub/fsdocs/stprog.pdf>`_
 
     """
     p = (0.458675e1, 0.322009e0, 0.103452e-1, 0.274777e-3, 0.157115e-5)

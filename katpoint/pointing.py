@@ -116,7 +116,7 @@ class PointingModel(Model):
         -----
         The model is based on poclb/fln.c and poclb/flt.c in Field System version
         9.9.0. The C implementation differs from the official description in
-        [1]_, introducing minor changes to the ad hoc parameters. In this
+        [Him1993]_, introducing minor changes to the ad hoc parameters. In this
         implementation, the angle *phi* is fixed at 90 degrees, which hard-codes
         the model for a standard alt-az mount.
 
@@ -130,7 +130,7 @@ class PointingModel(Model):
 
         References
         ----------
-        .. [1] Himwich, "Pointing Model Derivation," Mark IV Field System Reference
+        .. [Him1993] Himwich, "Pointing Model Derivation," Mark IV Field System Reference
            Manual, Version 8.2, 1 September 1993, available at
            `<ftp://gemini.gsfc.nasa.gov/pub/fsdocs/model.pdf>`_
 
@@ -301,11 +301,11 @@ class PointingModel(Model):
         Since the standard pointing model is linear in the model parameters, it
         is fit with linear least-squares techniques. This is done by creating a
         design matrix and solving the linear system via singular value
-        decomposition (SVD), as explained in [1]_.
+        decomposition (SVD), as explained in [PTV+1992]_.
 
         References
         ----------
-        .. [1] Press, Teukolsky, Vetterling, Flannery, "Numerical Recipes in C,"
+        .. [PTV+1992] Press, Teukolsky, Vetterling, Flannery, "Numerical Recipes in C,"
            2nd Ed., pp. 671-681, 1992. Section 15.4: "General Linear Least
            Squares", available at `<http://www.nrbook.com/a/bookcpdf/c15-4.pdf>`_
 
