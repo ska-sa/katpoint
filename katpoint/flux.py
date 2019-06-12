@@ -40,10 +40,10 @@ class FluxDensityModel(object):
        log10(S) = a + b*log10(v) + c*log10(v)**2 + d*log10(v)**3 + e*exp(f*log10(v))
 
     where *S* is the flux density in janskies (Jy) and *v* is the frequency in
-    MHz. The model is based on the Baars polynomial [BGP1977]_ (up to a third-order
-    term) and extended with an exponential term from the 1Jy catalogue [KWP+1981]_. It
-    is considered valid for a specified frequency range only. For any frequencies
-    outside this range a value of NaN is returned.
+    MHz. The model is based on the Baars polynomial [BGP1977]_ (up to a third-
+    order term) and extended with an exponential term from the 1Jy catalogue
+    [KWP+1981]_. It is considered valid for a specified frequency range only.
+    For any frequencies outside this range a value of NaN is returned.
 
     It also models polarisation: an optional (I, Q, U, V) vector may be given
     to specify fractional Stokes parameters, which scale *S*. If not specified,
@@ -88,12 +88,12 @@ class FluxDensityModel(object):
 
     References
     ----------
-    .. [BGP1977] J.W.M. Baars, R. Genzel, I.I.K. Pauliny-Toth, A. Witzel, "The Absolute
-       Spectrum of Cas A; An Accurate Flux Density Scale and a Set of Secondary
-       Calibrators," Astron. Astrophys., 61, 99-106, 1977.
-    .. [KWP+1981] H. Kuehr, A. Witzel, I.I.K. Pauliny-Toth, U. Nauber, "A catalogue of
-       extragalactic radio sources having flux densities greater than 1 Jy at
-       5 GHz," Astron. Astrophys. Suppl. Ser., 45, 367-430, 1981.
+    .. [BGP1977] J.W.M. Baars, R. Genzel, I.I.K. Pauliny-Toth, A. Witzel,
+       "The Absolute Spectrum of Cas A; An Accurate Flux Density Scale and
+       a Set of Secondary Calibrators," Astron. Astrophys., 61, 99-106, 1977.
+    .. [KWP+1981] H. Kuehr, A. Witzel, I.I.K. Pauliny-Toth, U. Nauber,
+       "A catalogue of extragalactic radio sources having flux densities greater
+       than 1 Jy at 5 GHz," Astron. Astrophys. Suppl. Ser., 45, 367-430, 1981.
 
     """
     # Coefficients are zero by default, except for I

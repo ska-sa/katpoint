@@ -130,8 +130,8 @@ class PointingModel(Model):
 
         References
         ----------
-        .. [Him1993] Himwich, "Pointing Model Derivation," Mark IV Field System Reference
-           Manual, Version 8.2, 1 September 1993, available at
+        .. [Him1993] Himwich, "Pointing Model Derivation," Mark IV Field System
+           Reference Manual, Version 8.2, 1 September 1993, available at
            `<ftp://gemini.gsfc.nasa.gov/pub/fsdocs/model.pdf>`_
 
         """
@@ -305,8 +305,8 @@ class PointingModel(Model):
 
         References
         ----------
-        .. [PTV+1992] Press, Teukolsky, Vetterling, Flannery, "Numerical Recipes in C,"
-           2nd Ed., pp. 671-681, 1992. Section 15.4: "General Linear Least
+        .. [PTV+1992] Press, Teukolsky, Vetterling, Flannery, "Numerical Recipes
+           in C," 2nd Ed., pp. 671-681, 1992. Section 15.4: "General Linear Least
            Squares", available at `<http://www.nrbook.com/a/bookcpdf/c15-4.pdf>`_
 
         """

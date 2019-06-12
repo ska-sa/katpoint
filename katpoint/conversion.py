@@ -29,7 +29,8 @@ def lla_to_ecef(lat_rad, long_rad, alt_m):
 
     This converts a position on the Earth specified in geodetic latitude,
     longitude and altitude to earth-centered, earth-fixed (ECEF) cartesian
-    coordinates. This code assumes the WGS84 earth model, described in [NIMA2004]_.
+    coordinates. This code assumes the WGS84 earth model, described in
+    [NIMA2004]_.
 
     Parameters
     ----------
@@ -48,8 +49,9 @@ def lla_to_ecef(lat_rad, long_rad, alt_m):
     References
     ----------
 
-    .. [NIMA2004] National Imagery and Mapping Agency, "Department of Defense World
-       Geodetic System 1984," NIMA TR8350.2, Page 4-4, last updated June, 2004.
+    .. [NIMA2004] National Imagery and Mapping Agency, "Department of Defense
+       World Geodetic System 1984," NIMA TR8350.2, Page 4-4, last updated
+       June, 2004.
 
     """
     # WGS84 Defining Parameters

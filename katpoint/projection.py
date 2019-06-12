@@ -20,11 +20,12 @@ This module provides a basic set of routines that projects spherical coordinates
 onto a plane and deprojects the plane coordinates back to the sphere. It
 complements the ephem module, which focuses on transformations between various
 spherical coordinate systems instead. The routines are derived from AIPS, as
-documented in [Gre1993a]_ and [Gre1993b]_ and implemented in the DIRCOS and NEWPOS routines in
-the 31DEC08 release, with minor improvements. The projections are
-referred to by their AIPS (and FITS) codes, as also described in [CB2002]_ and
-implemented in Calabretta's WCSLIB. The (x, y) coordinates in this module
-correspond to the (L, M) direction cosines calculated in [Gre1993a]_ and [Gre1993b]_.
+documented in [Gre1993a]_ and [Gre1993b]_ and implemented in the DIRCOS and
+NEWPOS routines in the 31DEC08 release, with minor improvements. The projections
+are referred to by their AIPS (and FITS) codes, as also described in [CB2002]_
+and implemented in Calabretta's WCSLIB. The (x, y) coordinates in this module
+correspond to the (L, M) direction cosines calculated in [Gre1993a]_ and
+[Gre1993b]_.
 
 Any spherical coordinate system can be used in the projections, as long as the
 target and reference points are expressed in the same system of longitude and
@@ -63,8 +64,8 @@ The following projections are implemented:
 - Orthographic (**SIN**): This is the standard projection in aperture synthesis
   radio astronomy, as it ties in closely with the 2-D Fourier imaging equation
   and the resultant (l, m) coordinate system. It is the simple orthographic
-  projection of AIPS and [Gre1993a]_, not the generalised slant orthographic projection
-  of [CB2002]_.
+  projection of AIPS and [Gre1993a]_, not the generalised slant orthographic
+  projection of [CB2002]_.
 
 - Gnomonic (**TAN**): This is commonly used in optical astronomy. Great circles
   are projected as straight lines, so that the shortest distance between two
@@ -116,8 +117,10 @@ Alternatively they can be called directly::
   x, y = katpoint.sphere_to_plane['ARC'](az0, el0, az, el)
   az, el = katpoint.plane_to_sphere['ARC'](az0, el0, x, y)
 
-.. [Gre1993a] Greisen, "Non-linear Coordinate Systems in AIPS," AIPS Memo 27, 1993.
-.. [Gre1993b] Greisen, "Additional Non-linear Coordinates in AIPS," AIPS Memo 46, 1993.
+.. [Gre1993a] Greisen, "Non-linear Coordinate Systems in AIPS," AIPS Memo 27,
+   1993.
+.. [Gre1993b] Greisen, "Additional Non-linear Coordinates in AIPS," AIPS Memo 46,
+   1993.
 .. [CB2002] Calabretta, Greisen, "Representations of celestial coordinates in
    FITS. II," Astronomy & Astrophysics, vol. 395, pp. 1077-1122, 2002.
 
