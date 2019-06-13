@@ -466,7 +466,7 @@ class Catalogue(object):
                          target.name, target.tags[0], len(target.aliases))
 
     def add_tle(self, lines, tags=None):
-        """Add NORAD Two-Line Element (TLE) targets to catalogue.
+        r"""Add NORAD Two-Line Element (TLE) targets to catalogue.
 
         Examples of catalogue construction can be found in the :class:`Catalogue`
         documentation.
@@ -538,7 +538,7 @@ class Catalogue(object):
         self.add(targets, tags)
 
     def add_edb(self, lines, tags=None):
-        """Add XEphem database format (EDB) targets to catalogue.
+        r"""Add XEphem database format (EDB) targets to catalogue.
 
         Examples of catalogue construction can be found in the :class:`Catalogue`
         documentation.
@@ -561,7 +561,6 @@ class Catalogue(object):
         >>> lines = ['HYP71683,f|S|G2,14:39:35.88 ,-60:50:7.4 ,-0.010,2000,\n',
                      'HYP113368,f|S|A3,22:57:39.055,-29:37:20.10,1.166,2000,\n']
         >>> cat2.add_edb(lines)
-
         """
         targets = []
         for line in lines:
