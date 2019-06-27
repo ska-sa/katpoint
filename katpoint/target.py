@@ -669,7 +669,7 @@ class Target(object):
 
         Parameters
         ----------
-        antenna2 : :class:`Antenna` object
+        antenna2 : :class:`Antenna` object or sequence
             Second antenna of baseline pair (baseline vector points toward it)
         timestamp : :class:`Timestamp` object or equivalent, or sequence, optional
             Timestamp(s) in UTC seconds since Unix epoch (defaults to now)
@@ -679,8 +679,10 @@ class Target(object):
 
         Returns
         -------
-        u, v, w : float, or array of same shape as *timestamp*
-            (u, v, w) coordinates of baseline, in metres
+        u, v, w : float or array
+            (u, v, w) coordinates of baseline, in metres. If `timestamp` and/or
+            `antenna2` is a sequence, returns an array, with axes in that
+            order.
 
         Notes
         -----
@@ -691,14 +693,17 @@ class Target(object):
 
         """
         timestamp, antenna = self._set_timestamp_antenna_defaults(timestamp, antenna)
-        # Obtain baseline vector from reference antenna to second antenna
-        baseline_m = antenna.baseline_toward(antenna2)
         # Obtain basis vectors
         basis = self.uvw_basis(timestamp, antenna)
+        # Obtain baseline vector from reference antenna to second antenna
+        if is_iterable(antenna2):
+            baseline_m = np.stack([antenna.baseline_toward(a2) for a2 in antenna2])
+        else:
+            baseline_m = antenna.baseline_toward(antenna2)
         # Apply linear coordinate transformation. A single call np.dot won't
         # work for both the scalar and array case, so we explicitly specify the
         # axes to sum over.
-        u, v, w = np.tensordot(basis, baseline_m, ([1], [0]))
+        u, v, w = np.tensordot(basis, baseline_m, ([1], [-1]))
         return u, v, w
 
     def lmn(self, ra, dec, timestamp=None, antenna=None):

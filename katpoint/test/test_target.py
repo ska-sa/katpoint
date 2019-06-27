@@ -190,21 +190,33 @@ class TestTargetCalculations(unittest.TestCase):
         np.testing.assert_almost_equal(v, self.uvw[1], decimal=5)
         np.testing.assert_almost_equal(w, self.uvw[2], decimal=5)
 
-    def test_uvw_array(self):
+    def test_uvw_timestamp_array(self):
         """Test uvw calculation on an array."""
         u, v, w = self.target.uvw(self.ant2, np.array([self.ts, self.ts]), self.ant1)
         np.testing.assert_array_almost_equal(u, np.array([self.uvw[0]] * 2), decimal=5)
         np.testing.assert_array_almost_equal(v, np.array([self.uvw[1]] * 2), decimal=5)
         np.testing.assert_array_almost_equal(w, np.array([self.uvw[2]] * 2), decimal=5)
 
-    def test_uvw_array_radec(self):
-        """Test uvw calculation on an array when the target is a radec target."""
+    def test_uvw_timestamp_array_radec(self):
+        """Test uvw calculation on a timestamp array when the target is a radec target."""
         ra, dec = self.target.radec(self.ts, self.ant1)
         target = katpoint.construct_radec_target(ra, dec)
         u, v, w = target.uvw(self.ant2, np.array([self.ts, self.ts]), self.ant1)
         np.testing.assert_array_almost_equal(u, np.array([self.uvw[0]] * 2), decimal=5)
         np.testing.assert_array_almost_equal(v, np.array([self.uvw[1]] * 2), decimal=5)
         np.testing.assert_array_almost_equal(w, np.array([self.uvw[2]] * 2), decimal=5)
+
+    def test_uvw_antenna_array(self):
+        u, v, w = self.target.uvw([self.ant1, self.ant2], self.ts, self.ant1)
+        np.testing.assert_array_almost_equal(u, np.array([0, self.uvw[0]]), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([0, self.uvw[1]]), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([0, self.uvw[2]]), decimal=5)
+
+    def test_uvw_both_array(self):
+        u, v, w = self.target.uvw([self.ant1, self.ant2], [self.ts, self.ts], self.ant1)
+        np.testing.assert_array_almost_equal(u, np.array([[0, self.uvw[0]]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(v, np.array([[0, self.uvw[1]]] * 2), decimal=5)
+        np.testing.assert_array_almost_equal(w, np.array([[0, self.uvw[2]]] * 2), decimal=5)
 
     def test_uvw_hemispheres(self):
         """Test uvw calculation near the equator.
