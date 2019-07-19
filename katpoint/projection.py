@@ -133,8 +133,8 @@ import numpy as np
 
 def sphere_to_ortho(az0, el0, az, el):
     """Do calculations common to all zenithal/azimuthal projections."""
-    if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
-        raise ValueError('Elevation angle outside range of +- pi/2 radians')
+#    if np.any(np.abs(el0) > np.pi / 2.0) or np.any(np.abs(el) > np.pi / 2.0):
+#        raise ValueError('Elevation angle outside range of +- pi/2 radians')
     sin_el, cos_el, sin_el0, cos_el0 = np.sin(el), np.cos(el), np.sin(el0), np.cos(el0)
     # Keep azimuth delta between -pi and pi - probably unnecessary, but the only normalisation of az inputs
     delta_az = (az - az0 + np.pi) % (2.0 * np.pi) - np.pi
@@ -199,8 +199,8 @@ def sphere_to_plane_sin(az0, el0, az, el):
 
     """
     ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el)
-    if np.any(cos_theta < 0.0):
-        raise ValueError('Target point more than pi/2 radians away from reference point')
+#    if np.any(cos_theta < 0.0):
+#        raise ValueError('Target point more than pi/2 radians away from reference point')
     # x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
     return ortho_x, ortho_y
 
