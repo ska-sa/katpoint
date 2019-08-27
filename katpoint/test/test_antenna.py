@@ -90,8 +90,8 @@ class TestAntenna(unittest.TestCase):
         sid4 = ant.local_sidereal_time([utc_secs, utc_secs])
         assert_angles_almost_equal(sid3, sid4, decimal=12)
 
-    def test_reference_antenna(self):
+    def test_array_reference_antenna(self):
         ant = katpoint.Antenna(self.valid_antennas[2])
-        ref_ant = ant.reference_antenna()
+        ref_ant = ant.array_reference_antenna()
         self.assertEqual(ref_ant.description,
                          'array, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, , , 1.16')
