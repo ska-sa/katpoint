@@ -32,8 +32,8 @@ def assert_angles_almost_equal(x, y, decimal):
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
 
 
-class TestAntennaConstruction(unittest.TestCase):
-    """Test construction of antennas from strings and vice versa."""
+class TestAntenna(unittest.TestCase):
+    """Test :class:`katpoint.antenna.Antenna`."""
     def setUp(self):
         self.valid_antennas = [
             'XDM, -25:53:23.0, 27:41:03.0, 1406.1086, 15.0',
@@ -89,3 +89,9 @@ class TestAntennaConstruction(unittest.TestCase):
         sid3 = ant.local_sidereal_time([self.timestamp, self.timestamp])
         sid4 = ant.local_sidereal_time([utc_secs, utc_secs])
         assert_angles_almost_equal(sid3, sid4, decimal=12)
+
+    def test_array_reference_antenna(self):
+        ant = katpoint.Antenna(self.valid_antennas[2])
+        ref_ant = ant.array_reference_antenna()
+        self.assertEqual(ref_ant.description,
+                         'array, -30:43:17.3, 21:24:38.5, 1038.0, 12.0, , , 1.16')

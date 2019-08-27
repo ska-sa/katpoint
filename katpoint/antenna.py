@@ -320,3 +320,17 @@ class Antenna(object):
             return np.array([_scalar_local_sidereal_time(t) for t in timestamp])
         else:
             return _scalar_local_sidereal_time(timestamp)
+
+    def array_reference_antenna(self, name='array'):
+        """Synthetic antenna at the delay model reference position of this antenna.
+
+        This is mainly useful as the reference `antenna` for
+        :meth:`.Target.uvw`, in which case it will give both faster and more
+        accurate results than other choices.
+
+        The returned antenna will have no delay or pointing model. It is
+        intended to be used only for its position and does not correspond to a
+        physical antenna.
+        """
+        pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
+        return Antenna(name, pos[0], pos[1], pos[2], self.diameter, beamwidth=self.beamwidth)
