@@ -322,7 +322,7 @@ class Antenna(object):
             return _scalar_local_sidereal_time(timestamp)
 
     def array_reference_antenna(self, name='array'):
-        """Returns a synthetic antenna at the delay model reference position of this antenna.
+        """Synthetic antenna at the delay model reference position of this antenna.
 
         This is mainly useful as the reference `antenna` for
         :meth:`.Target.uvw`, in which case it will give both faster and more
