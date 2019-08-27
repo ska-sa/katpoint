@@ -333,4 +333,4 @@ class Antenna(object):
         physical antenna.
         """
         pos = self.ref_position_wgs84 if self.delay_model else self.position_wgs84
-        return Antenna(name, *pos, self.diameter, beamwidth=self.beamwidth)
+        return Antenna(name, pos[0], pos[1], pos[2], self.diameter, beamwidth=self.beamwidth)
