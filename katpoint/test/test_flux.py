@@ -42,11 +42,11 @@ class TestFluxDensityModel(unittest.TestCase):
         self.assertRaises(ValueError, katpoint.FluxDensityModel, '1.0')
 
     def test_description(self):
-        self.assertEqual(self.flux_model.description, '(1.0 2.0 2 0 0 0 0 0 2 0.5 0.25 -0.75)')
+        self.assertEqual(self.flux_model.description, '(1.0 2.0 2.0 0.0 0.0 0.0 0.0 0.0 2.0 0.5 0.25 -0.75)')
         # Must truncate default coefficients, including I=1
-        self.assertEqual(self.too_many_params.description, '(1.0 2.0 2)')
+        self.assertEqual(self.too_many_params.description, '(1.0 2.0 2.0)')
         # At least one coefficient is always shown
-        self.assertEqual(self.unit_model.description, '(100.0 200.0 0)')
+        self.assertEqual(self.unit_model.description, '(100.0 200.0 0.0)')
 
     def test_flux_density(self):
         """Test flux density calculation."""
