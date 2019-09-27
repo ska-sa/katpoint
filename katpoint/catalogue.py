@@ -440,7 +440,7 @@ class Catalogue(object):
             if isinstance(target, basestring):
                 # Ignore strings starting with a hash (assumed to be comments)
                 # or only containing whitespace
-                if (target[0] == '#') or (len(target.strip()) == 0):
+                if (len(target.strip()) == 0) or (target[0] == '#'):
                     continue
                 target = Target(target)
             if not isinstance(target, Target):
