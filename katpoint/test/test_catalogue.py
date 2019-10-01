@@ -134,6 +134,10 @@ class TestCatalogueConstruction(unittest.TestCase):
         self.assertEqual(a, b, 'Shuffled catalogues are not equal')
         self.assertEqual(hash(a), hash(b), 'Shuffled catalogues have different hashes')
 
+    def test_skip_empty(self):
+        cat = katpoint.Catalogue(['', '# comment', '   ', '\t\r '])
+        self.assertEqual(len(cat), 0)
+
 
 class TestCatalogueFilterSort(unittest.TestCase):
     """Test filtering and sorting of catalogues."""
