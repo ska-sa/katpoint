@@ -3,10 +3,11 @@ History
 
 0.9 (2019-10-02)
 ----------------
-* Add Antenna.reference_antenna utility function (#51)
+* Add Antenna.array_reference_antenna utility function (#51)
 * Vectorise Target.uvw (#49)
 * Improve precision of flux model description string (#52)
 * Produce documentation on readthedocs.org (#48)
+* Add script that converts PSRCAT database into Catalogue (#16)
 
 0.8 (2019-02-12)
 ----------------
