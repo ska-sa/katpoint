@@ -107,7 +107,10 @@ class Timestamp(object):
 
     def __sub__(self, other):
         """Subtract seconds (or another timestamp) from timestamp and return result."""
-        return Timestamp(self.secs - float(other))
+        if isinstance(other, Timestamp):
+            return self.secs - other.secs
+        else:
+            return Timestamp(self.secs - other)
 
     def __mul__(self, other):
         """Multiply timestamp by numerical factor (useful for processing timestamps)."""
