@@ -95,11 +95,11 @@ class Timestamp(object):
 
     def __eq__(self, other):
         """Test for equality"""
-        return self.secs == other.secs
+        return float(self) == float(other)
 
     def __lt__(self, other):
         """Test for less than"""
-        return self.secs < other.secs
+        return float(self) < float(other)
 
     def __add__(self, other):
         """Add seconds (as floating-point number) to timestamp and return result."""
@@ -107,10 +107,7 @@ class Timestamp(object):
 
     def __sub__(self, other):
         """Subtract seconds (or another timestamp) from timestamp and return result."""
-        if isinstance(other, Timestamp):
-            return self.secs - other.secs
-        else:
-            return Timestamp(self.secs - other)
+        return Timestamp(self.secs - float(other))
 
     def __mul__(self, other):
         """Multiply timestamp by numerical factor (useful for processing timestamps)."""
@@ -135,7 +132,7 @@ class Timestamp(object):
 
     def __isub__(self, other):
         """Subtract seconds (as floating-point number) from timestamp in-place."""
-        self.secs -= other
+        self.secs -= float(other)
         return self
 
     def __float__(self):
