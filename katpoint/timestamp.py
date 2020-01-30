@@ -135,7 +135,7 @@ class Timestamp(object):
 
     def __isub__(self, other):
         """Subtract seconds (as floating-point number) from timestamp in-place."""
-        self.secs -= float(other)
+        self.secs -= other
         return self
 
     def __float__(self):
