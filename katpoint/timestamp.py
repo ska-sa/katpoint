@@ -108,7 +108,7 @@ class Timestamp(object):
     def __sub__(self, other):
         """Subtract seconds (or another timestamp) from timestamp and return result."""
         if isinstance(other, Timestamp):
-            return self.secs - other.secs
+            return Timestamp(self.secs - other.secs)
         else:
             return Timestamp(self.secs - other)
 
@@ -127,6 +127,10 @@ class Timestamp(object):
     def __radd__(self, other):
         """Add timestamp to seconds (as floating-point number) and return result."""
         return Timestamp(other + self.secs)
+
+    def __rsub__(self, other):
+        """Subtract timestamp from seconds (or another timestamp) and return result."""
+        return self.__sub__(other)
 
     def __iadd__(self, other):
         """Add seconds (as floating-point number) to timestamp in-place."""
