@@ -62,10 +62,21 @@ def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
     The code is based on poclb/refrwn.c in Field System version 9.9.2, which
     was added on 2006-11-15. This is a C version (with typos fixed) of the
     Fortran version in polb/refr.f. As noted in the Field System
-    documentation [Him1993]_, the refraction model originated with the Haystack
-    pointing system, but the documentation for this algorithm seems to have
-    been lost. It agrees well with the DSN refraction model, though.
+    documentation [Him1993b]_, the refraction model originated with the Haystack
+    pointing system. A description of the model can be found in [Clark1966]_,
+    which in turn references [IH1963]_ as the ultimate source.
 
+    References
+    ----------
+    .. [Him1993b] E. Himwich, "Station Programs," Mark IV Field System Reference
+       Manual, Version 8.2, 1 September 1993.
+    .. [Clark1966] C.A. Clark, "Haystack Pointing System: Radar Coordinate
+       Correction," Technical Note 1966-56, Lincoln Laboratory, MIT, 1966,
+       `<https://doi.org/10.21236/ad0641603>`_
+    .. [IH1963] W.R. Iliff, J.M. Holt, "Use of Surface Refractivity in the
+       Empirical Prediction of Total Atmospheric Refraction," Journal of Research
+       of the National Bureau of Standards--D. Radio Propagation, vol. 67D,
+       no. 1, Jan 1963, `<https://doi.org/10.6028/jres.067d.006>`_
     """
     p = (0.458675e1, 0.322009e0, 0.103452e-1, 0.274777e-3, 0.157115e-5)
     cvt = 1.33289

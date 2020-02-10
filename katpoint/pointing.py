@@ -131,8 +131,7 @@ class PointingModel(Model):
         References
         ----------
         .. [Him1993] Himwich, "Pointing Model Derivation," Mark IV Field System
-           Reference Manual, Version 8.2, 1 September 1993, available at
-           `<ftp://gemini.gsfc.nasa.gov/pub/fsdocs/model.pdf>`_
+           Reference Manual, Version 8.2, 1 September 1993.
 
         """
         # Unpack parameters to make the code correspond to the maths
