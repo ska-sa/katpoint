@@ -69,8 +69,7 @@ def refraction_offset_vlbi(el, temperature_C, pressure_hPa, humidity_percent):
     References
     ----------
     .. [Him1993b] E. Himwich, "Station Programs," Mark IV Field System Reference
-       Manual, Version 8.2, 1 September 1993, available at
-       `<ftp://gemini.gsfc.nasa.gov/pub/fsdocs/stprog.pdf>`_
+       Manual, Version 8.2, 1 September 1993.
     .. [Clark1966] C.A. Clark, "Haystack Pointing System: Radar Coordinate
        Correction," Technical Note 1966-56, Lincoln Laboratory, MIT, 1966,
        `<https://doi.org/10.21236/ad0641603>`_
