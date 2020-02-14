@@ -138,10 +138,7 @@ class Timestamp(object):
 
     def __rsub__(self, other):
         """Subtract timestamp from seconds (or another timestamp) and return result."""
-        if isinstance(other, Timestamp):
-            return other.secs - self.secs
-        else:
-            return other - self.secs
+        return other - self.secs
 
     def __isub__(self, other):
         """Subtract seconds (as floating-point number) from timestamp in-place."""
