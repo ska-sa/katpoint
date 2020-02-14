@@ -95,11 +95,11 @@ class Timestamp(object):
 
     def __eq__(self, other):
         """Test for equality"""
-        return float(self) == float(other)
+        return self.secs == float(other)
 
     def __lt__(self, other):
         """Test for less than"""
-        return float(self) < float(other)
+        return self.secs < float(other)
 
     def __add__(self, other):
         """Add seconds (as floating-point number) to timestamp and return result."""
