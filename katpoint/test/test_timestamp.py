@@ -76,3 +76,16 @@ class TestTimestamp(unittest.TestCase):
             self.assertEqual(hash(t), hash(t + 0.0), 'Timestamp hashes not equal')
         except TypeError:
             self.fail('Timestamp object not hashable')
+
+    def test_operators(self):
+        """Test operators defined for timestamps."""
+        T = katpoint.Timestamp(self.valid_timestamps[0][0])
+        S = T.secs
+        # Logical operators, float treated as absolute time
+        self.assertTrue(T == S)
+        self.assertTrue(T < S+1)
+        self.assertTrue(T > S-1)
+        # Arithmetic operators, float treated as interval
+        self.assertTrue(isinstance(T - S, katpoint.Timestamp))
+        self.assertTrue(isinstance(S - T, float))
+        self.assertTrue(isinstance(T - T, float))

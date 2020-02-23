@@ -95,18 +95,22 @@ class Timestamp(object):
 
     def __eq__(self, other):
         """Test for equality"""
-        return self.secs == other.secs
+        return self.secs == float(other)
 
     def __lt__(self, other):
         """Test for less than"""
-        return self.secs < other.secs
+        return self.secs < float(other)
 
     def __add__(self, other):
         """Add seconds (as floating-point number) to timestamp and return result."""
         return Timestamp(self.secs + other)
 
     def __sub__(self, other):
-        """Subtract seconds (or another timestamp) from timestamp and return result."""
+        """
+            Subtract seconds (floating-point number is treated as a time interval) from timestamp
+            and return result. If used for the difference between two (absolute time) Timestamps
+            then the result is an interval in seconds (a floating-point number).
+        """
         if isinstance(other, Timestamp):
             return self.secs - other.secs
         else:
@@ -132,6 +136,14 @@ class Timestamp(object):
         """Add seconds (as floating-point number) to timestamp in-place."""
         self.secs += other
         return self
+
+    def __rsub__(self, other):
+        """
+            Subtract timestamp from seconds (as floating-point number) and return
+            resulting seconds (floating-point number). This is typically used when
+            calculating the interval between two absolute instants of time.
+        """
+        return other - self.secs
 
     def __isub__(self, other):
         """Subtract seconds (as floating-point number) from timestamp in-place."""
