@@ -107,7 +107,7 @@ class Timestamp(object):
 
     def __sub__(self, other):
         """
-            Subtract seconds (floating-point number is treaded as a time interval) from timestamp
+            Subtract seconds (floating-point number is treated as a time interval) from timestamp
             and return result. If used for the difference between two (absolute time) Timestamps
             then the result is an interval in seconds (a floating-point number).
         """
@@ -141,7 +141,7 @@ class Timestamp(object):
         """
             Subtract timestamp from seconds (as floating-point number) and return
             resulting seconds (floating-point number). This is typically used when
-            calculating the interval between to absolute instants of time.
+            calculating the interval between two absolute instants of time.
         """
         return other - self.secs
 
