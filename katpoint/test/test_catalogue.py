@@ -20,6 +20,8 @@ from __future__ import print_function, division, absolute_import
 import unittest
 import time
 
+import ephem.stars
+
 import katpoint
 
 
@@ -91,7 +93,8 @@ class TestCatalogueConstruction(unittest.TestCase):
         """Test construction of catalogues."""
         cat = katpoint.Catalogue(add_specials=True, add_stars=True, antenna=self.antenna)
         num_targets_original = len(cat)
-        self.assertEqual(num_targets_original, len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
+        self.assertEqual(num_targets_original, len(katpoint.specials) + 1 + len(ephem.stars.stars),
+                         'Number of targets incorrect')
         # Add target already in catalogue - no action
         cat.add(katpoint.Target('Sun, special'))
         num_targets = len(cat)
@@ -171,14 +174,16 @@ class TestCatalogueFilterSort(unittest.TestCase):
     def test_sort_catalogue(self):
         """Test sorting of catalogues."""
         cat = katpoint.Catalogue(add_specials=True, add_stars=True)
-        self.assertEqual(len(cat.targets), len(katpoint.specials) + 1 + 94, 'Number of targets incorrect')
+        self.assertEqual(len(cat.targets), len(katpoint.specials) + 1 + len(ephem.stars.stars),
+                         'Number of targets incorrect')
         cat1 = cat.sort(key='name')
         self.assertEqual(cat1, cat, 'Catalogue equality failed')
-        self.assertEqual(cat1.targets[0].name, 'Achernar', 'Sorting on name failed')
+        # Ephem 3.7.7.0 added new stars
+        self.assertIn(cat1.targets[0].name, {'Acamar', 'Achernar'}, 'Sorting on name failed')
         cat2 = cat.sort(key='ra', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(cat2.targets[0].name, 'Sirrah', 'Sorting on ra failed')  # RA: 0:08:53.09
+        self.assertIn(cat2.targets[0].name, {'Alpheratz', 'Sirrah'}, 'Sorting on ra failed')
         cat3 = cat.sort(key='dec', timestamp=self.timestamp, antenna=self.antenna)
-        self.assertEqual(cat3.targets[0].name, 'Agena', 'Sorting on dec failed')  # DEC: -60:25:27.3
+        self.assertIn(cat3.targets[0].name, {'Miaplacidus', 'Agena'}, 'Sorting on dec failed')
         cat4 = cat.sort(key='az', timestamp=self.timestamp, antenna=self.antenna, ascending=False)
         self.assertEqual(cat4.targets[0].name, 'Polaris', 'Sorting on az failed')  # az: 359:25:07.3
         cat5 = cat.sort(key='el', timestamp=self.timestamp, antenna=self.antenna)
