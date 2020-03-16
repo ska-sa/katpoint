@@ -45,7 +45,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import katpoint
-from vo.table import parse_single_table
+from astropy.table import Table
 
 
 # For each flux field in table, specify the name, centre frequency and start frequency (in MHz)
@@ -55,17 +55,17 @@ start = [20.0, 100.0, 200.0, 400.0, 750.0, 1500.0, 3000.0, 6000.0, 12000.0, 3000
 # List of anomalous flux fields that will be edited out for the purpose of fitting
 anomalies = {'J0108+1320': 6, 'J0541-0154': 2, 'J2253+1608': 6}
 
-# Load main table in one shot (don't be pedantic, as the VizieR VOTables contain a deprecated DEFINITIONS element)
-table = parse_single_table("pkscat90_S1410_min_10Jy.vot", pedantic=False)
+# Load main table in one shot (don't verify, as the VizieR VOTables contain a deprecated DEFINITIONS element)
+table = Table.read('pkscat90_S1410_min_10Jy.vot')
 
 # Fit all sources onto one figure
 plt.figure(1)
 plt.clf()
-plot_rows = int(np.ceil(np.sqrt(table.nrows)))
+plot_rows = int(np.ceil(np.sqrt(len(table))))
 src_strings = []
 
 # Iterate through sources
-for n, src in enumerate(table.array):
+for n, src in enumerate(table):
     names = src['Jname']
     if len(src['Alias']) > 0:
         names += ' | *' + src['Alias']
