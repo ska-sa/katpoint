@@ -54,11 +54,11 @@ import numpy as np
 from scikits.fitting import PiecewisePolynomial1DFit
 import katpoint
 
-from vo.table import parse_single_table
+from astropy.table import Table
 
-# Load tables in one shot (don't be pedantic, as the VizieR VOTables contain a deprecated DEFINITIONS element)
-table = parse_single_table("tabara.vot", pedantic=False)
-pol_table = parse_single_table("tabara_pol.vot", pedantic=False)
+# Load tables in one shot (don't verify, as the VizieR VOTables contain a deprecated DEFINITIONS element)
+table = Table.read('tabara.vot')
+pol_table = Table.read('tabara_pol.vot')
 # Use Kuehr 1Jy catalogue to provide flux density models
 flux_cat = katpoint.Catalogue(open('kuehr1Jy_source_list.csv'))
 # Use ATCA calibrator list to provide positions (and as a first-level check of source structure)
@@ -90,7 +90,7 @@ polflux_limit = 0.2
 
 # Iterate through sources
 src_strings = []
-for src in table.array:
+for src in table:
     # Select sources based on various criteria
     if src['S6cm'] < flux_limit:
         print('%s skipped: flux @ 6cm: %.2f < %.2f' % (src['Name'], src['S6cm'], flux_limit))
@@ -123,7 +123,7 @@ for src in table.array:
         (katpoint.deg2rad(src['_RAJ2000']), katpoint.deg2rad(src['_DEJ2000']))
     tags_ra_dec = katpoint.construct_radec_target(ra, dec).add_tags('J2000 ' + src['Type']).description
     # Extract polarisation data for the current source from pol table
-    pol_data = pol_table.array[pol_table.array['Name'] == src['Name']]
+    pol_data = pol_table[pol_table['Name'] == src['Name']]
     pol_freqs_MHz = katpoint.lightspeed / (0.01 * pol_data['lambda']) / 1e6
     pol_percent = pol_data['Pol']
     # Remove duplicate frequencies and fit linear interpolator to data as function of frequency

@@ -53,26 +53,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import katpoint
 
-from vo.table import parse_single_table
+from astropy.table import Table
 
-# Load tables in one shot (don't be pedantic, as the VizieR VOTables contain a deprecated DEFINITIONS element)
-table = parse_single_table("kuehr1Jy.vot", pedantic=False)
-flux_table = parse_single_table("kuehr1Jy_flux.vot", pedantic=False)
+# Load tables in one shot (don't verify, as the VizieR VOTables contain a deprecated DEFINITIONS element)
+table = Table.read('kuehr1Jy.vot')
+flux_table = Table.read('kuehr1Jy_flux.vot')
 src_strings = []
-plot_freqs = [flux_table.array['Freq'].min(), flux_table.array['Freq'].max()]
+plot_freqs = [flux_table['Freq'].min(), flux_table['Freq'].max()]
 test_log_freq = np.linspace(np.log10(plot_freqs[0]), np.log10(plot_freqs[1]), 200)
 plot_rows = 8
 plots_per_fig = plot_rows * plot_rows
 
 # Iterate through sources
-for src in table.array:
+for src in table:
     names = '1Jy ' + src['_1Jy']
     if len(src['_3C']) > 0:
         names += ' | *' + src['_3C']
     ra, dec = katpoint.deg2rad(src['_RAJ2000']), katpoint.deg2rad(src['_DEJ2000'])
     tags_ra_dec = katpoint.construct_radec_target(ra, dec).add_tags('J2000').description
     # Extract flux data for the current source from flux table
-    flux = flux_table.array[flux_table.array['_1Jy'] == src['_1Jy']]
+    flux = flux_table[flux_table['_1Jy'] == src['_1Jy']]
     # Determine widest possible frequency range where flux is defined (ignore internal gaps in this range)
     # For better or worse, extend range to at least KAT7 frequency band (also handles empty frequency lists)
     flux_freqs = flux['Freq'].tolist() + [800.0, 2400.0]
