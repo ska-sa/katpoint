@@ -129,6 +129,100 @@ from __future__ import print_function, division, absolute_import
 
 import numpy as np
 
+
+# --------------------------------------------------------------------------------------------------
+# --- Handling out-of-range inputs
+# --------------------------------------------------------------------------------------------------
+
+class ProjectionInputsOutOfRangeError(ValueError):
+    """One or more inputs to a spherical projection routine is out of range."""
+
+
+class OutOfRange(object):
+    """Handle out-of-range input values in spherical projection routines."""
+
+    _treatment = _old_treatment = 'raise'
+
+    @classmethod
+    def __enter__(cls):
+        pass
+
+    @classmethod
+    def __exit__(cls, *args, **kws):
+        cls._treatment = cls._old_treatment
+
+    @classmethod
+    def get_treatment(cls):
+        """The current treatment of out-of-range values."""
+        return cls._treatment
+
+    @classmethod
+    def set_treatment(cls, treatment):
+        """"Change the treatment of out-of-range values.
+
+        The supported treatments are:
+          - 'raise': raise :class:`ProjectionInputsOutOfRangeError` (default)
+          - 'nan': replace out-of-range values with NaNs
+          - 'clip': replace out-of-range values with nearest valid values
+
+        Parameters
+        ----------
+        treatment : {'raise', 'nan', 'clip'}
+            New treatment
+
+        Returns
+        -------
+        context_manager : :class:`OutOfRange`
+            The method can be used in a with-statement for temporary changes
+
+        Raises
+        ------
+        ValueError
+            If `treatment` is not a recognised option
+        """
+        valid_treatments = {'raise', 'nan', 'clip'}
+        if treatment not in valid_treatments:
+            raise ValueError("Unknown out-of-range treatment '{}', must be one of {}"
+                             .format(treatment, valid_treatments))
+        cls._old_treatment = cls._treatment
+        cls._treatment = treatment
+        return cls()
+
+    @classmethod
+    def treat(cls, x, err_msg, lower=None, upper=None):
+        """Apply treatment to any out-of-range values in `x`.
+
+        Parameters
+        ----------
+        x : real number or sequence of real numbers
+            Input values (left untouched)
+        err_msg : string
+            Error message passed to exception if treatment is 'raise'
+        lower, upper : real number or None, optional
+            Bounds for values in `x` (specify at least one bound!)
+
+        Returns
+        -------
+        treated_x : float or array of float
+            Treated values (if treatment allows it)
+
+        Raises
+        ------
+        ProjectionInputsOutOfRangeError
+            If any values in `x` are out of range and treatment is 'raise'
+        """
+        clipped_x = np.asarray(np.clip(x, lower, upper), dtype=np.float)
+        out_of_range = (x != clipped_x)
+        if not np.any(out_of_range):
+            return clipped_x
+        if cls._treatment == 'clip':
+            return clipped_x
+        elif cls._treatment == 'nan':
+            clipped_x[out_of_range] = np.nan
+            return clipped_x
+        else:
+            raise ProjectionInputsOutOfRangeError(err_msg)
+
 # --------------------------------------------------------------------------------------------------
 # --- Common
 # --------------------------------------------------------------------------------------------------

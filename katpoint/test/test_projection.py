@@ -22,6 +22,7 @@ import unittest
 import numpy as np
 
 import katpoint
+from katpoint.projection import OutOfRange, ProjectionInputsOutOfRangeError
 
 try:
     from .aips_projection import newpos, dircos
@@ -43,6 +44,54 @@ def assert_angles_almost_equal(x, y, decimal):
     def primary_angle(x):
         return x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
     np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
+
+
+class TestOutOfRangeTreatment(unittest.TestCase):
+    """Test treatment of out-of-range values."""
+    def setUp(self):
+        self._old_treatment = OutOfRange.get_treatment()
+
+    def test_treatment_setup(self):
+        OutOfRange.set_treatment('raise')
+        self.assertEqual(OutOfRange.get_treatment(), 'raise')
+        OutOfRange.set_treatment('clip')
+        self.assertEqual(OutOfRange.get_treatment(), 'clip')
+        with self.assertRaises(ValueError):
+            OutOfRange.set_treatment('bad treatment')
+        with OutOfRange.set_treatment('raise'):
+            self.assertEqual(OutOfRange.get_treatment(), 'raise')
+        self.assertEqual(OutOfRange.get_treatment(), 'clip')
+
+    def test_out_of_range_handling_array(self):
+        x = [1, 2, 3, 4]
+        y = OutOfRange.treat(x, 'Should not happen', lower=0, upper=5)
+        np.testing.assert_array_equal(y, x)
+        with OutOfRange.set_treatment('raise'):
+            with self.assertRaises(ProjectionInputsOutOfRangeError):
+                y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+        with OutOfRange.set_treatment('nan'):
+            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+            np.testing.assert_array_equal(y, [np.nan, np.nan, 3.0, 4.0])
+        with OutOfRange.set_treatment('clip'):
+            y = OutOfRange.treat(x, 'Out of range', upper=1.1)
+            np.testing.assert_array_equal(y, [1.0, 1.1, 1.1, 1.1])
+
+    def test_out_of_range_handling_scalar(self):
+        x = 2
+        y = OutOfRange.treat(x, 'Should not happen', lower=0, upper=5)
+        np.testing.assert_array_equal(y, x)
+        with OutOfRange.set_treatment('raise'):
+            with self.assertRaises(ProjectionInputsOutOfRangeError):
+                y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+        with OutOfRange.set_treatment('nan'):
+            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+            np.testing.assert_array_equal(y, np.nan)
+        with OutOfRange.set_treatment('clip'):
+            y = OutOfRange.treat(x, 'Out of range', upper=1.1)
+            np.testing.assert_array_equal(y, 1.1)
+
+    def tearDown(self):
+        OutOfRange.set_treatment(self._old_treatment)
 
 
 class TestProjectionSIN(unittest.TestCase):
