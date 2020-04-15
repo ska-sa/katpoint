@@ -22,7 +22,7 @@ import unittest
 import numpy as np
 
 import katpoint
-from katpoint.projection import OutOfRange, ProjectionInputsOutOfRangeError
+from katpoint.projection import OutOfRange, OutOfRangeError
 
 try:
     from .aips_projection import newpos, dircos
@@ -67,11 +67,8 @@ class TestOutOfRangeTreatment(unittest.TestCase):
         y = OutOfRange.treat(x, 'Should not happen', lower=0, upper=5)
         np.testing.assert_array_equal(y, x)
         with OutOfRange.set_treatment('raise'):
-            with self.assertRaises(ProjectionInputsOutOfRangeError):
+            with self.assertRaises(OutOfRangeError):
                 y = OutOfRange.treat(x, 'Out of range', lower=2.1)
-        with OutOfRange.set_treatment('nan'):
-            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
-            np.testing.assert_array_equal(y, [np.nan, np.nan, 3.0, 4.0])
         with OutOfRange.set_treatment('clip'):
             y = OutOfRange.treat(x, 'Out of range', upper=1.1)
             np.testing.assert_array_equal(y, [1.0, 1.1, 1.1, 1.1])
@@ -81,11 +78,8 @@ class TestOutOfRangeTreatment(unittest.TestCase):
         y = OutOfRange.treat(x, 'Should not happen', lower=0, upper=5)
         np.testing.assert_array_equal(y, x)
         with OutOfRange.set_treatment('raise'):
-            with self.assertRaises(ProjectionInputsOutOfRangeError):
+            with self.assertRaises(OutOfRangeError):
                 y = OutOfRange.treat(x, 'Out of range', lower=2.1)
-        with OutOfRange.set_treatment('nan'):
-            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
-            np.testing.assert_array_equal(y, np.nan)
         with OutOfRange.set_treatment('clip'):
             y = OutOfRange.treat(x, 'Out of range', upper=1.1)
             np.testing.assert_array_equal(y, 1.1)

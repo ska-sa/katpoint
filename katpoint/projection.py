@@ -93,6 +93,10 @@ The following projections are implemented:
 
 Each projection typically has restrictions on the input domain and output range
 of values, which are highlighted in the docstrings of the individual functions.
+Out-of-range input values either raise an exception or are replaced with the
+closest valid value, based on the last :meth:`OutOfRange.set_treatment` call
+(which can also be used as a context manager).
+
 Each function in this module is also vectorised, and will operate on single
 floating-point values as well as :mod:`numpy` arrays of floats. The standard
 :mod:`numpy` broadcasting rules apply. It is therefore possible to have an
@@ -134,12 +138,12 @@ import numpy as np
 # --- Handling out-of-range inputs
 # --------------------------------------------------------------------------------------------------
 
-class ProjectionInputsOutOfRangeError(ValueError):
-    """One or more inputs to a spherical projection routine is out of range."""
+class OutOfRangeError(ValueError):
+    """A numeric value is out of range."""
 
 
 class OutOfRange(object):
-    """Handle out-of-range input values in spherical projection routines."""
+    """Customisable handling of out-of-range numeric values."""
 
     _treatment = _old_treatment = 'raise'
 
@@ -161,26 +165,25 @@ class OutOfRange(object):
         """"Change the treatment of out-of-range values.
 
         The supported treatments are:
-          - 'raise': raise :class:`ProjectionInputsOutOfRangeError` (default)
-          - 'nan': replace out-of-range values with NaNs
+          - 'raise': raise :class:`OutOfRangeError` (the default)
           - 'clip': replace out-of-range values with nearest valid values
 
         Parameters
         ----------
-        treatment : {'raise', 'nan', 'clip'}
+        treatment : {'raise', 'clip'}
             New treatment
 
         Returns
         -------
         context_manager : :class:`OutOfRange`
-            The method can be used in a with-statement for temporary changes
+            An instance intended to be used in a with-statement
 
         Raises
         ------
         ValueError
             If `treatment` is not a recognised option
         """
-        valid_treatments = {'raise', 'nan', 'clip'}
+        valid_treatments = {'raise', 'clip'}
         if treatment not in valid_treatments:
             raise ValueError("Unknown out-of-range treatment '{}', must be one of {}"
                              .format(treatment, valid_treatments))
@@ -204,24 +207,18 @@ class OutOfRange(object):
         Returns
         -------
         treated_x : float or array of float
-            Treated values (if treatment allows it)
+            Treated values
 
         Raises
         ------
-        ProjectionInputsOutOfRangeError
+        OutOfRangeError
             If any values in `x` are out of range and treatment is 'raise'
         """
         clipped_x = np.asarray(np.clip(x, lower, upper), dtype=np.float)
         out_of_range = (x != clipped_x)
-        if not np.any(out_of_range):
-            return clipped_x
-        if cls._treatment == 'clip':
-            return clipped_x
-        elif cls._treatment == 'nan':
-            clipped_x[out_of_range] = np.nan
-            return clipped_x
-        else:
-            raise ProjectionInputsOutOfRangeError(err_msg)
+        if np.any(out_of_range) and cls._treatment == 'raise':
+            raise OutOfRangeError(err_msg)
+        return clipped_x
 
 # --------------------------------------------------------------------------------------------------
 # --- Common
