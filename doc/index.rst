@@ -1,16 +1,17 @@
-.. katdal documentation master file, created by
+.. katpoint documentation master file, created by
    sphinx-quickstart on Mon Jun 10 15:18:10 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to katdal's documentation!
-==================================
+Welcome to katpoint's documentation!
+====================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    modules
+   API
 
 
 Indices and tables

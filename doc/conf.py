@@ -18,7 +18,7 @@ import katpoint
 
 # -- Project information -----------------------------------------------------
 
-project = 'katdal'
+project = 'katpoint'
 copyright = '2019, South African Radio Astronomy Observatory'
 author = 'South African Radio Astronomy Observatory'
 
@@ -66,3 +66,5 @@ audodoc_member_order = 'bysource'
 # -- Options for intersphinx extension ---------------------------------------
 
 intersphinx_mapping = {'katsdptelstate': ('https://katsdptelstate.readthedocs.io/en/latest', None)}
+
+master_doc = 'index'
