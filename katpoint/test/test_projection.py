@@ -158,9 +158,6 @@ class TestProjectionSIN(unittest.TestCase):
         np.testing.assert_almost_equal(xy, [1.0, 0.0], decimal=12)
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, 0.0))
         np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
-        # Points outside allowed domain on sphere
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
 
         # PLANE TO SPHERE
         # Origin
@@ -184,9 +181,42 @@ class TestProjectionSIN(unittest.TestCase):
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -1.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
+
+    def test_out_of_range_cases(self):
+        """SIN projection: test out-of-range cases."""
+        # SPHERE TO PLANE
+        # Points outside allowed domain on sphere
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('clip'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
+
+        # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        self.assertRaises(ValueError, self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
-        self.assertRaises(ValueError, self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
+        with OutOfRange.set_treatment('clip'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 2.0, 0.0))
+            assert_angles_almost_equal(ae, [np.pi / 2.0, 0.0], decimal=12)
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 2.0))
+            assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
 
 
 class TestProjectionTAN(unittest.TestCase):
@@ -264,9 +294,6 @@ class TestProjectionTAN(unittest.TestCase):
         np.testing.assert_almost_equal(xy, [1.0, 0.0], decimal=12)
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, np.pi / 4.0))
         np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
-        # Points outside allowed domain on sphere
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
 
         # PLANE TO SPHERE
         # Origin
@@ -290,6 +317,34 @@ class TestProjectionTAN(unittest.TestCase):
         assert_angles_almost_equal(ae, [0.0, -np.pi / 4.0], decimal=12)
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -1.0))
         assert_angles_almost_equal(ae, [np.pi, -np.pi / 4.0], decimal=12)
+
+    def test_out_of_range_cases(self):
+        """TAN projection: test out-of-range cases."""
+        # SPHERE TO PLANE
+        # Points outside allowed domain on sphere
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('clip'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, -1e5], decimal=11)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=11)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_almost_equal(xy, [0.0, 1e5], decimal=11)
+
+        # PLANE TO SPHERE
+        # Points outside allowed domain in plane
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
+        with OutOfRange.set_treatment('clip'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
 
 
 class TestProjectionARC(unittest.TestCase):
@@ -366,8 +421,6 @@ class TestProjectionARC(unittest.TestCase):
         # Point diametrically opposite the reference point on sphere
         xy = np.array(self.sphere_to_plane(np.pi, 0.0, 0.0, 0.0))
         np.testing.assert_almost_equal(np.abs(xy), [np.pi, 0.0], decimal=12)
-        # Points outside allowed domain on sphere
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
 
         # PLANE TO SPHERE
         # Origin
@@ -400,9 +453,38 @@ class TestProjectionARC(unittest.TestCase):
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -np.pi / 2.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
+
+    def test_out_of_range_cases(self):
+        """ARC projection: test out-of-range cases."""
+        # SPHERE TO PLANE
+        # Points outside allowed domain on sphere
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('clip'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, -np.pi / 2.0], decimal=12)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_almost_equal(xy, [0.0, np.pi / 2.0], decimal=12)
+
+        # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        self.assertRaises(ValueError, self.plane_to_sphere, 0.0, 0.0, 4.0, 0.0)
-        self.assertRaises(ValueError, self.plane_to_sphere, 0.0, 0.0, 0.0, 4.0)
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, 0.0, 4.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, 0.0, 0.0, 4.0)
+        with OutOfRange.set_treatment('clip'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 4.0, 0.0))
+            assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 4.0))
+            assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
 
 
 class TestProjectionSTG(unittest.TestCase):
@@ -478,9 +560,6 @@ class TestProjectionSTG(unittest.TestCase):
         np.testing.assert_almost_equal(xy, [2.0, 0.0], decimal=12)
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, 0.0))
         np.testing.assert_almost_equal(xy, [-2.0, 0.0], decimal=12)
-        # Points outside allowed domain on sphere
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
 
         # PLANE TO SPHERE
         # Origin
@@ -504,6 +583,34 @@ class TestProjectionSTG(unittest.TestCase):
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -2.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
+
+    def test_out_of_range_cases(self):
+        """STG projection: test out-of-range cases."""
+        # SPHERE TO PLANE
+        # Points outside allowed domain on sphere
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('clip'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, -2.0], decimal=12)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=10)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_almost_equal(xy, [0.0, 2.0], decimal=12)
+
+        # PLANE TO SPHERE
+        # Points outside allowed domain in plane
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
+        with OutOfRange.set_treatment('clip'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
 
 
 class TestProjectionCAR(unittest.TestCase):
@@ -610,9 +717,6 @@ class TestProjectionSSN(unittest.TestCase):
         np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, 0.0))
         np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
-        # Points outside allowed domain on sphere
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
-        self.assertRaises(ValueError, self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
 
         # PLANE TO SPHERE
         # Origin
@@ -637,6 +741,39 @@ class TestProjectionSSN(unittest.TestCase):
         assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
         ae = np.array(self.plane_to_sphere(0.0, -1.0, 0.0, np.cos(1.0)))
         assert_angles_almost_equal(ae, [0.0, -np.pi / 2.0], decimal=12)
+
+    def test_out_of_range_cases(self):
+        """SSN projection: test out-of-range cases."""
+        # SPHERE TO PLANE
+        # Points outside allowed domain on sphere
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('clip'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
+
+        # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        self.assertRaises(ValueError, self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
-        self.assertRaises(ValueError, self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
+        with OutOfRange.set_treatment('raise'):
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
+            self.assertRaises(OutOfRangeError,
+                              self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
+        with OutOfRange.set_treatment('clip'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 2.0, 0.0))
+            assert_angles_almost_equal(ae, [-np.pi / 2.0, 0.0], decimal=12)
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 2.0))
+            assert_angles_almost_equal(ae, [0.0, -np.pi / 2.0], decimal=12)
