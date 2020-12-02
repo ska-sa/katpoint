@@ -43,7 +43,12 @@ def skip(reason=''):
 def assert_angles_almost_equal(x, y, decimal):
     def primary_angle(x):
         return x - np.round(x / (2.0 * np.pi)) * 2.0 * np.pi
-    np.testing.assert_almost_equal(primary_angle(x - y), np.zeros(np.shape(x)), decimal=decimal)
+    x = np.asarray(x)
+    y = np.asarray(y)
+    np.testing.assert_array_equal(0 * x, 0 * y,
+                                  'Array shapes and/or NaN patterns differ')
+    d = primary_angle(np.nan_to_num(x - y))
+    np.testing.assert_almost_equal(d, np.zeros(np.shape(x)), decimal=decimal)
 
 
 class TestOutOfRangeTreatment(unittest.TestCase):
@@ -197,7 +202,7 @@ class TestProjectionSIN(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
-            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
+            np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
 
@@ -331,11 +336,11 @@ class TestProjectionTAN(unittest.TestCase):
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
         with OutOfRange.set_treatment('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
-            np.testing.assert_almost_equal(xy, [0.0, -1e5], decimal=11)
+            np.testing.assert_almost_equal(xy, [0.0, -1e6], decimal=4)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
-            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=11)
+            np.testing.assert_almost_equal(xy, [-1e6, 0.0], decimal=4)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
-            np.testing.assert_almost_equal(xy, [0.0, 1e5], decimal=11)
+            np.testing.assert_almost_equal(xy, [0.0, 1e6], decimal=4)
 
         # PLANE TO SPHERE
         # Points outside allowed domain in plane
@@ -599,7 +604,7 @@ class TestProjectionSTG(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -2.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
-            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=10)
+            np.testing.assert_almost_equal(xy, [-888.8873888868487, 0.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, 2.0], decimal=12)
 
@@ -757,7 +762,7 @@ class TestProjectionSSN(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
-            np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
+            np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
 
