@@ -126,10 +126,10 @@ class TestDelayCorrection(unittest.TestCase):
         delay1, phase1 = self.delays.corrections(target3, self.ts,
                                                  self.ts + 1.0, offset)
         # Conspire to return to special target1
-        self.assertEqual(delay0['A2h'], extra_delay, 'Delay for ant2h should be zero')
-        self.assertEqual(delay0['A2v'], extra_delay, 'Delay for ant2v should be zero')
-        self.assertEqual(delay1['A2h'][0], extra_delay, 'Delay for ant2h should be zero')
-        self.assertEqual(delay1['A2v'][0], extra_delay, 'Delay for ant2v should be zero')
+        np.testing.assert_almost_equal(delay0['A2h'], extra_delay, decimal=15)
+        np.testing.assert_almost_equal(delay0['A2v'], extra_delay, decimal=15)
+        np.testing.assert_almost_equal(delay1['A2h'][0], extra_delay, decimal=15)
+        np.testing.assert_almost_equal(delay1['A2v'][0], extra_delay, decimal=15)
         self.assertEqual(delay1['A2h'][1], 0.0, 'Delay rate for ant2h should be zero')
         self.assertEqual(delay1['A2v'][1], 0.0, 'Delay rate for ant2v should be zero')
         # Now try (ra, dec) coordinate system
