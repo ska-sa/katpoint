@@ -142,8 +142,8 @@ def clip_2d(x, y, min_radius, max_radius, default_x=1.0, default_y=0.0):
     """"""
     radius = np.asarray(np.sqrt(x * x + y * y))
     new_radius = np.asarray(np.clip(radius, min_radius, max_radius))
-    x = np.asarray(x)
-    y = np.asarray(y)
+    x = np.asarray(x).copy()
+    y = np.asarray(y).copy()
     out_of_range = new_radius != radius
     scalable = out_of_range & (radius != 0.0)
     unscalable = out_of_range & (radius == 0.0)
@@ -516,17 +516,9 @@ def sphere_to_plane_arc(az0, el0, az, el):
     ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el)
     # Safeguard the arccos, as over-ranging happens occasionally due to round-off error
     theta = np.arccos(np.clip(cos_theta, -1.0, 1.0))
-    if np.isscalar(theta):
-        if theta == 0.0:
-            scale = 1.0
-        else:
-            scale = theta / np.sin(theta)
-    else:
-        scale = np.ones(theta.shape)
-        nonzero = (theta != 0.0)
-        scale[nonzero] = theta[nonzero] / np.sin(theta[nonzero])
+    # Scale length of (x, y) vector from sin(theta) to theta in a safe way
     # x = theta * sin(phi), y = theta * cos(phi)
-    return scale * ortho_x, scale * ortho_y
+    return clip_2d(ortho_x, ortho_y, theta, theta)
 
 
 def plane_to_sphere_arc(az0, el0, x, y):
@@ -568,22 +560,15 @@ def plane_to_sphere_arc(az0, el0, x, y):
     theta = np.sqrt(x * x + y * y)
     check = 'Length of (x, y) vector bigger than pi'
     theta = OutOfRange.treat(theta, check, upper=np.pi)
-    cos_theta = np.cos(theta)
-    if np.isscalar(theta):
-        if theta == 0.0:
-            scale = 1.0
-        else:
-            scale = np.sin(theta) / theta
-    else:
-        scale = np.ones(theta.shape)
-        nonzero = (theta != 0.0)
-        scale[nonzero] = np.sin(theta[nonzero]) / theta[nonzero]
+    sin_theta, cos_theta = np.sin(theta), np.cos(theta)
+    # Scale length of (x, y) vector from theta to sin(theta) in a safe way
+    x, y = clip_2d(x, y, sin_theta, sin_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
-    sin_el = cos_el0 * scale * y + sin_el0 * cos_theta
+    sin_el = cos_el0 * y + sin_el0 * cos_theta
     # Safeguard the arcsin - in AIPS, clipping triggered "answer undefined", but that seems too harsh
     el = np.arcsin(np.clip(sin_el, -1.0, 1.0))
     # This term is cos(el) * cos(el0) * sin(delta_az)
-    num = x * scale * cos_el0
+    num = cos_el0 * x
     # This term is cos(el) * cos(el0) * cos(delta_az)
     den = cos_theta - sin_el * sin_el0
     az = az0 + np.arctan2(num, den)
