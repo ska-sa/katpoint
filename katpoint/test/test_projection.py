@@ -96,6 +96,7 @@ class TestOutOfRangeTreatment(unittest.TestCase):
 class TestProjectionSIN(unittest.TestCase):
     """Test orthographic projection."""
     def setUp(self):
+        np.random.seed(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['SIN']
         self.sphere_to_plane = katpoint.sphere_to_plane['SIN']
         N = 100
@@ -227,6 +228,7 @@ class TestProjectionSIN(unittest.TestCase):
 class TestProjectionTAN(unittest.TestCase):
     """Test gnomonic projection."""
     def setUp(self):
+        np.random.seed(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['TAN']
         self.sphere_to_plane = katpoint.sphere_to_plane['TAN']
         N = 100
@@ -355,6 +357,7 @@ class TestProjectionTAN(unittest.TestCase):
 class TestProjectionARC(unittest.TestCase):
     """Test zenithal equidistant projection."""
     def setUp(self):
+        np.random.seed(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['ARC']
         self.sphere_to_plane = katpoint.sphere_to_plane['ARC']
         N = 100
@@ -495,6 +498,7 @@ class TestProjectionARC(unittest.TestCase):
 class TestProjectionSTG(unittest.TestCase):
     """Test stereographic projection."""
     def setUp(self):
+        np.random.seed(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['STG']
         self.sphere_to_plane = katpoint.sphere_to_plane['STG']
         N = 100
@@ -621,6 +625,7 @@ class TestProjectionSTG(unittest.TestCase):
 class TestProjectionCAR(unittest.TestCase):
     """Test plate carree projection."""
     def setUp(self):
+        np.random.seed(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['CAR']
         self.sphere_to_plane = katpoint.sphere_to_plane['CAR']
         N = 100
@@ -662,6 +667,7 @@ def plane_to_sphere_original_ssn(target_az, target_el, ll, mm):
 class TestProjectionSSN(unittest.TestCase):
     """Test swapped orthographic projection."""
     def setUp(self):
+        np.random.seed(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['SSN']
         self.sphere_to_plane = katpoint.sphere_to_plane['SSN']
         N = 100
