@@ -659,7 +659,7 @@ class TestProjectionSTG(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -2.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
-            np.testing.assert_almost_equal(xy, [-888.8873888868487, 0.0], decimal=12)
+            np.testing.assert_almost_equal(xy, [-894.42495493, 0.0], decimal=8)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, 2.0], decimal=12)
 

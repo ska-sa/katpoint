@@ -217,8 +217,7 @@ class OutOfRange(object):
             If any values in `x` are out of range and treatment is 'raise'
         """
         clipped_x = np.asarray(np.clip(x, lower, upper), dtype=np.float)
-        # Suppress false alarms due to rounding errors by invoking eps
-        out_of_range = np.abs(x - clipped_x) > np.finfo(float).eps
+        out_of_range = (x != clipped_x)
         if cls._treatment == 'raise' and np.any(out_of_range):
             raise OutOfRangeError(err_msg)
         elif cls._treatment == 'nan':
@@ -249,7 +248,7 @@ def safe_scale(x, y, new_radius):
     return x, y
 
 
-def sphere_to_ortho(az0, el0, az, el, max_theta=None):
+def sphere_to_ortho(az0, el0, az, el, min_cos_theta=None):
     """Do calculations common to all zenithal/azimuthal projections."""
     # Ensure that elevation angles are in valid range if they are finite numbers
     check = 'Elevation angle outside range of +- pi/2 radians'
@@ -266,10 +265,10 @@ def sphere_to_ortho(az0, el0, az, el, max_theta=None):
     # x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
     ortho_x = cos_el * sin_daz
     ortho_y = sin_el * cos_el0 - cos_el * sin_el0 * cos_daz
-    if max_theta is not None:
+    if min_cos_theta is not None:
         check = ('Target point more than {} pi radians away from '
-                 'reference point'.format(max_theta / np.pi))
-        cos_theta = OutOfRange.treat(cos_theta, check, lower=np.cos(max_theta))
+                 'reference point'.format(np.arccos(min_cos_theta) / np.pi))
+        cos_theta = OutOfRange.treat(cos_theta, check, lower=min_cos_theta)
         sin_theta = np.sqrt(1.0 - cos_theta * cos_theta)
         ortho_x, ortho_y = safe_scale(ortho_x, ortho_y, new_radius=sin_theta)
     return ortho_x, ortho_y, cos_theta
@@ -327,7 +326,8 @@ def sphere_to_plane_sin(az0, el0, az, el):
     'slant orthographic' projection as in WCSLIB.
 
     """
-    ortho_x, ortho_y, _ = sphere_to_ortho(az0, el0, az, el, np.pi / 2.0)
+    # Angular separation theta must be <= 90 degrees
+    ortho_x, ortho_y, _ = sphere_to_ortho(az0, el0, az, el, min_cos_theta=0.0)
     # x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
     return ortho_x, ortho_y
 
@@ -432,8 +432,8 @@ def sphere_to_plane_tan(az0, el0, az, el):
         If an elevation is out of range or target is too far from reference,
         and out-of-range treatment is 'raise'
     """
-    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el,
-                                                  max_theta=np.pi / 2.0 - 1e-6)
+    # Angular separation theta must be strictly < 90 degrees - pick 1e-6 radians less
+    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el, min_cos_theta=1e-6)
     # x = tan(theta) * sin(phi), y = tan(theta) * cos(phi)
     return ortho_x / cos_theta, ortho_y / cos_theta
 
@@ -617,8 +617,8 @@ def sphere_to_plane_stg(az0, el0, az, el):
         If an elevation is out of range or target point opposite to reference,
         and out-of-range treatment is 'raise'
     """
-    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el,
-                                                  max_theta=np.pi - 4.5e-3)
+    # Angular separation theta must be strictly < 180 degrees - pick 1e-5 radians less
+    ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el, min_cos_theta=1e-5 - 1)
     den = 1.0 + cos_theta
     # x = 2 sin(theta) sin(phi) / (1 + cos(theta))
     # y = 2 sin(theta) cos(phi) / (1 + cos(theta))
