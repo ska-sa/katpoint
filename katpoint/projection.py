@@ -138,24 +138,6 @@ import numpy as np
 # --- Handling out-of-range inputs
 # --------------------------------------------------------------------------------------------------
 
-def clip_2d(x, y, min_radius, max_radius, default_x=1.0, default_y=0.0):
-    """"""
-    radius = np.asarray(np.sqrt(x * x + y * y))
-    new_radius = np.asarray(np.clip(radius, min_radius, max_radius))
-    x = np.asarray(x).copy()
-    y = np.asarray(y).copy()
-    out_of_range = new_radius != radius
-    scalable = out_of_range & (radius != 0.0)
-    unscalable = out_of_range & (radius == 0.0)
-    scale = new_radius[scalable] / radius[scalable]
-    x[scalable] *= scale
-    y[scalable] *= scale
-    x[unscalable] = default_x * new_radius[unscalable]
-    y[unscalable] = default_y * new_radius[unscalable]
-    x = x if x.ndim else x.item()
-    y = y if y.ndim else y.item()
-    return x, y
-
 
 class OutOfRangeError(ValueError):
     """A numeric value is out of range."""
@@ -245,6 +227,25 @@ class OutOfRange(object):
 # --------------------------------------------------------------------------------------------------
 
 
+def safe_scale(x, y, new_radius):
+    """"""
+    x = np.asarray(x).copy()
+    y = np.asarray(y).copy()
+    new_radius = np.asarray(new_radius)
+    radius = np.asarray(np.sqrt(x * x + y * y))
+    out_of_range = new_radius != radius
+    scalable = out_of_range & (radius != 0.0)
+    unscalable = out_of_range & (radius == 0.0)
+    scale = new_radius[scalable] / radius[scalable]
+    x[scalable] *= scale
+    y[scalable] *= scale
+    x[unscalable] = new_radius[unscalable]
+    y[unscalable] = 0.0
+    x = x if x.ndim else x.item()
+    y = y if y.ndim else y.item()
+    return x, y
+
+
 def sphere_to_ortho(az0, el0, az, el, max_theta=None):
     """Do calculations common to all zenithal/azimuthal projections."""
     # Ensure that elevation angles are in valid range if they are finite numbers
@@ -266,8 +267,8 @@ def sphere_to_ortho(az0, el0, az, el, max_theta=None):
         check = ('Target point more than {} pi radians away from '
                  'reference point'.format(max_theta / np.pi))
         cos_theta = OutOfRange.treat(cos_theta, check, lower=np.cos(max_theta))
-        radius = np.sqrt(1.0 - cos_theta * cos_theta)  # sin(theta)
-        ortho_x, ortho_y = clip_2d(ortho_x, ortho_y, radius, radius)
+        sin_theta = np.sqrt(1.0 - cos_theta * cos_theta)
+        ortho_x, ortho_y = safe_scale(ortho_x, ortho_y, new_radius=sin_theta)
     return ortho_x, ortho_y, cos_theta
 
 # --------------------------------------------------------------------------------------------------
@@ -518,7 +519,7 @@ def sphere_to_plane_arc(az0, el0, az, el):
     theta = np.arccos(np.clip(cos_theta, -1.0, 1.0))
     # Scale length of (x, y) vector from sin(theta) to theta in a safe way
     # x = theta * sin(phi), y = theta * cos(phi)
-    return clip_2d(ortho_x, ortho_y, theta, theta)
+    return safe_scale(ortho_x, ortho_y, new_radius=theta)
 
 
 def plane_to_sphere_arc(az0, el0, x, y):
@@ -562,7 +563,7 @@ def plane_to_sphere_arc(az0, el0, x, y):
     theta = OutOfRange.treat(theta, check, upper=np.pi)
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
     # Scale length of (x, y) vector from theta to sin(theta) in a safe way
-    x, y = clip_2d(x, y, sin_theta, sin_theta)
+    x, y = safe_scale(x, y, new_radius=sin_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     sin_el = cos_el0 * y + sin_el0 * cos_theta
     # Safeguard the arcsin - in AIPS, clipping triggered "answer undefined", but that seems too harsh
