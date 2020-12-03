@@ -59,6 +59,8 @@ class TestOutOfRangeTreatment(unittest.TestCase):
     def test_treatment_setup(self):
         OutOfRange.set_treatment('raise')
         self.assertEqual(OutOfRange.get_treatment(), 'raise')
+        OutOfRange.set_treatment('nan')
+        self.assertEqual(OutOfRange.get_treatment(), 'nan')
         OutOfRange.set_treatment('clip')
         self.assertEqual(OutOfRange.get_treatment(), 'clip')
         with self.assertRaises(ValueError):
@@ -74,6 +76,9 @@ class TestOutOfRangeTreatment(unittest.TestCase):
         with OutOfRange.set_treatment('raise'):
             with self.assertRaises(OutOfRangeError):
                 y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+        with OutOfRange.set_treatment('nan'):
+            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+            np.testing.assert_array_equal(y, [np.nan, np.nan, 3.0, 4.0])
         with OutOfRange.set_treatment('clip'):
             y = OutOfRange.treat(x, 'Out of range', upper=1.1)
             np.testing.assert_array_equal(y, [1.0, 1.1, 1.1, 1.1])
@@ -85,6 +90,9 @@ class TestOutOfRangeTreatment(unittest.TestCase):
         with OutOfRange.set_treatment('raise'):
             with self.assertRaises(OutOfRangeError):
                 y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+        with OutOfRange.set_treatment('nan'):
+            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+            np.testing.assert_array_equal(y, np.nan)
         with OutOfRange.set_treatment('clip'):
             y = OutOfRange.treat(x, 'Out of range', upper=1.1)
             np.testing.assert_array_equal(y, 1.1)
@@ -199,6 +207,13 @@ class TestProjectionSIN(unittest.TestCase):
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('nan'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
@@ -216,6 +231,13 @@ class TestProjectionSIN(unittest.TestCase):
                               self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
+        with OutOfRange.set_treatment('nan'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 2.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 2.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
@@ -336,6 +358,13 @@ class TestProjectionTAN(unittest.TestCase):
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('nan'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -1e6], decimal=4)
@@ -349,6 +378,9 @@ class TestProjectionTAN(unittest.TestCase):
         with OutOfRange.set_treatment('raise'):
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
+        with OutOfRange.set_treatment('nan'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
@@ -471,6 +503,11 @@ class TestProjectionARC(unittest.TestCase):
                               self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('nan'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -np.pi / 2.0], decimal=12)
@@ -486,6 +523,13 @@ class TestProjectionARC(unittest.TestCase):
                               self.plane_to_sphere, 0.0, 0.0, 4.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 0.0, 4.0)
+        with OutOfRange.set_treatment('nan'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 4.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 4.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
@@ -604,6 +648,13 @@ class TestProjectionSTG(unittest.TestCase):
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('nan'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -2.0], decimal=12)
@@ -617,6 +668,9 @@ class TestProjectionSTG(unittest.TestCase):
         with OutOfRange.set_treatment('raise'):
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
+        with OutOfRange.set_treatment('nan'):
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
@@ -764,6 +818,13 @@ class TestProjectionSSN(unittest.TestCase):
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
+        with OutOfRange.set_treatment('nan'):
+            xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
+            xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
+            np.testing.assert_array_equal(xy, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
@@ -781,6 +842,23 @@ class TestProjectionSSN(unittest.TestCase):
                               self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
+        with OutOfRange.set_treatment('nan'):
+            # Bad el0 > 90 degrees
+            ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            # Bad (x, y) vector length > 1.0
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 2.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 2.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            # Bad x coordinate > cos(el0)
+            ae = np.array(self.plane_to_sphere(0.0, np.pi / 2.0, 1.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            ae = np.array(self.plane_to_sphere(0.0, np.pi / 2.0, -1.0, 0.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
+            # Bad y coordinate -> den < 0
+            ae = np.array(self.plane_to_sphere(0.0, np.pi / 2.0, 0.0, -1.0))
+            np.testing.assert_array_equal(ae, [np.nan, np.nan])
         with OutOfRange.set_treatment('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
