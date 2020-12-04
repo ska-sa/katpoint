@@ -199,7 +199,7 @@ class OutOfRange(object):
 
         Parameters
         ----------
-        x : real number or sequence of real numbers
+        x : real number or array-like of real numbers
             Input values (left untouched)
         err_msg : string
             Error message passed to exception if treatment is 'raise'
@@ -209,15 +209,23 @@ class OutOfRange(object):
         Returns
         -------
         treated_x : float or array of float
-            Treated values
+            Treated values (guaranteed to be in range or NaN)
 
         Raises
         ------
         OutOfRangeError
             If any values in `x` are out of range and treatment is 'raise'
+
+        Notes
+        -----
+        If a value is out of bounds by less than the machine precision, it is
+        considered a rounding error. It is not treated as out-of-range to avoid
+        false alarms, but instead silently clipped to ensure that all returned
+        data is in the valid range.
         """
         clipped_x = np.asarray(np.clip(x, lower, upper), dtype=np.float)
-        out_of_range = (x != clipped_x)
+        # Suppress false alarms due to rounding errors -> only flag substantial outliers
+        out_of_range = np.abs(x - clipped_x) > np.finfo(float).eps
         if cls._treatment == 'raise' and np.any(out_of_range):
             raise OutOfRangeError(err_msg)
         elif cls._treatment == 'nan':
@@ -877,7 +885,7 @@ def plane_to_sphere_ssn(az0, el0, x, y):
     den = sin_el0 * y + cos_theta * cos_el0_cos_daz
     # Ensure that cos(el) denominator term is positive to have abs(el) <= 90 degrees
     check = 'The y coordinate causes el to be outside range of +- pi/2 radians'
-    den = OutOfRange.treat(den, check, lower=-1e-12)
+    den = OutOfRange.treat(den, check, lower=0.0)
     el = np.arctan2(num, den)
     # Ensure that az is NaN when el is NaN
     az *= np.where(np.isnan(el), np.nan, 1.0)
