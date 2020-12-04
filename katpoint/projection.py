@@ -238,7 +238,22 @@ class OutOfRange(object):
 
 
 def safe_scale(x, y, new_radius):
-    """"""
+    """Scale the length of the 2D (x, y) vector to a new radius in a safe way.
+
+    This handles both scalars and arrays, and maps the origin to (new_radius, 0).
+
+    Parameters
+    ----------
+    x, y : float or array
+        Coordinates of 2D vector(s) (unchanged by this function)
+    new_radius : float or array
+        Desired length of output vector(s)
+
+    Returns
+    -------
+    out_x, out_y : float or array
+        Coordinates of 2D vector(s) guaranteed to have length `new_radius`
+    """
     x = np.asarray(x).copy()
     y = np.asarray(y).copy()
     new_radius = np.asarray(new_radius)
@@ -257,7 +272,36 @@ def safe_scale(x, y, new_radius):
 
 
 def sphere_to_ortho(az0, el0, az, el, min_cos_theta=None):
-    """Do calculations common to all zenithal/azimuthal projections."""
+    """Do calculations common to all zenithal/azimuthal projections.
+
+    This does a basic orthographic (SIN) projection and also returns the angular
+    separation / native latitude `theta` in cosine form, which can be used to
+    construct many other projections. The angular separation is optionally
+    checked against a projection-specific limit, and the (x, y) outputs are
+    treated accordingly.
+
+    Parameters
+    ----------
+    az0 : float or array
+        Azimuth / right ascension / longitude of reference point(s), in radians
+    el0 : float or array
+        Elevation / declination / latitude of reference point(s), in radians
+    az : float or array
+        Azimuth / right ascension / longitude of target point(s), in radians
+    el : float or array
+        Elevation / declination / latitude of target point(s), in radians
+    min_cos_theta : float, optional
+        Limit on angular separation of target and reference, used to clip (x, y)
+
+    Returns
+    -------
+    ortho_x : float or array
+        Azimuth-like coordinate(s) on plane (equivalent to l), in radians
+    ortho_y : float or array
+        Elevation-like coordinate(s) on plane (equivalent to m), in radians
+    cos_theta : float or array
+        Angular separation of target and reference points, expressed as cosine
+    """
     # Ensure that elevation angles are in valid range if they are finite numbers
     check = 'Elevation angle outside range of +- pi/2 radians'
     el0 = OutOfRange.treat(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
