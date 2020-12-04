@@ -22,7 +22,7 @@ import unittest
 import numpy as np
 
 import katpoint
-from katpoint.projection import OutOfRange, OutOfRangeError
+from katpoint import OutOfRange, OutOfRangeError
 
 try:
     from .aips_projection import newpos, dircos
