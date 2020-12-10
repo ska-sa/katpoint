@@ -131,8 +131,10 @@ Alternatively they can be called directly::
 """
 from __future__ import print_function, division, absolute_import
 
-import numpy as np
+import threading
+import contextlib
 
+import numpy as np
 
 # --------------------------------------------------------------------------------------------------
 # --- Handling out-of-range inputs
@@ -143,94 +145,122 @@ class OutOfRangeError(ValueError):
     """A numeric value is out of range."""
 
 
-class OutOfRange(object):
-    """Customisable handling of out-of-range numeric values."""
+_out_of_range_cvar = threading.local()
+_out_of_range_cvar.treatment = 'raise'
 
-    _treatment = _old_treatment = 'raise'
 
-    @classmethod
-    def __enter__(cls):
-        pass
+def set_out_of_range_treatment(treatment):
+    """Change the treatment of out-of-range values (permanently).
 
-    @classmethod
-    def __exit__(cls, *args, **kws):
-        cls._treatment = cls._old_treatment
+    The supported treatments are:
+        - 'raise': raise :class:`OutOfRangeError` (the default)
+        - 'nan': replace out-of-range values with NaNs
+        - 'clip': replace out-of-range values with nearest valid values
 
-    @classmethod
-    def get_treatment(cls):
-        """The current treatment of out-of-range values."""
-        return cls._treatment
+    Parameters
+    ----------
+    treatment : {'raise', 'nan', 'clip'}
+        New treatment
 
-    @classmethod
-    def set_treatment(cls, treatment):
-        """"Change the treatment of out-of-range values.
+    Returns
+    -------
+    previous_treatment : object
+        An object that can be passed to `set_out_of_range_treatment`
+        to restore the previous treatment
 
-        The supported treatments are:
-          - 'raise': raise :class:`OutOfRangeError` (the default)
-          - 'nan': replace out-of-range values with NaNs
-          - 'clip': replace out-of-range values with nearest valid values
+    Raises
+    ------
+    ValueError
+        If `treatment` is not a recognised option
+    """
+    valid_treatments = {'raise', 'nan', 'clip'}
+    if treatment not in valid_treatments:
+        raise ValueError("Unknown out-of-range treatment '{}', must be one of {}"
+                         .format(treatment, valid_treatments))
+    previous_treatment = _out_of_range_cvar.treatment
+    _out_of_range_cvar.treatment = treatment
+    return previous_treatment
 
-        Parameters
-        ----------
-        treatment : {'raise', 'nan', 'clip'}
-            New treatment
 
-        Returns
-        -------
-        context_manager : :class:`OutOfRange`
-            An instance intended to be used in a with-statement
+def get_out_of_range_treatment():
+    """The current treatment of out-of-range values."""
+    return _out_of_range_cvar.treatment
 
-        Raises
-        ------
-        ValueError
-            If `treatment` is not a recognised option
-        """
-        valid_treatments = {'raise', 'nan', 'clip'}
-        if treatment not in valid_treatments:
-            raise ValueError("Unknown out-of-range treatment '{}', must be one of {}"
-                             .format(treatment, valid_treatments))
-        cls._old_treatment = cls._treatment
-        cls._treatment = treatment
-        return cls()
 
-    @classmethod
-    def treat(cls, x, err_msg, lower=None, upper=None):
-        """Apply treatment to any out-of-range values in `x`.
+@contextlib.contextmanager
+def out_of_range_context(treatment):
+    """Change the treatment of out-of-range values temporarily via context manager.
 
-        Parameters
-        ----------
-        x : real number or array-like of real numbers
-            Input values (left untouched)
-        err_msg : string
-            Error message passed to exception if treatment is 'raise'
-        lower, upper : real number or None, optional
-            Bounds for values in `x` (specify at least one bound!)
+    Parameters
+    ----------
+    treatment : str
+        Temporary treatment
 
-        Returns
-        -------
-        treated_x : float or array of float
-            Treated values (guaranteed to be in range or NaN)
+    Notes
+    -----
+    For a description of available treatments, see `set_out_of_range_treatment`.
 
-        Raises
-        ------
-        OutOfRangeError
-            If any values in `x` are out of range and treatment is 'raise'
+    Examples
+    --------
+    >>> with out_of_range_context(treatment='raise'):
+    ...     plane_to_sphere_sin(0.0, 0.0, 0.0, 2.0)
+    Traceback (most recent call last):
+    File "<stdin>", line 2, in <module>
+    OutOfRangeError: Length of (x, y) vector bigger than 1.0
 
-        Notes
-        -----
-        If a value is out of bounds by less than the machine precision, it is
-        considered a rounding error. It is not treated as out-of-range to avoid
-        false alarms, but instead silently clipped to ensure that all returned
-        data is in the valid range.
-        """
-        clipped_x = np.asarray(np.clip(x, lower, upper), dtype=np.float)
-        # Suppress false alarms due to rounding errors -> only flag substantial outliers
-        out_of_range = np.abs(x - clipped_x) > np.finfo(float).eps
-        if cls._treatment == 'raise' and np.any(out_of_range):
-            raise OutOfRangeError(err_msg)
-        elif cls._treatment == 'nan':
-            clipped_x[out_of_range] = np.nan
-        return clipped_x if clipped_x.ndim else clipped_x.item()
+    >>> with out_of_range_context(treatment='nan'):
+    ...     plane_to_sphere_sin(0.0, 0.0, 0.0, 2.0)
+    (nan, nan)
+
+    >>> with out_of_range_context(treatment='clip'):
+    ...     plane_to_sphere_sin(0.0, 0.0, 0.0, 2.0)
+    (0.0, np.pi / 2.0)
+    """
+    previous_treatment = set_out_of_range_treatment(treatment)
+    try:
+        yield
+    finally:
+        set_out_of_range_treatment(previous_treatment)
+
+
+def treat_out_of_range_values(x, err_msg, lower=None, upper=None):
+    """Apply treatment to any out-of-range values in `x`.
+
+    Parameters
+    ----------
+    x : real number or array-like of real numbers
+        Input values (left untouched)
+    err_msg : string
+        Error message passed to exception if treatment is 'raise'
+    lower, upper : real number or None, optional
+        Bounds for values in `x` (specify at least one bound!)
+
+    Returns
+    -------
+    treated_x : float or array of float
+        Treated values (guaranteed to be in range or NaN)
+
+    Raises
+    ------
+    OutOfRangeError
+        If any values in `x` are out of range and treatment is 'raise'
+
+    Notes
+    -----
+    If a value is out of bounds by less than the machine precision, it is
+    considered a rounding error. It is not treated as out-of-range to avoid
+    false alarms, but instead silently clipped to ensure that all returned
+    data is in the valid range.
+    """
+    clipped_x = np.asarray(np.clip(x, lower, upper), dtype=np.float)
+    # Suppress false alarms due to rounding errors -> only flag substantial outliers
+    out_of_range = np.abs(x - clipped_x) > np.finfo(float).eps
+    treatment = get_out_of_range_treatment()
+    if treatment == 'raise' and np.any(out_of_range):
+        raise OutOfRangeError(err_msg)
+    elif treatment == 'nan':
+        clipped_x[out_of_range] = np.nan
+    return clipped_x if clipped_x.ndim else clipped_x.item()
 
 # --------------------------------------------------------------------------------------------------
 # --- Common
@@ -304,8 +334,8 @@ def sphere_to_ortho(az0, el0, az, el, min_cos_theta=None):
     """
     # Ensure that elevation angles are in valid range if they are finite numbers
     check = 'Elevation angle outside range of +- pi/2 radians'
-    el0 = OutOfRange.treat(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
-    el = OutOfRange.treat(el, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
+    el0 = treat_out_of_range_values(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
+    el = treat_out_of_range_values(el, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
     sin_el, cos_el, sin_el0, cos_el0 = np.sin(el), np.cos(el), np.sin(el0), np.cos(el0)
     # Keep azimuth delta between -pi and pi - probably unnecessary,
     # but the only normalisation of az inputs
@@ -320,7 +350,7 @@ def sphere_to_ortho(az0, el0, az, el, min_cos_theta=None):
     if min_cos_theta is not None:
         check = ('Target point more than {} pi radians away from '
                  'reference point'.format(np.arccos(min_cos_theta) / np.pi))
-        cos_theta = OutOfRange.treat(cos_theta, check, lower=min_cos_theta)
+        cos_theta = treat_out_of_range_values(cos_theta, check, lower=min_cos_theta)
         sin_theta = np.sqrt(1.0 - cos_theta * cos_theta)
         ortho_x, ortho_y = safe_scale(ortho_x, ortho_y, new_radius=sin_theta)
     return ortho_x, ortho_y, cos_theta
@@ -431,10 +461,10 @@ def plane_to_sphere_sin(az0, el0, x, y):
 
     """
     check = 'Elevation angle outside range of +- pi/2 radians'
-    el0 = OutOfRange.treat(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
+    el0 = treat_out_of_range_values(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
     sin2_theta = x * x + y * y
     check = 'Length of (x, y) vector bigger than 1.0'
-    sin2_theta = OutOfRange.treat(sin2_theta, check, upper=1.0)
+    sin2_theta = treat_out_of_range_values(sin2_theta, check, upper=1.0)
     cos_theta = np.sqrt(1.0 - sin2_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     sin_el = sin_el0 * cos_theta + cos_el0 * y
@@ -523,7 +553,7 @@ def plane_to_sphere_tan(az0, el0, x, y):
         If elevation `el0` is out of range and out-of-range treatment is 'raise'
     """
     check = 'Elevation angle outside range of +- pi/2 radians'
-    el0 = OutOfRange.treat(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
+    el0 = treat_out_of_range_values(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     # This term is cos(el) * cos(daz) / cos(theta)
     den = cos_el0 - y * sin_el0
@@ -612,10 +642,10 @@ def plane_to_sphere_arc(az0, el0, x, y):
         and out-of-range treatment is 'raise'
     """
     check = 'Elevation angle outside range of +- pi/2 radians'
-    el0 = OutOfRange.treat(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
+    el0 = treat_out_of_range_values(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
     theta = np.sqrt(x * x + y * y)
     check = 'Length of (x, y) vector bigger than pi'
-    theta = OutOfRange.treat(theta, check, upper=np.pi)
+    theta = treat_out_of_range_values(theta, check, upper=np.pi)
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
     # Scale length of (x, y) vector from theta to sin(theta) in a safe way
     x, y = safe_scale(x, y, new_radius=sin_theta)
@@ -710,7 +740,7 @@ def plane_to_sphere_stg(az0, el0, x, y):
         If elevation `el0` is out of range and out-of-range treatment is 'raise'
     """
     check = 'Elevation angle outside range of +- pi/2 radians'
-    el0 = OutOfRange.treat(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
+    el0 = treat_out_of_range_values(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     # This is the square of 2 sin(theta) / (1 + cos(theta))
     r2 = x * x + y * y
@@ -910,15 +940,15 @@ def plane_to_sphere_ssn(az0, el0, x, y):
 
     """
     check = 'Elevation angle outside range of +- pi/2 radians'
-    el0 = OutOfRange.treat(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
+    el0 = treat_out_of_range_values(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
     sin2_theta = x * x + y * y
     check = 'Length of (x, y) vector bigger than 1.0'
-    sin2_theta = OutOfRange.treat(sin2_theta, check, upper=1.0)
+    sin2_theta = treat_out_of_range_values(sin2_theta, check, upper=1.0)
     cos_theta = np.sqrt(1.0 - sin2_theta)
     sin_el0, cos_el0 = np.sin(el0), np.cos(el0)
     sin_daz = -x / cos_el0
     check = 'The x coordinate is outside range of +- cos(el0) radians'
-    sin_daz = OutOfRange.treat(sin_daz, check, lower=-1.0, upper=1.0)
+    sin_daz = treat_out_of_range_values(sin_daz, check, lower=-1.0, upper=1.0)
     # Since delta_az = az - az0 is the azimuth angle of final (x, cos(theta), y)
     # unit vector and cos(theta) >= 0, delta_az is restricted to +-90 degrees,
     # making the use of arcsin OK here
@@ -929,7 +959,7 @@ def plane_to_sphere_ssn(az0, el0, x, y):
     den = sin_el0 * y + cos_theta * cos_el0_cos_daz
     # Ensure that cos(el) denominator term is positive to have abs(el) <= 90 degrees
     check = 'The y coordinate causes el to be outside range of +- pi/2 radians'
-    den = OutOfRange.treat(den, check, lower=0.0)
+    den = treat_out_of_range_values(den, check, lower=0.0)
     el = np.arctan2(num, den)
     # Ensure that az is NaN when el is NaN
     az *= np.where(np.isnan(el), np.nan, 1.0)

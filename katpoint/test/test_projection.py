@@ -22,7 +22,8 @@ import unittest
 import numpy as np
 
 import katpoint
-from katpoint import OutOfRange, OutOfRangeError
+from katpoint.projection import (OutOfRangeError, out_of_range_context, treat_out_of_range_values,
+                                 set_out_of_range_treatment, get_out_of_range_treatment)
 
 try:
     from .aips_projection import newpos, dircos
@@ -54,51 +55,51 @@ def assert_angles_almost_equal(x, y, decimal):
 class TestOutOfRangeTreatment(unittest.TestCase):
     """Test treatment of out-of-range values."""
     def setUp(self):
-        self._old_treatment = OutOfRange.get_treatment()
+        self._old_treatment = get_out_of_range_treatment()
 
     def test_treatment_setup(self):
-        OutOfRange.set_treatment('raise')
-        self.assertEqual(OutOfRange.get_treatment(), 'raise')
-        OutOfRange.set_treatment('nan')
-        self.assertEqual(OutOfRange.get_treatment(), 'nan')
-        OutOfRange.set_treatment('clip')
-        self.assertEqual(OutOfRange.get_treatment(), 'clip')
+        set_out_of_range_treatment('raise')
+        self.assertEqual(get_out_of_range_treatment(), 'raise')
+        set_out_of_range_treatment('nan')
+        self.assertEqual(get_out_of_range_treatment(), 'nan')
+        set_out_of_range_treatment('clip')
+        self.assertEqual(get_out_of_range_treatment(), 'clip')
         with self.assertRaises(ValueError):
-            OutOfRange.set_treatment('bad treatment')
-        with OutOfRange.set_treatment('raise'):
-            self.assertEqual(OutOfRange.get_treatment(), 'raise')
-        self.assertEqual(OutOfRange.get_treatment(), 'clip')
+            set_out_of_range_treatment('bad treatment')
+        with out_of_range_context('raise'):
+            self.assertEqual(get_out_of_range_treatment(), 'raise')
+        self.assertEqual(get_out_of_range_treatment(), 'clip')
 
     def test_out_of_range_handling_array(self):
         x = [1, 2, 3, 4]
-        y = OutOfRange.treat(x, 'Should not happen', lower=0, upper=5)
+        y = treat_out_of_range_values(x, 'Should not happen', lower=0, upper=5)
         np.testing.assert_array_equal(y, x)
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             with self.assertRaises(OutOfRangeError):
-                y = OutOfRange.treat(x, 'Out of range', lower=2.1)
-        with OutOfRange.set_treatment('nan'):
-            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+                y = treat_out_of_range_values(x, 'Out of range', lower=2.1)
+        with out_of_range_context('nan'):
+            y = treat_out_of_range_values(x, 'Out of range', lower=2.1)
             np.testing.assert_array_equal(y, [np.nan, np.nan, 3.0, 4.0])
-        with OutOfRange.set_treatment('clip'):
-            y = OutOfRange.treat(x, 'Out of range', upper=1.1)
+        with out_of_range_context('clip'):
+            y = treat_out_of_range_values(x, 'Out of range', upper=1.1)
             np.testing.assert_array_equal(y, [1.0, 1.1, 1.1, 1.1])
 
     def test_out_of_range_handling_scalar(self):
         x = 2
-        y = OutOfRange.treat(x, 'Should not happen', lower=0, upper=5)
+        y = treat_out_of_range_values(x, 'Should not happen', lower=0, upper=5)
         np.testing.assert_array_equal(y, x)
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             with self.assertRaises(OutOfRangeError):
-                y = OutOfRange.treat(x, 'Out of range', lower=2.1)
-        with OutOfRange.set_treatment('nan'):
-            y = OutOfRange.treat(x, 'Out of range', lower=2.1)
+                y = treat_out_of_range_values(x, 'Out of range', lower=2.1)
+        with out_of_range_context('nan'):
+            y = treat_out_of_range_values(x, 'Out of range', lower=2.1)
             np.testing.assert_array_equal(y, np.nan)
-        with OutOfRange.set_treatment('clip'):
-            y = OutOfRange.treat(x, 'Out of range', upper=1.1)
+        with out_of_range_context('clip'):
+            y = treat_out_of_range_values(x, 'Out of range', upper=1.1)
             np.testing.assert_array_equal(y, 1.1)
 
     def tearDown(self):
-        OutOfRange.set_treatment(self._old_treatment)
+        set_out_of_range_treatment(self._old_treatment)
 
 
 class TestProjectionSIN(unittest.TestCase):
@@ -200,21 +201,21 @@ class TestProjectionSIN(unittest.TestCase):
         """SIN projection: test out-of-range cases."""
         # SPHERE TO PLANE
         # Points outside allowed domain on sphere
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
@@ -224,21 +225,21 @@ class TestProjectionSIN(unittest.TestCase):
 
         # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
             ae = np.array(self.plane_to_sphere(0.0, 0.0, 2.0, 0.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
             ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 2.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
             ae = np.array(self.plane_to_sphere(0.0, 0.0, 2.0, 0.0))
@@ -351,21 +352,21 @@ class TestProjectionTAN(unittest.TestCase):
         """TAN projection: test out-of-range cases."""
         # SPHERE TO PLANE
         # Points outside allowed domain on sphere
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -1e6], decimal=4)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
@@ -375,13 +376,13 @@ class TestProjectionTAN(unittest.TestCase):
 
         # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
 
@@ -498,17 +499,17 @@ class TestProjectionARC(unittest.TestCase):
         """ARC projection: test out-of-range cases."""
         # SPHERE TO PLANE
         # Points outside allowed domain on sphere
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -np.pi / 2.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
@@ -516,21 +517,21 @@ class TestProjectionARC(unittest.TestCase):
 
         # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 4.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 0.0, 4.0)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
             ae = np.array(self.plane_to_sphere(0.0, 0.0, 4.0, 0.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
             ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 4.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
             ae = np.array(self.plane_to_sphere(0.0, 0.0, 4.0, 0.0))
@@ -641,21 +642,21 @@ class TestProjectionSTG(unittest.TestCase):
         """STG projection: test out-of-range cases."""
         # SPHERE TO PLANE
         # Points outside allowed domain on sphere
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, -2.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
@@ -665,13 +666,13 @@ class TestProjectionSTG(unittest.TestCase):
 
         # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
 
@@ -811,21 +812,21 @@ class TestProjectionSSN(unittest.TestCase):
         """SSN projection: test out-of-range cases."""
         # SPHERE TO PLANE
         # Points outside allowed domain on sphere
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, np.pi, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.sphere_to_plane, 0.0, 0.0, 0.0, np.pi)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_array_equal(xy, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             xy = np.array(self.sphere_to_plane(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
             xy = np.array(self.sphere_to_plane(0.0, 0.0, np.pi, 0.0))
@@ -835,14 +836,14 @@ class TestProjectionSSN(unittest.TestCase):
 
         # PLANE TO SPHERE
         # Points outside allowed domain in plane
-        with OutOfRange.set_treatment('raise'):
+        with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, np.pi, 0.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 2.0, 0.0)
             self.assertRaises(OutOfRangeError,
                               self.plane_to_sphere, 0.0, 0.0, 0.0, 2.0)
-        with OutOfRange.set_treatment('nan'):
+        with out_of_range_context('nan'):
             # Bad el0 > 90 degrees
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
@@ -859,7 +860,7 @@ class TestProjectionSSN(unittest.TestCase):
             # Bad y coordinate -> den < 0
             ae = np.array(self.plane_to_sphere(0.0, np.pi / 2.0, 0.0, -1.0))
             np.testing.assert_array_equal(ae, [np.nan, np.nan])
-        with OutOfRange.set_treatment('clip'):
+        with out_of_range_context('clip'):
             ae = np.array(self.plane_to_sphere(0.0, np.pi, 0.0, 0.0))
             assert_angles_almost_equal(ae, [0.0, np.pi / 2.0], decimal=12)
             ae = np.array(self.plane_to_sphere(0.0, 0.0, 2.0, 0.0))
