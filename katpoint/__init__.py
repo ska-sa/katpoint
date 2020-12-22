@@ -50,11 +50,11 @@ from .delay import DelayModel, DelayCorrection
 # If the module is reloaded, this will fail - ignore the resulting NameError
 try:
     _target, _antenna, _timestamp, _flux, _catalogue, _ephem_extra, \
-        _conversion, _projection, _pointing, _refraction, _delay = \
+        _conversion, _pointing, _refraction, _delay = \
         target, antenna, timestamp, flux, catalogue, ephem_extra, \
-        conversion, projection, pointing, refraction, delay
+        conversion, pointing, refraction, delay
     del target, antenna, timestamp, flux, catalogue, ephem_extra, \
-        conversion, projection, pointing, refraction, delay
+        conversion, pointing, refraction, delay
 except NameError:
     pass
 

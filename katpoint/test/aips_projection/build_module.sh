@@ -26,14 +26,14 @@
 #
 
 # Obtain AIPS source files (keep URL up to date!)
-aips_src=ftp.aoc.nrao.edu::31DEC16
+aips_src=ftp.aoc.nrao.edu::31DEC20
 rsync -auvz --timeout=120 --files-from=aips_files.lst --no-relative $aips_src .
 for f in *.FOR; do mv $f ${f/.FOR/.F}; done
 # Add f2py icing and comment out troublesome AIPS calls
 patch -p0 < aips_files.patch
 
 # On some systems the Python version is appended to f2py executable name (probably to avoid clashes)
-pyver=`python -c "import sys; print('%d.%d' % sys.version_info[:2])"`
+pyver=`python3 -c "import sys; print('%d.%d' % sys.version_info[:2])"`
 f2py_exe='f2py'$pyver
 if ! which $f2py_exe ; then
   f2py_exe='f2py'
