@@ -170,9 +170,8 @@ class TestProjectionSIN(unittest.TestCase):
         np.testing.assert_almost_equal(xx, x_aips, decimal=9)
         np.testing.assert_almost_equal(yy, y_aips, decimal=9)
 
-    def test_corner_cases(self):
-        """SIN projection: test special corner cases."""
-        # SPHERE TO PLANE
+    def test_corner_cases_sphere_to_plane(self):
+        """SIN projection: test special corner cases (sphere->plane)."""
         # Origin
         xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, 0.0))
         np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
@@ -195,7 +194,8 @@ class TestProjectionSIN(unittest.TestCase):
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, 0.0))
         np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_corner_cases_plane_to_sphere(self):
+        """SIN projection: test special corner cases (plane->sphere)."""
         # Origin
         ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 0.0))
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
@@ -218,9 +218,8 @@ class TestProjectionSIN(unittest.TestCase):
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -1.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
 
-    def test_out_of_range_cases(self):
-        """SIN projection: test out-of-range cases."""
-        # SPHERE TO PLANE
+    def test_out_of_range_cases_sphere_to_plane(self):
+        """SIN projection: test out-of-range cases (sphere->plane)."""
         # Points outside allowed domain on sphere
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -244,7 +243,8 @@ class TestProjectionSIN(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_out_of_range_cases_plane_to_sphere(self):
+        """SIN projection: test out-of-range cases (plane->sphere)."""
         # Points outside allowed domain in plane
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -321,9 +321,8 @@ class TestProjectionTAN(unittest.TestCase):
         np.testing.assert_almost_equal(xx, x_aips, decimal=10)
         np.testing.assert_almost_equal(yy, y_aips, decimal=10)
 
-    def test_corner_cases(self):
-        """TAN projection: test special corner cases."""
-        # SPHERE TO PLANE
+    def test_corner_cases_sphere_to_plane(self):
+        """TAN projection: test special corner cases (sphere->plane)."""
         # Origin
         xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, 0.0))
         np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
@@ -346,7 +345,8 @@ class TestProjectionTAN(unittest.TestCase):
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, np.pi / 4.0))
         np.testing.assert_almost_equal(xy, [-1.0, 0.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_corner_cases_plane_to_sphere(self):
+        """TAN projection: test special corner cases (plane->sphere)."""
         # Origin
         ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 0.0))
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
@@ -369,9 +369,8 @@ class TestProjectionTAN(unittest.TestCase):
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -1.0))
         assert_angles_almost_equal(ae, [np.pi, -np.pi / 4.0], decimal=12)
 
-    def test_out_of_range_cases(self):
-        """TAN projection: test out-of-range cases."""
-        # SPHERE TO PLANE
+    def test_out_of_range_cases_sphere_to_plane(self):
+        """TAN projection: test out-of-range cases (sphere->plane)."""
         # Points outside allowed domain on sphere
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -395,7 +394,8 @@ class TestProjectionTAN(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, 1e6], decimal=4)
 
-        # PLANE TO SPHERE
+    def test_out_of_range_cases_plane_to_sphere(self):
+        """TAN projection: test out-of-range cases (plane->sphere)."""
         # Points outside allowed domain in plane
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -456,9 +456,8 @@ class TestProjectionARC(unittest.TestCase):
         np.testing.assert_almost_equal(xx, x_aips, decimal=8)
         np.testing.assert_almost_equal(yy, y_aips, decimal=8)
 
-    def test_corner_cases(self):
-        """ARC projection: test special corner cases."""
-        # SPHERE TO PLANE
+    def test_corner_cases_sphere_to_plane(self):
+        """ARC projection: test special corner cases (sphere->plane)."""
         # Origin
         xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, 0.0))
         np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
@@ -484,7 +483,8 @@ class TestProjectionARC(unittest.TestCase):
         xy = np.array(self.sphere_to_plane(np.pi, 0.0, 0.0, 0.0))
         np.testing.assert_almost_equal(np.abs(xy), [np.pi, 0.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_corner_cases_plane_to_sphere(self):
+        """ARC projection: test special corner cases (plane->sphere)."""
         # Origin
         ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 0.0))
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
@@ -516,9 +516,8 @@ class TestProjectionARC(unittest.TestCase):
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -np.pi / 2.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
 
-    def test_out_of_range_cases(self):
-        """ARC projection: test out-of-range cases."""
-        # SPHERE TO PLANE
+    def test_out_of_range_cases_sphere_to_plane(self):
+        """ARC projection: test out-of-range cases (sphere->plane)."""
         # Points outside allowed domain on sphere
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -536,7 +535,8 @@ class TestProjectionARC(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, np.pi / 2.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_out_of_range_cases_plane_to_sphere(self):
+        """ARC projection: test out-of-range cases (plane->sphere)."""
         # Points outside allowed domain in plane
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -611,9 +611,8 @@ class TestProjectionSTG(unittest.TestCase):
         np.testing.assert_almost_equal(xx, x_aips, decimal=9)
         np.testing.assert_almost_equal(yy, y_aips, decimal=9)
 
-    def test_corner_cases(self):
-        """STG projection: test special corner cases."""
-        # SPHERE TO PLANE
+    def test_corner_cases_sphere_to_plane(self):
+        """STG projection: test special corner cases (sphere->plane)."""
         # Origin
         xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, 0.0))
         np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
@@ -636,7 +635,8 @@ class TestProjectionSTG(unittest.TestCase):
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, 0.0))
         np.testing.assert_almost_equal(xy, [-2.0, 0.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_corner_cases_plane_to_sphere(self):
+        """STG projection: test special corner cases (plane->sphere)."""
         # Origin
         ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 0.0))
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
@@ -659,9 +659,8 @@ class TestProjectionSTG(unittest.TestCase):
         ae = np.array(self.plane_to_sphere(0.0,  -np.pi / 2.0, 0.0, -2.0))
         assert_angles_almost_equal(ae, [np.pi, 0.0], decimal=12)
 
-    def test_out_of_range_cases(self):
-        """STG projection: test out-of-range cases."""
-        # SPHERE TO PLANE
+    def test_out_of_range_cases_sphere_to_plane(self):
+        """STG projection: test out-of-range cases (sphere->plane)."""
         # Points outside allowed domain on sphere
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -685,7 +684,8 @@ class TestProjectionSTG(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, 2.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_out_of_range_cases_plane_to_sphere(self):
+        """STG projection: test out-of-range cases (plane->sphere)."""
         # Points outside allowed domain in plane
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -780,9 +780,8 @@ class TestProjectionSSN(unittest.TestCase):
         assert_angles_almost_equal(az, aa, decimal=10)
         assert_angles_almost_equal(el, ee, decimal=10)
 
-    def test_corner_cases(self):
-        """SSN projection: test special corner cases."""
-        # SPHERE TO PLANE
+    def test_corner_cases_sphere_to_plane(self):
+        """SSN projection: test special corner cases (sphere->plane)."""
         # Origin
         xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, 0.0))
         np.testing.assert_almost_equal(xy, [0.0, 0.0], decimal=12)
@@ -805,7 +804,8 @@ class TestProjectionSSN(unittest.TestCase):
         xy = np.array(self.sphere_to_plane(0.0, np.pi / 2.0, -np.pi / 2.0, 0.0))
         np.testing.assert_almost_equal(xy, [0.0, 1.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_corner_cases_plane_to_sphere(self):
+        """SSN projection: test special corner cases (plane->sphere)."""
         # Origin
         ae = np.array(self.plane_to_sphere(0.0, 0.0, 0.0, 0.0))
         assert_angles_almost_equal(ae, [0.0, 0.0], decimal=12)
@@ -829,9 +829,8 @@ class TestProjectionSSN(unittest.TestCase):
         ae = np.array(self.plane_to_sphere(0.0, -1.0, 0.0, np.cos(1.0)))
         assert_angles_almost_equal(ae, [0.0, -np.pi / 2.0], decimal=12)
 
-    def test_out_of_range_cases(self):
-        """SSN projection: test out-of-range cases."""
-        # SPHERE TO PLANE
+    def test_out_of_range_cases_sphere_to_plane(self):
+        """SSN projection: test out-of-range cases (sphere->plane)."""
         # Points outside allowed domain on sphere
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
@@ -855,7 +854,8 @@ class TestProjectionSSN(unittest.TestCase):
             xy = np.array(self.sphere_to_plane(0.0, 0.0, 0.0, np.pi))
             np.testing.assert_almost_equal(xy, [0.0, -1.0], decimal=12)
 
-        # PLANE TO SPHERE
+    def test_out_of_range_cases_plane_to_sphere(self):
+        """SSN projection: test out-of-range cases (plane->sphere)."""
         # Points outside allowed domain in plane
         with out_of_range_context('raise'):
             self.assertRaises(OutOfRangeError,
