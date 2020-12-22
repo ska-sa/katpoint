@@ -98,6 +98,27 @@ class TestOutOfRangeTreatment(unittest.TestCase):
             y = treat_out_of_range_values(x, 'Out of range', upper=1.1)
             np.testing.assert_array_equal(y, 1.1)
 
+    def test_scalar_vs_0d(self):
+        with out_of_range_context('clip'):
+            x = 2.0
+            y = treat_out_of_range_values(x, 'Out of range', upper=1.1)
+            assert np.isscalar(y)
+            x = np.array(2.0)
+            y = treat_out_of_range_values(x, 'Out of range', upper=1.1)
+            assert not np.isscalar(y)
+
+    def test_clipping_of_minor_outliers(self):
+        x = 1.0 + np.finfo(float).eps
+        with out_of_range_context('raise'):
+            y = treat_out_of_range_values(x, 'Should not trigger false alarm', upper=1.0)
+            assert y == 1.0
+        with out_of_range_context('nan'):
+            y = treat_out_of_range_values(x, 'Should not trigger false alarm', upper=1.0)
+            assert y == 1.0
+        with out_of_range_context('clip'):
+            y = treat_out_of_range_values(x, 'Should not trigger false alarm', upper=1.0)
+            assert y == 1.0
+
     def tearDown(self):
         set_out_of_range_treatment(self._old_treatment)
 

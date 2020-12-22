@@ -247,20 +247,22 @@ def treat_out_of_range_values(x, err_msg, lower=None, upper=None):
 
     Notes
     -----
-    If a value is out of bounds by less than the machine precision, it is
-    considered a rounding error. It is not treated as out-of-range to avoid
-    false alarms, but instead silently clipped to ensure that all returned
-    data is in the valid range.
+    If a value is out of bounds by less than an absolute tolerance related to
+    the machine precision, it is considered a rounding error. It is not treated
+    as out-of-range to avoid false alarms, but instead silently clipped to
+    ensure that all returned data is in the valid range.
     """
-    clipped_x = np.asarray(np.clip(x, lower, upper), dtype=np.float)
-    # Suppress false alarms due to rounding errors -> only flag substantial outliers
-    out_of_range = np.abs(x - clipped_x) > np.finfo(float).eps
+    # Cast output array to float so that we may assign NaNs to it if needed
+    clipped_x = np.asarray(np.clip(x, lower, upper), dtype=float)
     treatment = get_out_of_range_treatment()
-    if treatment == 'raise' and np.any(out_of_range):
-        raise OutOfRangeError(err_msg)
-    elif treatment == 'nan':
-        clipped_x[out_of_range] = np.nan
-    return clipped_x if clipped_x.ndim else clipped_x.item()
+    if treatment != 'clip':
+        # Suppress false alarms due to rounding errors -> only flag substantial outliers
+        out_of_range = ~np.isclose(x, clipped_x, rtol=0., atol=4. * np.finfo(float).eps)
+        if treatment == 'raise' and np.any(out_of_range):
+            raise OutOfRangeError(err_msg)
+        elif treatment == 'nan':
+            clipped_x[out_of_range] = np.nan
+    return clipped_x.item() if np.isscalar(x) else clipped_x
 
 # --------------------------------------------------------------------------------------------------
 # --- Common
@@ -284,21 +286,21 @@ def safe_scale(x, y, new_radius):
     out_x, out_y : float or array
         Coordinates of 2D vector(s) guaranteed to have length `new_radius`
     """
-    x = np.asarray(x).copy()
-    y = np.asarray(y).copy()
+    radius = np.asarray(np.hypot(x, y))
     new_radius = np.asarray(new_radius)
-    radius = np.asarray(np.sqrt(x * x + y * y))
-    out_of_range = new_radius != radius
-    scalable = out_of_range & (radius != 0.0)
-    unscalable = out_of_range & (radius == 0.0)
+    needs_scaling = new_radius != radius
+    scalable = needs_scaling & (radius != 0.0)
+    unscalable = needs_scaling & (radius == 0.0)
     scale = new_radius[scalable] / radius[scalable]
-    x[scalable] *= scale
-    y[scalable] *= scale
-    x[unscalable] = new_radius[unscalable]
-    y[unscalable] = 0.0
-    x = x if x.ndim else x.item()
-    y = y if y.ndim else y.item()
-    return x, y
+    out_x = np.array(x)
+    out_y = np.array(y)
+    out_x[scalable] *= scale
+    out_y[scalable] *= scale
+    out_x[unscalable] = new_radius[unscalable]
+    out_y[unscalable] = 0.0
+    out_x = out_x.item() if np.isscalar(x) else out_x
+    out_y = out_y.item() if np.isscalar(y) else out_y
+    return out_x, out_y
 
 
 def sphere_to_ortho(az0, el0, az, el, min_cos_theta=None):
@@ -343,6 +345,8 @@ def sphere_to_ortho(az0, el0, az, el, min_cos_theta=None):
     sin_daz, cos_daz = np.sin(delta_az), np.cos(delta_az)
     # Theta is the native latitude (0 at reference point, increases radially outwards)
     cos_theta = sin_el * sin_el0 + cos_el * cos_el0 * cos_daz
+    # Safeguard cos(theta), as over-ranging happens occasionally due to round-off error
+    cos_theta = np.clip(cos_theta, -1.0, 1.0)
     # Do basic orthographic projection:
     # x = sin(theta) * sin(phi), y = sin(theta) * cos(phi)
     ortho_x = cos_el * sin_daz
@@ -600,8 +604,7 @@ def sphere_to_plane_arc(az0, el0, az, el):
         If an elevation is out of range and out-of-range treatment is 'raise'
     """
     ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el)
-    # Safeguard the arccos, as over-ranging happens occasionally due to round-off error
-    theta = np.arccos(np.clip(cos_theta, -1.0, 1.0))
+    theta = np.arccos(cos_theta)
     # Scale length of (x, y) vector from sin(theta) to theta in a safe way
     # x = theta * sin(phi), y = theta * cos(phi)
     return safe_scale(ortho_x, ortho_y, new_radius=theta)
@@ -643,7 +646,7 @@ def plane_to_sphere_arc(az0, el0, x, y):
     """
     check = 'Elevation angle outside range of +- pi/2 radians'
     el0 = treat_out_of_range_values(el0, check, lower=-np.pi / 2.0, upper=np.pi / 2.0)
-    theta = np.sqrt(x * x + y * y)
+    theta = np.hypot(x, y)
     check = 'Length of (x, y) vector bigger than pi'
     theta = treat_out_of_range_values(theta, check, upper=np.pi)
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
@@ -962,7 +965,7 @@ def plane_to_sphere_ssn(az0, el0, x, y):
     den = treat_out_of_range_values(den, check, lower=0.0)
     el = np.arctan2(num, den)
     # Ensure that az is NaN when el is NaN
-    az *= np.where(np.isnan(el), np.nan, 1.0)
+    az = np.where(np.isnan(el), np.nan, az)
     return az, el
 
 
