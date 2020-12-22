@@ -126,17 +126,17 @@ class TestOutOfRangeTreatment(unittest.TestCase):
 class TestProjectionSIN(unittest.TestCase):
     """Test orthographic projection."""
     def setUp(self):
-        np.random.seed(42)
+        rs = np.random.RandomState(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['SIN']
         self.sphere_to_plane = katpoint.sphere_to_plane['SIN']
         N = 100
         max_theta = np.pi / 2.0
-        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        self.az0 = np.pi * (2.0 * rs.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
-        self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
+        self.el0 = 0.999 * np.pi * (rs.rand(N) - 0.5)
         # (x, y) points within unit circle
-        theta = max_theta * np.random.rand(N)
-        phi = 2 * np.pi * np.random.rand(N)
+        theta = max_theta * rs.rand(N)
+        phi = 2 * np.pi * rs.rand(N)
         self.x = np.sin(theta) * np.cos(phi)
         self.y = np.sin(theta) * np.sin(phi)
 
@@ -272,17 +272,17 @@ class TestProjectionSIN(unittest.TestCase):
 class TestProjectionTAN(unittest.TestCase):
     """Test gnomonic projection."""
     def setUp(self):
-        np.random.seed(42)
+        rs = np.random.RandomState(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['TAN']
         self.sphere_to_plane = katpoint.sphere_to_plane['TAN']
         N = 100
         # Stay away from edge of hemisphere
         max_theta = np.pi / 2.0 - 0.01
-        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        self.az0 = np.pi * (2.0 * rs.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
-        self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
-        theta = max_theta * np.random.rand(N)
-        phi = 2 * np.pi * np.random.rand(N)
+        self.el0 = 0.999 * np.pi * (rs.rand(N) - 0.5)
+        theta = max_theta * rs.rand(N)
+        phi = 2 * np.pi * rs.rand(N)
         # Perform inverse TAN mapping to spread out points on plane
         self.x = np.tan(theta) * np.cos(phi)
         self.y = np.tan(theta) * np.sin(phi)
@@ -411,18 +411,18 @@ class TestProjectionTAN(unittest.TestCase):
 class TestProjectionARC(unittest.TestCase):
     """Test zenithal equidistant projection."""
     def setUp(self):
-        np.random.seed(42)
+        rs = np.random.RandomState(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['ARC']
         self.sphere_to_plane = katpoint.sphere_to_plane['ARC']
         N = 100
         # Stay away from edge of circle
         max_theta = np.pi - 0.01
-        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        self.az0 = np.pi * (2.0 * rs.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
-        self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
+        self.el0 = 0.999 * np.pi * (rs.rand(N) - 0.5)
         # (x, y) points within circle of radius pi
-        theta = max_theta * np.random.rand(N)
-        phi = 2 * np.pi * np.random.rand(N)
+        theta = max_theta * rs.rand(N)
+        phi = 2 * np.pi * rs.rand(N)
         self.x = theta * np.cos(phi)
         self.y = theta * np.sin(phi)
 
@@ -564,19 +564,19 @@ class TestProjectionARC(unittest.TestCase):
 class TestProjectionSTG(unittest.TestCase):
     """Test stereographic projection."""
     def setUp(self):
-        np.random.seed(42)
+        rs = np.random.RandomState(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['STG']
         self.sphere_to_plane = katpoint.sphere_to_plane['STG']
         N = 100
         # Stay well away from point of projection
         max_theta = 0.8 * np.pi
-        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        self.az0 = np.pi * (2.0 * rs.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
-        self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
+        self.el0 = 0.999 * np.pi * (rs.rand(N) - 0.5)
         # Perform inverse STG mapping to spread out points on plane
-        theta = max_theta * np.random.rand(N)
+        theta = max_theta * rs.rand(N)
         r = 2.0 * np.sin(theta) / (1.0 + np.cos(theta))
-        phi = 2 * np.pi * np.random.rand(N)
+        phi = 2 * np.pi * rs.rand(N)
         self.x = r * np.cos(phi)
         self.y = r * np.sin(phi)
 
@@ -701,16 +701,16 @@ class TestProjectionSTG(unittest.TestCase):
 class TestProjectionCAR(unittest.TestCase):
     """Test plate carree projection."""
     def setUp(self):
-        np.random.seed(42)
+        rs = np.random.RandomState(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['CAR']
         self.sphere_to_plane = katpoint.sphere_to_plane['CAR']
         N = 100
         # Unrestricted (az0, el0) points on sphere
-        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
-        self.el0 = np.pi * (np.random.rand(N) - 0.5)
+        self.az0 = np.pi * (2.0 * rs.rand(N) - 1.0)
+        self.el0 = np.pi * (rs.rand(N) - 0.5)
         # Unrestricted (x, y) points on corresponding plane
-        self.x = np.pi * (2.0 * np.random.rand(N) - 1.0)
-        self.y = np.pi * (np.random.rand(N) - 0.5)
+        self.x = np.pi * (2.0 * rs.rand(N) - 1.0)
+        self.y = np.pi * (rs.rand(N) - 0.5)
 
     def test_random_closure(self):
         """CAR projection: do random projections and check closure."""
@@ -743,22 +743,22 @@ def plane_to_sphere_original_ssn(target_az, target_el, ll, mm):
 class TestProjectionSSN(unittest.TestCase):
     """Test swapped orthographic projection."""
     def setUp(self):
-        np.random.seed(42)
+        rs = np.random.RandomState(42)
         self.plane_to_sphere = katpoint.plane_to_sphere['SSN']
         self.sphere_to_plane = katpoint.sphere_to_plane['SSN']
         N = 100
-        self.az0 = np.pi * (2.0 * np.random.rand(N) - 1.0)
+        self.az0 = np.pi * (2.0 * rs.rand(N) - 1.0)
         # Keep away from poles (leave them as corner cases)
-        self.el0 = 0.999 * np.pi * (np.random.rand(N) - 0.5)
+        self.el0 = 0.999 * np.pi * (rs.rand(N) - 0.5)
         # (x, y) points within complicated SSN domain - clipped unit circle
         cos_el0 = np.cos(self.el0)
         # The x coordinate is bounded by +- cos(el0)
-        self.x = (2 * np.random.rand(N) - 1) * cos_el0
+        self.x = (2 * rs.rand(N) - 1) * cos_el0
         # The y coordinate ranges between two (semi-)circles centred on origin:
         # the unit circle on one side and circle of radius cos(el0) on other side
         y_offset = -np.sqrt(cos_el0 ** 2 - self.x ** 2)
         y_range = -y_offset + np.sqrt(1.0 - self.x ** 2)
-        self.y = (y_range * np.random.rand(N) + y_offset) * np.sign(self.el0)
+        self.y = (y_range * rs.rand(N) + y_offset) * np.sign(self.el0)
 
     def test_random_closure(self):
         """SSN projection: do random projections and check closure."""
