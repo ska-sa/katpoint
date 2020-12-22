@@ -355,6 +355,8 @@ def sphere_to_ortho(az0, el0, az, el, min_cos_theta=None):
         check = ('Target point more than {} pi radians away from '
                  'reference point'.format(np.arccos(min_cos_theta) / np.pi))
         cos_theta = treat_out_of_range_values(cos_theta, check, lower=min_cos_theta)
+        # Adjust radius of (x, y) to be commensurate with potentially clipped cos(theta),
+        # and also propagate any NaNs in cos(theta) to (x, y) to complete out-of-range treatment
         sin_theta = np.sqrt(1.0 - cos_theta * cos_theta)
         ortho_x, ortho_y = safe_scale(ortho_x, ortho_y, new_radius=sin_theta)
     return ortho_x, ortho_y, cos_theta
@@ -518,7 +520,7 @@ def sphere_to_plane_tan(az0, el0, az, el):
         If an elevation is out of range or target is too far from reference,
         and out-of-range treatment is 'raise'
     """
-    # Angular separation theta must be strictly < 90 degrees - pick 1e-6 radians less
+    # Angular separation theta must be strictly < pi/2 radians - pick 1e-6 radians less
     ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el, min_cos_theta=1e-6)
     # x = tan(theta) * sin(phi), y = tan(theta) * cos(phi)
     return ortho_x / cos_theta, ortho_y / cos_theta
@@ -702,7 +704,7 @@ def sphere_to_plane_stg(az0, el0, az, el):
         If an elevation is out of range or target point opposite to reference,
         and out-of-range treatment is 'raise'
     """
-    # Angular separation theta must be strictly < 180 degrees - pick 1e-5 radians less
+    # Angular separation theta must be strictly < pi radians - pick 4.5e-3 radians less
     ortho_x, ortho_y, cos_theta = sphere_to_ortho(az0, el0, az, el, min_cos_theta=1e-5 - 1)
     den = 1.0 + cos_theta
     # x = 2 sin(theta) sin(phi) / (1 + cos(theta))
