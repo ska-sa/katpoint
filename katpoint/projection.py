@@ -145,8 +145,11 @@ class OutOfRangeError(ValueError):
     """A numeric value is out of range."""
 
 
-_out_of_range_cvar = threading.local()
-_out_of_range_cvar.treatment = 'raise'
+class _OutOfRangeCvar(threading.local):
+    treatment = 'raise'
+
+
+_out_of_range_cvar = _OutOfRangeCvar()
 
 
 def set_out_of_range_treatment(treatment):
