@@ -17,6 +17,7 @@
 """Tests for the projection module."""
 from __future__ import print_function, division, absolute_import
 
+import threading
 import unittest
 
 import numpy as np
@@ -118,6 +119,21 @@ class TestOutOfRangeTreatment(unittest.TestCase):
         with out_of_range_context('clip'):
             y = treat_out_of_range_values(x, 'Should not trigger false alarm', upper=1.0)
             assert y == 1.0
+
+    def test_threading(self):
+        def my_thread():
+            try:
+                result.append(treat_out_of_range_values(2.0, 'Should raise', upper=1.0))
+            except Exception as exc:
+                result.append(exc)
+
+        result = []
+        thread = threading.Thread(target=my_thread)
+        with out_of_range_context('nan'):
+            # Make sure the thread code runs inside our out_of_range_context
+            thread.start()
+            thread.join()
+        assert isinstance(result[0], OutOfRangeError)
 
     def tearDown(self):
         set_out_of_range_treatment(self._old_treatment)
