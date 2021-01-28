@@ -1,3 +1,4 @@
+ephem
 future
 numpy
 pyephem
