@@ -1,7 +1,7 @@
 #!groovy
 
-@Library('katsdpjenkins@python2') _
+@Library('katsdpjenkins') _
 katsdp.killOldJobs()
-katsdp.setDependencies(['ska-sa/katsdpdockerbase/python2'])
-katsdp.standardBuild(python3: true, katsdpdockerbase_ref: 'python2')
+katsdp.setDependencies(['ska-sa/katsdpdockerbase/master'])
+katsdp.standardBuild()
 katsdp.mail('ludwig@ska.ac.za')

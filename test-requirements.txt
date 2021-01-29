@@ -1,7 +1,7 @@
-argparse               # via unittest2
+argparse; python_version<'3'        # via unittest2
 nose
 coverage
-linecache2             # via traceback2
-six                    # via unittest2
-traceback2             # via unittest2
-unittest2
+linecache2; python_version<'3'      # via traceback2
+six; python_version<'3'             # via unittest2
+traceback2; python_version<'3'      # via unittest2
+unittest2; python_version<'3'

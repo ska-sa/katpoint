@@ -17,7 +17,12 @@
 """Tests for the flux module."""
 from __future__ import print_function, division, absolute_import
 
-import unittest2 as unittest
+import sys
+
+if sys.version_info < (3,):
+    import unittest2 as unittest
+else:
+    import unittest
 
 import numpy as np
 
