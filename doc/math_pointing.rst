@@ -6,8 +6,8 @@ Mathematical Details of Antenna Pointing Correction
 Pointing an antenna involves many coordinate transformations. The complete chain
 of coordinate conversions from the standard J2000 right ascension and declination
 found in a catalogue to the actual commanded azimuth and elevation values sent
-to the low-level antenna driver is shown below. The graph includes the Fringe
-Finder sensor names which correspond to each stage of the chain.
+to the low-level antenna driver is shown below. For illustration the graph includes
+the KAT-7 Fringe Finder sensor names which correspond to each stage of the chain.
 
 .. _pointing_coordinate_conversions:
 
@@ -29,12 +29,12 @@ affects delay tracking in the correlator, while the latter affects antenna
 pointing. Specifically, the source is perceived to be higher in elevation than
 it actually is. This section focuses on the pointing aspect of refraction.
 
-Fringe Finder, KAT-7 and even MeerKAT currently focus on the measurement of
-centimeter-wavelength signals using dishes with a diameter of approximately 15
-metres, which implies a beamwidth of the order of one degree of arc. Since the
-maximum refraction offset is of the order of half a degree at the horizon, this
-lessens the need for highly accurate refraction models [Mangum1]_, which is a
-bigger problem for arrays like ALMA.
+KAT-7 and MeerKAT currently focus on the measurement of centimeter-wavelength
+signals using dishes with a diameter of approximately 15 metres, which implies
+a beamwidth of the order of one degree of arc. Since the maximum refraction
+offset is of the order of half a degree at the horizon, this lessens the need
+for highly accurate refraction models [Mangum1]_, which is a bigger problem
+for arrays like ALMA.
 
 At radio frequencies up to about a terahertz, refractive bending is independent
 of frequency and antenna location, and depends instead on the ambient weather
@@ -43,7 +43,7 @@ humidity. There are various atmospheric models that calculate the refraction
 offset to the elevation angle as a function of elevation angle and these three
 variables. The most accurate of these are discussed in [Mangum2]_.
 
-The Fringe Finder uses the simple refraction model in the VLBI Field System. The
+:mod:`katpoint` uses the simple refraction model in the VLBI Field System. The
 specific version can be found in Field System version 9.9.2. As noted in the
 Field System documentation [Himwich1]_, the refraction model originated with the
 Haystack pointing system, but the documentation for this algorithm seems to have
@@ -78,7 +78,7 @@ the only difference being different names for the parameters. This standard
 model is linear in the parameters, making it useable for small deviations only,
 and it describes a common set of coordinate system deviations in the mount.
 
-The Fringe Finder uses the VLBI Field System version of this model, specialised
+:mod:`katpoint` uses the VLBI Field System version of this model, specialised
 for an alt-az mount. The exact description corresponds to the C implementation
 of Field System version 9.9.0, which differs slightly from the official
 description in [Himwich2]_ by introducing minor changes to the ad hoc parameters.
