@@ -60,7 +60,7 @@ setup(name="katpoint",
       install_requires=[
           "future",
           "numpy",
-          "pyephem",
+          "ephem",
       ],
       tests_require=[
           "nose",
