@@ -1,3 +1,5 @@
+-c https://raw.githubusercontent.com/ska-sa/katsdpdockerbase/master/docker-base-build/base-requirements.txt
+
 argparse; python_version<'3'        # via unittest2
 nose
 coverage
