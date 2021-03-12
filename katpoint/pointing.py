@@ -23,6 +23,7 @@ from __future__ import print_function, division, absolute_import
 from builtins import range
 
 import logging
+import warnings
 
 import numpy as np
 
@@ -46,9 +47,9 @@ class PointingModel(Model):
 
     Parameters
     ----------
-    model : file-like object, sequence of 22 floats, or string, optional
-        Model specification. If this is a file-like object, load the model
-        from it. If this is a sequence of floats, accept it directly as the
+    model : :class:`PointingModel`, file-like, sequence of 22 floats, string, optional
+        Model specification. If this is a model or file-like object, load the
+        model from it. If this is a sequence of floats, accept it directly as the
         model parameters (defaults to sequence of zeroes). If it is a string,
         interpret it as a comma-separated (or whitespace-separated) sequence
         of parameters in their string form (i.e. a description string).
@@ -262,16 +263,24 @@ class PointingModel(Model):
                            iteration + 1, rad2deg(max_error) * 3600., max_az, max_el)
         return az, el
 
-    def fit(self, az, el, delta_az, delta_el, sigma_daz=None, sigma_del=None, enabled_params=None):
+    def fit(self, az, el, delta_az, delta_el, sigma_daz=None, sigma_del=None,
+            enabled_params=None, keep_disabled_params=False):
         """Fit pointing model parameters to observed offsets.
 
         This fits the pointing model to a sequence of observed (az, el) offsets.
-        A subset of the parameters can be fit, while the rest will be zeroed.
-        This is generally a good idea, as most of the parameters (P9 and above)
-        are ad hoc and should only be enabled if there are sufficient evidence
-        for them in the pointing error residuals. Standard errors can be
-        specified for the input offsets, and will be reflected in the returned
-        standard errors on the fitted parameters.
+        A subset of the parameters can be fit, while the rest will either be
+        kept (fixed) or zeroed. This is generally a good idea, as most of the
+        parameters (P9 and above) are ad hoc and should only be enabled if
+        there are sufficient evidence for them in the pointing error residuals.
+
+        While zeroing is the original behaviour, it is deprecated and will
+        eventually be removed, since the user can always explicitly zero the
+        model before calling :meth:`fit` to get the same result. The
+        contribution of fixed parameters will be subtracted from `delta_az`
+        and `delta_el` before the enabled parameters are fit to the residual.
+
+        Standard errors can be specified for the input offsets, and will be
+        reflected in the returned standard errors on the fitted parameters.
 
         Parameters
         ----------
@@ -287,6 +296,11 @@ class PointingModel(Model):
             integers start at **1** and correspond to the P-number. The default
             is to select the 6 main parameters modelling coordinate misalignment,
             which are P1, P3, P4, P5, P6 and P7.
+        keep_disabled_params : bool, optional
+            If True, disabled parameters (i.e. those that are not fitted)
+            keep their values and are treated as fixed / frozen parameters.
+            If False, they are zeroed. A future version of katpoint will
+            force this to be True and remove the parameter.
 
         Returns
         -------
@@ -320,9 +334,17 @@ class PointingModel(Model):
         assert az.shape == el.shape == delta_az.shape == delta_el.shape == sigma_daz.shape == sigma_del.shape, \
             'Input parameters should all have the same shape'
 
-        # Blank out the existing model
-        self.set()
+        if not keep_disabled_params:
+            # Blank out the existing model but warn that this behaviour is deprecated
+            self.set()
+            warnings.warn('Pointing model parameters that are not being fitted will be kept in '
+                          'future and not zeroed - zero the model beforehand instead', FutureWarning)
+        param_vector = np.array(self.values())
         sigma_params = np.zeros(len(self))
+        # Subtract the existing model from data (both enabled and disabled parameters)
+        fixed_delta_az, fixed_delta_el = self.offset(az, el)
+        residual_delta_az = delta_az - fixed_delta_az
+        residual_delta_el = delta_el - fixed_delta_el
 
         # Handle parameter enabling
         if enabled_params is None:
@@ -340,9 +362,9 @@ class PointingModel(Model):
             logger.warning('Pointing model parameter P10 is redundant for alt-az mount (same as P8) - disabled P10')
             enabled_params.remove(10)
         enabled_params = np.array(list(enabled_params))
-        # If no parameters are enabled, a zero model is returned
+        # If no parameters are enabled, the existing model is returned
         if len(enabled_params) == 0:
-            return np.array(self.values()), sigma_params
+            return param_vector, sigma_params
 
         # Number of active parameters
         M = len(enabled_params)
@@ -351,22 +373,21 @@ class PointingModel(Model):
         N = 2 * len(az)
         # Construct design matrix, containing weighted basis functions
         A = np.zeros((N, M))
-        param_vector = np.zeros(len(self))
         for m, param in enumerate(enabled_params):
             # Create parameter vector that will select a single column of design matrix
-            param_vector[:] = 0.0
-            param_vector[param - 1] = 1.0
-            self.fromlist(param_vector)
-            basis_az, basis_el = self.offset(az, el)
+            unit_vector = np.zeros(len(self))
+            unit_vector[param - 1] = 1.0
+            unit_model = PointingModel(unit_vector)
+            basis_az, basis_el = unit_model.offset(az, el)
             A[:, m] = np.hstack((basis_az * cos_el / sigma_daz, basis_el / sigma_del))
         # Measurement vector, containing weighted observed offsets
-        b = np.hstack((delta_az * cos_el / sigma_daz, delta_el / sigma_del))
+        b = np.hstack((residual_delta_az * cos_el / sigma_daz, residual_delta_el / sigma_del))
         # Solve linear least-squares problem using SVD (see NRinC, 2nd ed, Eq. 15.4.17)
         U, s, Vt = np.linalg.svd(A, full_matrices=False)
-        param_vector[enabled_params - 1] = np.dot(Vt.T, np.dot(U.T, b) / s)
+        # We solved on the residual (az, el) offsets, so add the solution to existing parameters
+        param_vector[enabled_params - 1] += Vt.T.dot(U.T.dot(b) / s)
         self.fromlist(param_vector)
         # Also obtain standard errors of parameters (see NRinC, 2nd ed, Eq. 15.4.19)
         sigma_params[enabled_params - 1] = np.sqrt(np.sum((Vt.T / s[np.newaxis, :]) ** 2, axis=1))
 #        logger.info('Fit pointing model using %dx%d design matrix with condition number %.2f', N, M, s[0] / s[-1])
-
         return param_vector, sigma_params

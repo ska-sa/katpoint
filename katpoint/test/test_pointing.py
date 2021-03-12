@@ -17,7 +17,13 @@
 """Tests for the pointing module."""
 from __future__ import print_function, division, absolute_import
 
-import unittest
+import sys
+import warnings
+
+if sys.version_info < (3,):
+    import unittest2 as unittest
+else:
+    import unittest
 
 import numpy as np
 
@@ -79,11 +85,37 @@ class TestPointingModel(unittest.TestCase):
         params[1] = params[9] = 0.0
         pm = katpoint.PointingModel(params.copy())
         delta_az, delta_el = pm.offset(self.az, self.el)
+        # All parameters are enabled
         enabled_params = (np.arange(self.num_params) + 1).tolist()
-        # Comment out these removes, thereby testing more code paths in PointingModel
-        # enabled_params.remove(2)
-        # enabled_params.remove(10)
-        fitted_params, sigma_params = pm.fit(self.az, self.el, delta_az, delta_el, enabled_params=[])
+        # Don't fit anything, but keep existing model
+        fitted_params, sigma_params = pm.fit(self.az, self.el, delta_az, delta_el,
+                                             enabled_params=[], keep_disabled_params=True)
+        np.testing.assert_equal(fitted_params, params)
+        np.testing.assert_equal(sigma_params, np.zeros(self.num_params))
+        with self.assertWarns(FutureWarning):
+            # Don't fit anything, and zero the model (deprecated)
+            fitted_params, _ = pm.fit(self.az, self.el, delta_az, delta_el, enabled_params=[])
         np.testing.assert_equal(fitted_params, np.zeros(self.num_params))
-        fitted_params, sigma_params = pm.fit(self.az, self.el, delta_az, delta_el, enabled_params=enabled_params)
+        # Clear model explicitly and fit all parameters
+        pm.set()
+        fitted_params, _ = pm.fit(self.az, self.el, delta_az, delta_el,
+                                  enabled_params=enabled_params, keep_disabled_params=True)
         np.testing.assert_almost_equal(fitted_params, params, decimal=9)
+        np.testing.assert_equal(fitted_params, pm.values())
+        # Don't clear model and refit all parameters - same result
+        fitted_params, _ = pm.fit(self.az, self.el, delta_az, delta_el,
+                                  enabled_params=enabled_params, keep_disabled_params=True)
+        np.testing.assert_almost_equal(fitted_params, params, decimal=9)
+        # Fit some different parameters and keep the rest
+        pm = katpoint.PointingModel(params.copy())
+        fitted_params, _ = pm.fit(self.az, self.el, delta_az + 0.001, delta_el,
+                                  enabled_params=[1, 2, 3], keep_disabled_params=True)
+        self.assertRaises(AssertionError, np.testing.assert_equal, fitted_params[:3], params[:3])
+        np.testing.assert_equal(fitted_params[3:], params[3:])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Fit some different parameters and zero the rest
+            fitted_params, _ = pm.fit(self.az, self.el, delta_az + 0.001, delta_el,
+                                      enabled_params=[1, 2, 3], keep_disabled_params=False)
+        self.assertRaises(AssertionError, np.testing.assert_equal, fitted_params[:3], params[:3])
+        np.testing.assert_equal(fitted_params[3:], np.zeros(self.num_params - 3))
