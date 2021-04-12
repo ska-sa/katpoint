@@ -246,8 +246,8 @@ class DelayCorrection(object):
                                                 antenna=self.ref_ant, **offset)
         targetdir = np.array(azel_to_enu(az, el))
         cos_el = np.cos(el)
-        design_mat = np.array([np.r_[-targetdir, 1.0, 0.0, cos_el],
-                               np.r_[-targetdir, 0.0, 1.0, cos_el]])
+        design_mat = np.array([np.r_[-targetdir, 1.0, 0.0, -cos_el],
+                               np.r_[-targetdir, 0.0, 1.0, -cos_el]])
         return np.dot(self._params, design_mat.T).ravel()
 
     def _cached_delays(self, target, timestamp, offset=None):
