@@ -67,24 +67,39 @@ def _just_gimme_an_ascii_string(s):
         return str(s)
 
 
-def angle_from_degrees(s):
-    """Creates angle object from sexagesimal string in degrees or number in radians."""
+def _to_angle(s, unit='d'):
+    """Creates angle object from sexagesimal string with given `unit` or number in radians."""
+    # Try to obtain the unit from a string suffix (this is the v1 angle format)
+    try:
+        suffix = _just_gimme_an_ascii_string(s[-1])
+    except (TypeError, IndexError):
+        suffix = ''
+    if suffix in ('d', 'h'):
+        unit = suffix
+        s = s[:-1]
+    # Pick appropriate converter based on unit
+    if unit in ('d', 'deg', 'degrees'):
+        converter = ephem.degrees
+    elif unit in ('h', 'hour', 'hourangle', 'hours'):
+        converter = ephem.hours
+    else:
+        raise ValueError(f"Unsupported angle unit {unit}, must be 'deg' or 'hour'")
     try:
         # Ephem expects a number or platform-appropriate string (i.e. Unicode on Py3)
-        return ephem.degrees(s)
+        return converter(s)
     except TypeError:
         # If input is neither, assume that it really wants to be a string
-        return ephem.degrees(_just_gimme_an_ascii_string(s))
+        return converter(_just_gimme_an_ascii_string(s))
+
+
+def angle_from_degrees(s):
+    """Creates angle object from sexagesimal string in degrees or number in radians."""
+    return _to_angle(s, unit='d')
 
 
 def angle_from_hours(s):
     """Creates angle object from sexagesimal string in hours or number in radians."""
-    try:
-        # Ephem expects a number or platform-appropriate string (i.e. Unicode on Py3)
-        return ephem.hours(s)
-    except TypeError:
-        # If input is neither, assume that it really wants to be a string
-        return ephem.hours(_just_gimme_an_ascii_string(s))
+    return _to_angle(s, unit='h')
 
 
 def wrap_angle(angle, period=2.0 * np.pi):

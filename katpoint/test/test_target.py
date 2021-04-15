@@ -33,12 +33,15 @@ class TestTargetConstruction(unittest.TestCase):
     """Test construction of targets from strings and vice versa."""
     def setUp(self):
         self.valid_targets = ['azel, -30.0, 90.0',
+                              'azel, -30.0d, 90.0d',
                               ', azel, 180, -45:00:00.0',
                               'Zenith, azel, 0, 90',
                               'radec J2000, 0, 0.0, (1000.0 2000.0 1.0 10.0)',
                               ', radec B1950, 14:23:45.6, -60:34:21.1',
                               'radec B1900, 14:23:45.6, -60:34:21.1',
+                              'radec B1900, 14:23:45.6h, -60:34:21.1d',
                               'gal, 300.0, 0.0',
+                              'gal, 300.0d, 0.0d',
                               'Sag A, gal, 0.0, 0.0',
                               'Zizou, radec cal, 1.4, 30.0, (1000.0 2000.0 1.0 10.0)',
                               'Fluffy | *Dinky, radec, 12.5, -50.0, (1.0 2.0 1.0 2.0 3.0 4.0)',
@@ -65,6 +68,8 @@ class TestTargetConstruction(unittest.TestCase):
                                 'Zenith, azel blah',
                                 'radec J2000, 0.3',
                                 'gal, 0.0',
+                                'gal, 0.0deg, 0.0deg',
+                                'gal, 0.0rad, 0.0rad',
                                 'Zizou, radec cal, 1.4, 30.0, (1000.0, 2000.0, 1.0, 10.0)',
                                 'tle, GPS BIIA-21 (PRN 09)    \n' +
                                 '2 22700  55.4408  61.3790 0191986  78.1802 283.9935  2.00561720104282\n',
@@ -80,8 +85,8 @@ class TestTargetConstruction(unittest.TestCase):
         # A floating-point RA is in degrees
         self.radec_target = 'radec, 20.0, -20.0'
         # A sexagesimal RA string is in hours
-        self.radec_target_rahours = 'radec, 20:00:00, -20:00:00'
-        self.gal_target = 'gal, 30.0, -30.0'
+        self.radec_target_rahours = 'radec, 20:00:00h, -20:00:00'
+        self.gal_target = 'gal, 30.0d, -30.0d'
         self.tag_target = 'azel J2000 GPS, 40.0, -30.0'
 
     def test_construct_target(self):
