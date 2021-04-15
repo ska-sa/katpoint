@@ -1028,13 +1028,13 @@ def construct_target_params(description):
         if len(fields) < 4:
             raise ValueError("Target description '%s' contains *gal* body with no (l, b) coordinates"
                              % description)
-        l, b = float(fields[2]), float(fields[3])
+        l, b = angle_from_degrees(fields[2]), angle_from_degrees(fields[3])
         body = ephem.FixedBody()
-        ra, dec = ephem.Galactic(deg2rad(l), deg2rad(b)).to_radec()
+        ra, dec = ephem.Galactic(l, b).to_radec()
         if preferred_name:
             body.name = preferred_name
         else:
-            body.name = "Galactic l: %.4f b: %.4f" % (l, b)
+            body.name = "Galactic l: %.4f b: %.4f" % (rad2deg(l), rad2deg(b))
         body._epoch = ephem.J2000
         body._ra = ra
         body._dec = dec
