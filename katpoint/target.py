@@ -56,9 +56,17 @@ class Target(object):
     the list may be empty. The <tags> field contains a space-separated list of
     descriptive tags for the target. The first tag is mandatory and indicates
     the body type of the target, which should be one of (*azel*, *radec*, *gal*,
-    *tle*, *special*, *star*, *xephem*). The longidutinal and latitudinal fields
-    are only relevant to *azel* and *radec* targets, in which case they contain
-    the relevant coordinates.
+    *tle*, *special*, *star*, *xephem*).
+
+    The longitudinal and latitudinal fields are only relevant to *azel*, *radec*
+    and *gal* targets, in which case they contain the relevant coordinates. The
+    following angle string formats are supported::
+
+      - Decimal, always in degrees (e.g. '12.5')
+      - Sexagesimal, in hours for right ascension and degrees for the rest,
+        with a colon or space separator (e.g. '12:30:00' or '12 30')
+      - Decimal or sexagesimal with explicit unit suffix 'd' or 'h',
+        e.g. '12.5h' (hours, not degrees!) or '12:30d'
 
     The <flux model> is a space-separated list of numbers used to represent the
     flux density of the target. The first two numbers specify the frequency
@@ -1119,10 +1127,10 @@ def construct_azel_target(az, el):
 
     Parameters
     ----------
-    az : string or float
-        Azimuth, either in 'D:M:S' string format, or as a float in radians
-    el : string or float
-        Elevation, either in 'D:M:S' string format, or as a float in radians
+    az, el : string or float
+        Azimuth / elevation, either as a sexagesimal or decimal string in degrees,
+        or such a string with an explicit unit suffix ('d' for degrees / 'h' for
+        hours), or as a float in radians
 
     Returns
     -------
@@ -1146,11 +1154,13 @@ def construct_radec_target(ra, dec):
     Parameters
     ----------
     ra : string or float
-        Right ascension, either in 'H:M:S' or decimal degree string format, or
-        as a float in radians
+        Right ascension, either as a sexagesimal string in hours, a decimal
+        string in degrees, or a sexagesimal or decimal string with an explicit
+        unit suffix ('d' for degrees / 'h' for hours), or as a float in radians
     dec : string or float
-        Declination, either in 'D:M:S' or decimal degree string format, or as
-        a float in radians
+        Declination, either as a sexagesimal or decimal string in degrees, or
+        such a string with an explicit unit suffix ('d' for degrees / 'h' for
+        hours), or as a float in radians
 
     Returns
     -------
