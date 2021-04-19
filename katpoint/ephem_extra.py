@@ -78,12 +78,12 @@ def _to_angle(s, unit='d'):
         unit = suffix
         s = s[:-1]
     # Pick appropriate converter based on unit
-    if unit in ('d', 'deg', 'degrees'):
+    if unit == 'd':
         converter = ephem.degrees
-    elif unit in ('h', 'hour', 'hourangle', 'hours'):
+    elif unit == 'h':
         converter = ephem.hours
     else:
-        raise ValueError(f"Unsupported angle unit {unit}, must be 'deg' or 'hour'")
+        raise ValueError("Unsupported angle unit '{}', must be 'd' or 'h'".format(unit))
     try:
         # Ephem expects a number or platform-appropriate string (i.e. Unicode on Py3)
         return converter(s)
@@ -94,12 +94,12 @@ def _to_angle(s, unit='d'):
 
 def angle_from_degrees(s):
     """Creates angle object from sexagesimal string in degrees or number in radians."""
-    return _to_angle(s, unit='d')
+    return ephem.degrees(_to_angle(s, unit='d'))
 
 
 def angle_from_hours(s):
     """Creates angle object from sexagesimal string in hours or number in radians."""
-    return _to_angle(s, unit='h')
+    return ephem.hours(_to_angle(s, unit='h'))
 
 
 def wrap_angle(angle, period=2.0 * np.pi):

@@ -152,6 +152,11 @@ class TestTargetConstruction(unittest.TestCase):
         calc_l, calc_b = katpoint.rad2deg(calc_lb[0]), katpoint.rad2deg(calc_lb[1])
         np.testing.assert_almost_equal(calc_l, 30.0, decimal=4)
         np.testing.assert_almost_equal(calc_b, -30.0, decimal=4)
+        lb2 = katpoint.Target('gal, 4h, -4h')
+        calc_lb2 = lb2.galactic()
+        calc_l2, calc_b2 = katpoint.rad2deg(calc_lb2[0]), katpoint.rad2deg(calc_lb2[1])
+        np.testing.assert_almost_equal(calc_l2, 60.0, decimal=4)
+        np.testing.assert_almost_equal(calc_b2, -60.0, decimal=4)
 
     def test_add_tags(self):
         """Test adding tags."""
