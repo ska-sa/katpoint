@@ -291,7 +291,15 @@ class Target(object):
             fields += [edb_string]
 
         elif self.body_type == 'wsclean':
-            pass  # TODO: wsclean format logic
+            # TODO: wsclean format logic is currently not specific (i.e. borrows xephem)
+            # Replace commas in wsclean string with tildes
+            # Also remove extra spaces added into string by writedb
+            wsc_string = '~'.join([wsc_field.strip() for wsc_field in self.body.writedb().split(',')])
+            # Suppress name if it's the same as in the xephem db string
+            wsc_name = wsc_string[:wsc_string.index('~')]
+            if wsc_name == names:
+                fields = [tags]
+            fields += [wsc_string]
 
         return ', '.join(fields)
 
@@ -1115,8 +1123,31 @@ def construct_target_params(description):
             tags.insert(1, 'tle')
         elif edb_type == 'P':
             tags.insert(1, 'special')
+
     elif body_type == 'wsclean':
-        pass  #TODO wsclean formatting
+        # TODO wsclean formatting
+        wsc_string = fields[-1].replace('~', ',')
+        wsc_name_field = wsc_string.partition(',')[0]
+        wsc_names = [name.strip() for name in wsc_name_field.split('|')]
+        if preferred_name:
+            wsc_string = wsc_string.replace(wsc_name_field, preferred_name)
+        else:
+            preferred_name = wsc_names[0]
+        if preferred_name != wsc_names[0]:
+            aliases.append(wsc_names[0])
+        for extra_name in wsc_names[1:]:
+            if not (extra_name in aliases) and not (extra_name == preferred_name):
+                aliases.append(extra_name)
+        body = wsc_string
+        # Add wsc source type ('point' | 'gaussian') as an extra tag, right after the main
+        # 'wsclean' tag
+        wsc_type = wsc_string[wsc_string.find(',') + 1]
+        if wsc_type == 'point':
+            tags.insert(1, '')
+        elif wsc_type == 'gaussian':
+            tags.insert(1, '')
+            # TODO handling gaussian sources requires changes to katpoint?
+
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
 

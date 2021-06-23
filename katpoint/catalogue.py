@@ -571,7 +571,7 @@ class Catalogue(object):
             targets.append('xephem,' + line.replace(',', '~'))
         self.add(targets, tags)
 
-    def add_wsclean(self):
+    def add_wsclean(self, lines, tags=None):
         """Add WSClean format (Blackboard Self-cal DPPP) targets to catalogue.
 
         Examples of catalogue construction can be found in the :class:`Catalogue`
@@ -588,8 +588,14 @@ class Catalogue(object):
         Examples
         --------
         """
-        pass
-        # TODO
+
+        targets = []
+        for line in lines:
+            if (line[0] == '#') or (len(line.strip()) == 0):
+                continue
+            targets.append('wsclean, ' + line)
+        self.add(targets, tags)
+        # TODO: check
 
     def remove(self, name):
         """Remove target from catalogue.
