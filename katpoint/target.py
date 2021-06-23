@@ -56,7 +56,7 @@ class Target(object):
     the list may be empty. The <tags> field contains a space-separated list of
     descriptive tags for the target. The first tag is mandatory and indicates
     the body type of the target, which should be one of (*azel*, *radec*, *gal*,
-    *tle*, *special*, *star*, *xephem*).
+    *tle*, *special*, *star*, *xephem*, TODO *wsclean*).
 
     The longitudinal and latitudinal fields are only relevant to *azel*, *radec*
     and *gal* targets, in which case they contain the relevant coordinates. The
@@ -85,10 +85,16 @@ class Target(object):
 
     For *tle* bodies, the final field in the description string should contain
     the three lines of the TLE. If the name list is empty, the target name is
-    taken from the TLE instead. The *xephem* body contains a string in XEphem
+    taken from the TLE instead.
+
+    The *xephem* body contains a string in XEphem
     EDB database format as the final field, with commas replaced by tildes. If
     the name list is empty, the target name is taken from the XEphem string
     instead.
+
+    TODO For *wsclean* bodies, the final field in the description string should
+    contain the wsclean component list format. If the name list is empty, the
+    target name is taken from the WSClean body instead.
 
     When specifying a description string, the rest of the target parameters are
     ignored, except for the default antenna and flux frequency (which do not
@@ -165,6 +171,7 @@ class Target(object):
     def __repr__(self):
         """Short human-friendly string representation of target object."""
         sub_type = (' (%s)' % self.tags[1]) if (self.body_type == 'xephem') and (len(self.tags) > 1) else ''
+        # TODO determine if any special processing need be done for wsclean format sources
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.body_type + sub_type, id(self))
 
     def __reduce__(self):
@@ -282,6 +289,9 @@ class Target(object):
             if edb_name == names:
                 fields = [tags]
             fields += [edb_string]
+
+        elif self.body_type == 'wsclean':
+            pass  # TODO: wsclean format logic
 
         return ', '.join(fields)
 
@@ -979,7 +989,7 @@ def construct_target_params(description):
         raise ValueError("Target description '%s' must have at least two fields" % description)
     # Check if first name starts with body type tag, while the next field does not
     # This indicates a missing names field -> add an empty name list in front
-    body_types = ['azel', 'radec', 'gal', 'tle', 'special', 'star', 'xephem']
+    body_types = ['azel', 'radec', 'gal', 'tle', 'special', 'star', 'xephem', 'wsclean']  # TODO
     if np.any([fields[0].startswith(s) for s in body_types]) and \
        not np.any([fields[1].startswith(s) for s in body_types]):
         fields = [''] + fields
@@ -1105,7 +1115,8 @@ def construct_target_params(description):
             tags.insert(1, 'tle')
         elif edb_type == 'P':
             tags.insert(1, 'special')
-
+    elif body_type == 'wsclean':
+        pass  #TODO wsclean formatting
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
 

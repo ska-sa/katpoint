@@ -138,11 +138,12 @@ class Catalogue(object):
     and many *xephem* targets are stored in EDB database files. Editing these
     files to make each line a valid :class:`Target` description string is
     cumbersome, especially in the case of TLE files which are regularly updated.
-    Two special methods simplify the loading of targets from these files::
+    Three special methods simplify the loading of targets from these files::
 
         cat = katpoint.Catalogue()
         cat.add_tle(file('gps-ops.txt'))
         cat.add_edb(file('hipparcos.edb'))
+        # TODO cat.add_wsclean(file('<prefix>-sources.txt'))
 
     Whenever targets are added to the catalogue, a tag or list of tags may be
     specified. The tags can also be given as a single string of
@@ -155,6 +156,7 @@ class Catalogue(object):
         cat.add_tle(file('glo-ops.txt'), tags=['glonass', 'satellite'])
         cat.add(file('source_list.csv'), tags='calibrator')
         cat.add_edb(file('hipparcos.edb'), tags='star')
+        # TODO cat.add_wsclean(file('<prefix>-sources.txt'), tags='cal_lsm')
 
     Finally, targets may be removed from the catalogue. The most recently added
     target with the specified name is removed from the targets list as well as
@@ -568,6 +570,26 @@ class Catalogue(object):
                 continue
             targets.append('xephem,' + line.replace(',', '~'))
         self.add(targets, tags)
+
+    def add_wsclean(self):
+        """Add WSClean format (Blackboard Self-cal DPPP) targets to catalogue.
+
+        Examples of catalogue construction can be found in the :class:`Catalogue`
+        documentation.
+
+        Parameters
+        ----------
+        lines : sequence of strings
+            List of lines containing a target per line (may also be file object)
+        tags : string or sequence of strings, optional
+            Tag or list of tags to add to targets (strings will be split on
+            whitespace)
+
+        Examples
+        --------
+        """
+        pass
+        # TODO
 
     def remove(self, name):
         """Remove target from catalogue.
