@@ -291,11 +291,8 @@ class Target(object):
             fields += [edb_string]
 
         elif self.body_type == 'wsclean':
-            # TODO: wsclean format logic is currently not specific (i.e. borrows xephem)
-            # Replace commas in wsclean string with tildes
-            # Also remove extra spaces added into string by writedb
+            # TODO: wsclean format logic
             wsc_string = '~'.join([wsc_field.strip() for wsc_field in self.body.writedb().split(',')])
-            # Suppress name if it's the same as in the xephem db string
             wsc_name = wsc_string[:wsc_string.index('~')]
             if wsc_name == names:
                 fields = [tags]
@@ -1146,7 +1143,7 @@ def construct_target_params(description):
             tags.insert(1, '')
         elif wsc_type == 'gaussian':
             tags.insert(1, '')
-            # TODO handling gaussian sources requires changes to katpoint?
+            # TODO handling gaussian sources requires deeper changes to katpoint?
 
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))

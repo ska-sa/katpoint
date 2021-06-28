@@ -16,6 +16,7 @@
 
 """Target catalogue."""
 from __future__ import print_function, division, absolute_import
+
 from builtins import object
 from past.builtins import basestring
 
@@ -24,6 +25,7 @@ from collections import defaultdict
 
 import ephem.stars
 import numpy as np
+import io
 
 from .target import Target
 from .timestamp import Timestamp
@@ -572,7 +574,7 @@ class Catalogue(object):
         self.add(targets, tags)
 
     def add_wsclean(self, lines, tags=None):
-        """Add WSClean format (Blackboard Self-cal DPPP) targets to catalogue.
+        """Add WSClean format (BlackBoard Self-cal DPPP) targets to catalogue.
 
         Examples of catalogue construction can be found in the :class:`Catalogue`
         documentation.
@@ -587,13 +589,40 @@ class Catalogue(object):
 
         Examples
         --------
-        """
+        Here are some ways to add WCS targets to a catalogue:
 
+        >>> from katpoint import Catalogue
+        >>> cat = Catalogue()
+        >>> cat.add_wcs(file('wsclean-001-sources.txt'), tags='cal')
+        >>> lines = ['Format = Name, Type, Ra, Dec, I, SpectralIndex, LogarithmicSI, ReferenceFrequency=125584411.621094, MajorAxis, MinorAxis, Orientation'
+                    's0c0,POINT,08:28:05.152,39.35.08.511,0.000748810650400475,[-0.00695379313004673,-0.0849693907803257],false,125584411.621094,,,'
+                    's1c1,GAUSSIAN,07:51:09.24,42.32.46.177,0.000660490865128381,[0.00404869217508666,-0.011844732049232],false,125584411.621094,83.6144111272856,83.6144111272856,0']
+        >>> cat2.add_wcs(lines)
+        """
+        # collapse the list/file-object ambiguity
+        if isinstance(lines, io.TextIOWrapper):
+            lines = lines.readlines()
+
+        # read header (first line) to determine fields, # then set default values for the fields
+        header = ''.join(lines.pop(0).split(' '))
+        if not header.startswith('Format='):
+            raise KeyError('WSClean format header is mal-formed: line does not begin with '
+                           '"Header = ..."')
+        else:
+            hd = {}
+            for item in header[len('format='):].split(','):
+                item = item.replace("'", "").split('=')
+                if len(item) > 1:
+                    hd[item[0]] = item[1]
+                else:
+                    hd[item[0]] = None
+
+        # read source list line-by-line and populate the catalogue with targets
         targets = []
         for line in lines:
             if (line[0] == '#') or (len(line.strip()) == 0):
                 continue
-            targets.append('wsclean, ' + line)
+            targets.append('wsclean, ' + line.replace(',', '~'))
         self.add(targets, tags)
         # TODO: check
 
