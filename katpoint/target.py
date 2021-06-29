@@ -1122,7 +1122,7 @@ def construct_target_params(description):
             tags.insert(1, 'special')
 
     elif body_type == 'wsclean':
-        # TODO wsclean formatting
+
         wsc_string = fields[-1].replace('~', ',')
         wsc_name_field = wsc_string.partition(',')[0]
         wsc_names = [name.strip() for name in wsc_name_field.split('|')]
@@ -1135,15 +1135,35 @@ def construct_target_params(description):
         for extra_name in wsc_names[1:]:
             if not (extra_name in aliases) and not (extra_name == preferred_name):
                 aliases.append(extra_name)
-        body = wsc_string
+
+        # TODO Format-field-awareness
+        wsc_string_l = wsc_string.split(',')
+        wsc_type_field = wsc_string_l[1]
+        wsc_ra_field = wsc_string_l[2]
+        wsc_dec_field = wsc_string_l[3]
+        wsc_flux_field = wsc_string_l[4]
+
+        body = ephem.FixedBody()
+        ra, dec = angle_from_hours(wsc_ra_field), angle_from_degrees(wsc_dec_field)
+        if preferred_name:
+            body.name = preferred_name
+        else:
+            body.name = "Ra: %s Dec: %s" % (ra, dec)
+        body._ra = ra
+        body._dec = dec
+
+        body.mag = wsc_flux_field
+
+
+
+
         # Add wsc source type ('point' | 'gaussian') as an extra tag, right after the main
         # 'wsclean' tag
-        wsc_type = wsc_string[wsc_string.find(',') + 1]
-        if wsc_type == 'point':
-            tags.insert(1, '')
-        elif wsc_type == 'gaussian':
-            tags.insert(1, '')
-            # TODO handling gaussian sources requires deeper changes to katpoint?
+        if wsc_type_field == 'point':
+            tags.insert(1, 'point')
+        elif wsc_type_field == 'gaussian':
+            tags.insert(1, 'gaussian')
+            # TODO decide: handling gaussian sources requires deeper changes to katpoint?
 
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
