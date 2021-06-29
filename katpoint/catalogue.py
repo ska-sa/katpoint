@@ -600,14 +600,12 @@ class Catalogue(object):
         >>> cat.add_wsclean(lines)
         """
 
-        # read source list line-by-line and populate the catalogue with targets
         targets = []
         for line in lines:
-            if (line[0] == '#') or (line[0:len('Format')] == 'Format') or (len(line.strip()) == 0):
+            if (line[0] == '#') or (len(line.strip()) == 0) or (line.startswith('Format')):
                 continue
-            targets.append('wsclean, ' + line.strip().replace(',', '~'))
-        self.add(targets, tags)
-        # TODO: check
+            targets.append('wsclean,' + line.replace(',', '~'))
+        self.add(targets)#,tags)
 
     def remove(self, name):
         """Remove target from catalogue.

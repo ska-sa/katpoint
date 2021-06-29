@@ -1137,7 +1137,9 @@ def construct_target_params(description):
                 aliases.append(extra_name)
 
         # TODO Format-field-awareness
+
         wsc_string_l = wsc_string.split(',')
+        print(wsc_string_l)
         wsc_type_field = wsc_string_l[1]
         wsc_ra_field = wsc_string_l[2]
         wsc_dec_field = wsc_string_l[3]
@@ -1153,9 +1155,6 @@ def construct_target_params(description):
         body._dec = dec
 
         body.mag = wsc_flux_field
-
-
-
 
         # Add wsc source type ('point' | 'gaussian') as an extra tag, right after the main
         # 'wsclean' tag
