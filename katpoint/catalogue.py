@@ -601,11 +601,61 @@ class Catalogue(object):
         """
 
         targets = []
+        hd = {}
         for line in lines:
-            if (line[0] == '#') or (len(line.strip()) == 0) or (line.startswith('Format')):
+            if (line[0] == '#') or (len(line.strip()) == 0):
                 continue
-            targets.append('wsclean,' + line.replace(',', '~'))
-        self.add(targets)#,tags)
+            if line.startswith(
+                    'Format ='):  # ''.join(line.split(' ')).lower().startswith('format='): #
+                # if the first line is a format specifier (header), create a dictionary with keys
+                # the field names and default values if they exist
+                line = ''.join(line.split(' '))
+                for item in line[len('Format='):].split(','):
+                    item = item.replace("'", "").strip().split('=')
+                    if len(item) > 1:
+                        hd[item[0]] = item[1]
+                    else:
+                        hd[item[0]] = None
+                # remove SpectralIndex from the dictionary (see below)
+                hd.pop('SpectralIndex')
+                continue
+
+            # A ridiculous situation ensues where we have to extract (a variable number of)
+            # spectral index coefficients from the middle of the WSClean format string.
+            si = line[line.find('[') + 1:line.find(']')].replace(',', ' ')
+            line = line[0:line.find('[') - 1] + line[line.find(']') + 1:]
+
+            # create a dictionary from all fields except for si
+            try:
+                wsc_dict = {k: v for k, v in zip(list(hd.keys()), line.strip().split(','))}
+            except:
+                raise KeyError("malformed or nonexistent header/format specifier in source list")
+
+            # set default values
+            for item in wsc_dict:
+                if not wsc_dict[item]:
+                    if hd[item]:
+                        wsc_dict[item] = hd[item]
+
+            # Add wsc source type ('point' | 'gaussian') as an extra tag
+            if wsc_dict['Type'] == 'POINT':
+                tags = 'point'
+            elif wsc_dict['Type'] == 'GAUSSIAN':
+                tags = 'gaussian'
+
+            # add back in the SpectralIndex
+            wsc_dict['SpectralIndex'] = si
+
+            # convert to tilde-separated string
+            l = ''
+            for key, value in wsc_dict.items():
+                l += f'{value}~ '
+
+            flux_model = wsc_dict['SpectralIndex']
+            targets.append(f'wsclean | {tags}, {wsc_dict["Ra"]}, {wsc_dict["Dec"]}, '
+                           f'{wsc_dict["SpectralIndex"]}, {l[:-3]}')
+
+        self.add(targets)
 
     def remove(self, name):
         """Remove target from catalogue.

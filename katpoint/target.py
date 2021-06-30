@@ -1016,6 +1016,10 @@ def construct_target_params(description):
     while len(fields[-1]) == 0:
         fields.pop()
 
+    # Extract flux model if it is available
+    flux_model = FluxDensityModel(fields[4]) if (len(fields) > 4) and (
+                len(fields[4].strip(' ()')) > 0) else None
+
     # Create appropriate PyEphem body based on body type
     if body_type == 'azel':
         if len(fields) < 4:
@@ -1136,14 +1140,12 @@ def construct_target_params(description):
             if not (extra_name in aliases) and not (extra_name == preferred_name):
                 aliases.append(extra_name)
 
-        # TODO Format-field-awareness
-
+        # TODO appropriate error checks
         wsc_string_l = wsc_string.split(',')
-        print(wsc_string_l)
         wsc_type_field = wsc_string_l[1]
         wsc_ra_field = wsc_string_l[2]
         wsc_dec_field = wsc_string_l[3]
-        wsc_flux_field = wsc_string_l[4]
+        wsc_flux_field = wsc_string_l[-1]
 
         body = ephem.FixedBody()
         ra, dec = angle_from_hours(wsc_ra_field), angle_from_degrees(wsc_dec_field)
@@ -1154,21 +1156,21 @@ def construct_target_params(description):
         body._ra = ra
         body._dec = dec
 
-        body.mag = wsc_flux_field
-
         # Add wsc source type ('point' | 'gaussian') as an extra tag, right after the main
         # 'wsclean' tag
-        if wsc_type_field == 'point':
+        if wsc_type_field == 'POINT':
             tags.insert(1, 'point')
-        elif wsc_type_field == 'gaussian':
+        elif wsc_type_field == 'GAUSSIAN':
             tags.insert(1, 'gaussian')
             # TODO decide: handling gaussian sources requires deeper changes to katpoint?
 
+        # TODO
+        #  Extract wsc flux model if it is available
+        #  How to determine min and max valid frequency?
+        flux_model = FluxDensityModel(f'0 2000 {wsc_flux_field[4].strip()}')
+
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))
-
-    # Extract flux model if it is available
-    flux_model = FluxDensityModel(fields[4]) if (len(fields) > 4) and (len(fields[4].strip(' ()')) > 0) else None
 
     return body, tags, aliases, flux_model
 
