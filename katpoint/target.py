@@ -1126,8 +1126,6 @@ def construct_target_params(description):
             tags.insert(1, 'special')
 
     elif body_type == 'wsclean':
-
-        print('fields: ', fields) #TODO
         wsc_string = fields[-1].replace('~', ',')
         wsc_name_field = wsc_string.partition(',')[0]
         wsc_names = [name.strip() for name in wsc_name_field.split('|')]
@@ -1141,16 +1139,13 @@ def construct_target_params(description):
             if not (extra_name in aliases) and not (extra_name == preferred_name):
                 aliases.append(extra_name)
 
-        # TODO appropriate error checks
         wsc_string_l = wsc_string.split(',')
-        wsc_name_field = wsc_string_l[1]
-        wsc_names = wsc_name_field.split('|')
-        wsc_type_field = wsc_names[-1]
-
-        wsc_ra_field = wsc_string_l[2]
-        wsc_dec_field = wsc_string_l[3]
-        wsc_flux_field = wsc_string_l[4]
-        #orig = wsc_string_l[-1].replace('~', ',')
+        try:
+            wsc_ra_field = wsc_string_l[2]
+            wsc_dec_field = wsc_string_l[3]
+            wsc_flux_field = wsc_string_l[4]
+        except ValueError:
+            raise ValueError("WSClean target description string contains unknown key(s)")
 
         body = ephem.FixedBody()
         ra, dec = angle_from_hours(wsc_ra_field), angle_from_degrees(wsc_dec_field)
@@ -1161,18 +1156,8 @@ def construct_target_params(description):
         body._ra = ra
         body._dec = dec
 
-        # Add wsc source type ('point' | 'gaussian') as an extra tag, right after the main
-        # 'wsclean' tag
-        if wsc_type_field == 'POINT':
-            tags.insert(1, 'point')
-        elif wsc_type_field == 'GAUSSIAN':
-            tags.insert(1, 'gaussian')
-            # TODO decide: handling gaussian sources requires deeper changes?
-
         #  Extract wsc flux model if it is available
-        flux_model = FluxDensityModel(f'1000 2000 {wsc_flux_field.strip()}')
-        #  TODO How to determine min and max valid frequency? WSCLean defines a reference
-        #   frequency, but not a valid range
+        flux_model = FluxDensityModel(f'300 4000 {wsc_flux_field.strip()}')
 
     else:
         raise ValueError("Target description '%s' contains unknown body type '%s'" % (description, body_type))

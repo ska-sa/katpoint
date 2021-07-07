@@ -601,7 +601,7 @@ class Catalogue(object):
                     's1c1,GAUSSIAN,07:51:09.24,42.32.46.177,0.000660490865128381,\
                     [0.00404869217508666,-0.011844732049232],false,125584411.621094,\
                     83.6144111272856,83.6144111272856,0']
->>> cat.add_wsclean(lines)
+        >>> cat.add_wsclean(lines)
         """
 
         targets = []
@@ -609,8 +609,7 @@ class Catalogue(object):
         for line in lines:
             if (line[0] == '#') or (len(line.strip()) == 0):
                 continue
-            if line.startswith(
-                    'Format ='):  # ''.join(line.split(' ')).lower().startswith('format='): #
+            if line.startswith('Format ='):
                 # if the first line is a format specifier (header), create a dictionary with keys
                 # the field names and default values if they exist
                 line = ''.join(line.split(' '))
@@ -626,17 +625,17 @@ class Catalogue(object):
 
             # check that the format specifier dictionary has been populated
             if not hd:
-                raise ValueError("WSCLean format not specified in header")
+                raise ValueError("WSCLean format not specified in header line")
 
             # extract (a variable number of) spectral index coefficients from the middle of the
             # WSClean format string.
-            si = line[line.find('[') + 1:line.find(']')].replace(',', ' ')
+            si = line[line.find('[') + 1:line.find(']')] .replace(',', ' ')
             line = line[0:line.find('[') - 1] + line[line.find(']') + 1:]
 
             # create a dictionary from all fields except for si
             try:
                 wsc_dict = {k: v for k, v in zip(list(hd.keys()), line.strip().split(','))}
-            except:
+            except KeyError:
                 raise KeyError("malformed or nonexistent header/format specifier in source list")
 
             # set default values
@@ -646,7 +645,10 @@ class Catalogue(object):
                         wsc_dict[item] = hd[item]
 
             # add back in the SpectralIndex
-            wsc_dict['SpectralIndex'] = si
+            if wsc_dict['LogarithmicSI']:  # spectral index is specified identically to katpoint
+                wsc_dict['SpectralIndex'] = si
+            else:  # TODO: convert between logarithmic and polynomial si (curr. uses just Stokes I)
+                wsc_dict['SpectralIndex'] = si.partition(',')[0]
 
             # Add wsc source type ('point' | 'gaussian') as an extra tag
             if wsc_dict['Type'] == 'POINT':
@@ -659,8 +661,8 @@ class Catalogue(object):
             for key, value in wsc_dict.items():
                 l += f'{value}~ '
 
-            targets.append(f'wsclean | {tags}, {wsc_dict["Ra"]}, {wsc_dict["Dec"]}, '
-                           f'{wsc_dict["SpectralIndex"]}, {l[:-3]}')
+            targets.append(f'wsclean {tags}, {wsc_dict["Ra"]}, {wsc_dict["Dec"]}, '
+                           f'{wsc_dict["SpectralIndex"]}, {l[:-2]}')
 
         self.add(targets)
 
