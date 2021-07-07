@@ -594,10 +594,14 @@ class Catalogue(object):
         >>> from katpoint import Catalogue
         >>> cat = Catalogue()
         >>> cat.add_wsclean(file('wsclean-001-sources.txt'), tags='cal')
-        >>> lines = ['Format = Name, Type, Ra, Dec, I, SpectralIndex, LogarithmicSI, ReferenceFrequency=125584411.621094, MajorAxis, MinorAxis, Orientation'
-                    's0c0,POINT,08:28:05.152,39.35.08.511,0.000748810650400475,[-0.00695379313004673,-0.0849693907803257],false,125584411.621094,,,'
-                    's1c1,GAUSSIAN,07:51:09.24,42.32.46.177,0.000660490865128381,[0.00404869217508666,-0.011844732049232],false,125584411.621094,83.6144111272856,83.6144111272856,0']
-        >>> cat.add_wsclean(lines)
+        >>> lines = ['Format = Name, Type, Ra, Dec, I, SpectralIndex, LogarithmicSI,
+                    ReferenceFrequency=125584411.621094, MajorAxis, MinorAxis, Orientation',
+                    's0c0,POINT,08:28:05.152,39.35.08.511,0.000748810650400475,\
+                    [-0.00695379313004673,-0.0849693907803257],false,125584411.621094,,,',
+                    's1c1,GAUSSIAN,07:51:09.24,42.32.46.177,0.000660490865128381,\
+                    [0.00404869217508666,-0.011844732049232],false,125584411.621094,\
+                    83.6144111272856,83.6144111272856,0']
+>>> cat.add_wsclean(lines)
         """
 
         targets = []
@@ -620,8 +624,12 @@ class Catalogue(object):
                 hd.pop('SpectralIndex')
                 continue
 
-            # A ridiculous situation ensues where we have to extract (a variable number of)
-            # spectral index coefficients from the middle of the WSClean format string.
+            # check that the format specifier dictionary has been populated
+            if not hd:
+                raise ValueError("WSCLean format not specified in header")
+
+            # extract (a variable number of) spectral index coefficients from the middle of the
+            # WSClean format string.
             si = line[line.find('[') + 1:line.find(']')].replace(',', ' ')
             line = line[0:line.find('[') - 1] + line[line.find(']') + 1:]
 
@@ -637,21 +645,20 @@ class Catalogue(object):
                     if hd[item]:
                         wsc_dict[item] = hd[item]
 
+            # add back in the SpectralIndex
+            wsc_dict['SpectralIndex'] = si
+
             # Add wsc source type ('point' | 'gaussian') as an extra tag
             if wsc_dict['Type'] == 'POINT':
                 tags = 'point'
             elif wsc_dict['Type'] == 'GAUSSIAN':
                 tags = 'gaussian'
 
-            # add back in the SpectralIndex
-            wsc_dict['SpectralIndex'] = si
-
-            # convert to tilde-separated string
+            # convert original specification to tilde-separated string
             l = ''
             for key, value in wsc_dict.items():
                 l += f'{value}~ '
 
-            flux_model = wsc_dict['SpectralIndex']
             targets.append(f'wsclean | {tags}, {wsc_dict["Ra"]}, {wsc_dict["Dec"]}, '
                            f'{wsc_dict["SpectralIndex"]}, {l[:-3]}')
 
