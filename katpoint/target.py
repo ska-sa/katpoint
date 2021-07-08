@@ -56,7 +56,7 @@ class Target(object):
     the list may be empty. The <tags> field contains a space-separated list of
     descriptive tags for the target. The first tag is mandatory and indicates
     the body type of the target, which should be one of (*azel*, *radec*, *gal*,
-    *tle*, *special*, *star*, *xephem*, TODO *wsclean*).
+    *tle*, *special*, *star*, *xephem*, *wsclean*).
 
     The longitudinal and latitudinal fields are only relevant to *azel*, *radec*
     and *gal* targets, in which case they contain the relevant coordinates. The
@@ -92,7 +92,7 @@ class Target(object):
     the name list is empty, the target name is taken from the XEphem string
     instead.
 
-    TODO For *wsclean* bodies, the final field in the description string should
+    For *wsclean* bodies, the final field in the description string should
     contain the wsclean component list format. If the name list is empty, the
     target name is taken from the WSClean body instead.
 
@@ -171,7 +171,6 @@ class Target(object):
     def __repr__(self):
         """Short human-friendly string representation of target object."""
         sub_type = (' (%s)' % self.tags[1]) if (self.body_type == 'xephem') and (len(self.tags) > 1) else ''
-        # TODO determine if any special processing need be done for wsclean format sources
         return "<katpoint.Target '%s' body=%s at 0x%x>" % (self.name, self.body_type + sub_type, id(self))
 
     def __reduce__(self):
@@ -291,7 +290,7 @@ class Target(object):
             fields += [edb_string]
 
         elif self.body_type == 'wsclean':
-            # TODO: wsclean format logic
+            # TODO: comprehensive wsclean specification
             wsc_string = '~'.join([wsc_field.strip() for wsc_field in self.body.writedb().split(',')])
             wsc_name = wsc_string[:wsc_string.index('~')]
             if wsc_name == names:
@@ -994,7 +993,7 @@ def construct_target_params(description):
         raise ValueError("Target description '%s' must have at least two fields" % description)
     # Check if first name starts with body type tag, while the next field does not
     # This indicates a missing names field -> add an empty name list in front
-    body_types = ['azel', 'radec', 'gal', 'tle', 'special', 'star', 'xephem', 'wsclean']  # TODO
+    body_types = ['azel', 'radec', 'gal', 'tle', 'special', 'star', 'xephem', 'wsclean']
     if np.any([fields[0].startswith(s) for s in body_types]) and \
        not np.any([fields[1].startswith(s) for s in body_types]):
         fields = [''] + fields
@@ -1017,8 +1016,7 @@ def construct_target_params(description):
         fields.pop()
 
     # Extract flux model if it is available
-    flux_model = FluxDensityModel(fields[4]) if (len(fields) > 4) and (
-                len(fields[4].strip(' ()')) > 0) else None
+    flux_model = FluxDensityModel(fields[4]) if (len(fields) > 4) and (len(fields[4].strip(' ()')) > 0) else None
 
     # Create appropriate PyEphem body based on body type
     if body_type == 'azel':
@@ -1129,6 +1127,7 @@ def construct_target_params(description):
         wsc_string = fields[-1].replace('~', ',')
         wsc_name_field = wsc_string.partition(',')[0]
         wsc_names = [name.strip() for name in wsc_name_field.split('|')]
+
         if preferred_name:
             wsc_string = wsc_string.replace(wsc_name_field, preferred_name)
         else:
@@ -1156,7 +1155,7 @@ def construct_target_params(description):
         body._ra = ra
         body._dec = dec
 
-        #  Extract wsc flux model if it is available
+        #  Extract wsc flux model
         flux_model = FluxDensityModel(f'300 4000 {wsc_flux_field.strip()}')
 
     else:

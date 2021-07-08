@@ -16,7 +16,6 @@
 
 """Target catalogue."""
 from __future__ import print_function, division, absolute_import
-
 from builtins import object
 from past.builtins import basestring
 
@@ -25,7 +24,6 @@ from collections import defaultdict
 
 import ephem.stars
 import numpy as np
-import io
 
 from .target import Target
 from .timestamp import Timestamp
@@ -145,7 +143,7 @@ class Catalogue(object):
         cat = katpoint.Catalogue()
         cat.add_tle(file('gps-ops.txt'))
         cat.add_edb(file('hipparcos.edb'))
-        # TODO cat.add_wsclean(file('<prefix>-sources.txt'))
+        cat.add_wsclean(file('<prefix>-sources.txt'))
 
     Whenever targets are added to the catalogue, a tag or list of tags may be
     specified. The tags can also be given as a single string of
@@ -158,7 +156,7 @@ class Catalogue(object):
         cat.add_tle(file('glo-ops.txt'), tags=['glonass', 'satellite'])
         cat.add(file('source_list.csv'), tags='calibrator')
         cat.add_edb(file('hipparcos.edb'), tags='star')
-        # TODO cat.add_wsclean(file('<prefix>-sources.txt'), tags='cal_lsm')
+        cat.add_wsclean(file('<prefix>-sources.txt'), tags='wsc')
 
     Finally, targets may be removed from the catalogue. The most recently added
     target with the specified name is removed from the targets list as well as
@@ -589,7 +587,7 @@ class Catalogue(object):
 
         Examples
         --------
-        Here are some ways to add WCS targets to a catalogue:
+        Here is an example of adding WCS targets to a catalogue:
 
         >>> from katpoint import Catalogue
         >>> cat = Catalogue()
@@ -656,13 +654,14 @@ class Catalogue(object):
             elif wsc_dict['Type'] == 'GAUSSIAN':
                 tags = 'gaussian'
 
-            # convert original specification to tilde-separated string
-            l = ''
+            # convert re-ordered dict to tilde-separated string
+            n_line = ''
             for key, value in wsc_dict.items():
-                l += f'{value}~ '
+                n_line += f'{value}~ '
+            n_line = n_line[:-2]
 
             targets.append(f'wsclean {tags}, {wsc_dict["Ra"]}, {wsc_dict["Dec"]}, '
-                           f'{wsc_dict["SpectralIndex"]}, {l[:-2]}')
+                           f'{wsc_dict["SpectralIndex"]}, {n_line}')
 
         self.add(targets)
 
