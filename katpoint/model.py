@@ -231,7 +231,10 @@ class Model(object):
             File-like object with write() method representing config file
 
         """
-        cfg = configparser.SafeConfigParser()
+        if future.utils.PY2:
+            cfg = configparser.SafeConfigParser()
+        else:
+            cfg = configparser.ConfigParser()
         cfg.add_section('header')
         for key, val in self.header.items():
             cfg.set('header', key, str(val))
@@ -252,10 +255,12 @@ class Model(object):
         defaults = dict((p.name, p._to_str(p.default_value)) for p in self)
         if future.utils.PY2:
             cfg = configparser.SafeConfigParser(defaults)
+            read_file = cfg.readfp
         else:
             cfg = configparser.ConfigParser(defaults, inline_comment_prefixes=(';', '#'))
+            read_file = cfg.read_file
         try:
-            cfg.readfp(file_like)
+            read_file(file_like)
             if cfg.sections() != ['header', 'params']:
                 raise configparser.Error('Expected sections not found in model file')
         except configparser.Error as exc:
