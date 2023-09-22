@@ -351,7 +351,7 @@ class PointingModel(Model):
             enabled_params = [1, 3, 4, 5, 6, 7]
         enabled_params = np.asarray(enabled_params)
         # Convert boolean selection to integer indices
-        if enabled_params.dtype == np.bool:
+        if enabled_params.dtype == bool:
             enabled_params = enabled_params.nonzero()[0] + 1
         enabled_params = set(enabled_params)
         # Remove troublesome parameters if enabled
