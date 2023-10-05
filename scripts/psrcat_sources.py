@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 #
 # Tool that converts the ATNF PSRCAT database into a katpoint Catalogue.
 #
