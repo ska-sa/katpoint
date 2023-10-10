@@ -138,11 +138,12 @@ class Catalogue(object):
     and many *xephem* targets are stored in EDB database files. Editing these
     files to make each line a valid :class:`Target` description string is
     cumbersome, especially in the case of TLE files which are regularly updated.
-    Two special methods simplify the loading of targets from these files::
+    Three special methods simplify the loading of targets from these files::
 
         cat = katpoint.Catalogue()
         cat.add_tle(file('gps-ops.txt'))
         cat.add_edb(file('hipparcos.edb'))
+        cat.add_wsclean(file('<prefix>-sources.txt'))
 
     Whenever targets are added to the catalogue, a tag or list of tags may be
     specified. The tags can also be given as a single string of
@@ -155,6 +156,7 @@ class Catalogue(object):
         cat.add_tle(file('glo-ops.txt'), tags=['glonass', 'satellite'])
         cat.add(file('source_list.csv'), tags='calibrator')
         cat.add_edb(file('hipparcos.edb'), tags='star')
+        cat.add_wsclean(file('<prefix>-sources.txt'), tags='wsc')
 
     Finally, targets may be removed from the catalogue. The most recently added
     target with the specified name is removed from the targets list as well as
@@ -568,6 +570,100 @@ class Catalogue(object):
                 continue
             targets.append('xephem,' + line.replace(',', '~'))
         self.add(targets, tags)
+
+    def add_wsclean(self, lines, tags=None):
+        """Add WSClean format (BlackBoard Self-cal DPPP) targets to catalogue.
+
+        Examples of catalogue construction can be found in the :class:`Catalogue`
+        documentation.
+
+        Parameters
+        ----------
+        lines : sequence of strings
+            List of lines containing a target per line (may also be file object)
+        tags : string or sequence of strings, optional
+            Tag or list of tags to add to targets (strings will be split on
+            whitespace)
+
+        Examples
+        --------
+        Here is an example of adding WCS targets to a catalogue:
+
+        >>> from katpoint import Catalogue
+        >>> cat = Catalogue()
+        >>> cat.add_wsclean(file('wsclean-001-sources.txt'), tags='cal')
+        >>> lines = ['Format = Name, Type, Ra, Dec, I, SpectralIndex, LogarithmicSI,
+                    ReferenceFrequency=125584411.621094, MajorAxis, MinorAxis, Orientation',
+                    's0c0,POINT,08:28:05.152,39.35.08.511,0.000748810650400475,\
+                    [-0.00695379313004673,-0.0849693907803257],false,125584411.621094,,,',
+                    's1c1,GAUSSIAN,07:51:09.24,42.32.46.177,0.000660490865128381,\
+                    [0.00404869217508666,-0.011844732049232],false,125584411.621094,\
+                    83.6144111272856,83.6144111272856,0']
+        >>> cat.add_wsclean(lines)
+        """
+
+        targets = []
+        hd = {}
+        for line in lines:
+            if (line[0] == '#') or (len(line.strip()) == 0):
+                continue
+            if line.startswith('Format ='):
+                # if the first line is a format specifier (header), create a dictionary with keys
+                # the field names and default values if they exist
+                line = ''.join(line.split(' '))
+                for item in line[len('Format='):].split(','):
+                    item = item.replace("'", "").strip().split('=')
+                    if len(item) > 1:
+                        hd[item[0]] = item[1]
+                    else:
+                        hd[item[0]] = None
+                # remove SpectralIndex from the dictionary (see below)
+                hd.pop('SpectralIndex')
+                continue
+
+            # check that the format specifier dictionary has been populated
+            if not hd:
+                raise ValueError("WSCLean format not specified in header line")
+
+            # extract (a variable number of) spectral index coefficients from the middle of the
+            # WSClean format string.
+            si = line[line.find('[') + 1:line.find(']')] .replace(',', ' ')
+            line = line[0:line.find('[') - 1] + line[line.find(']') + 1:]
+
+            # create a dictionary from all fields except for si
+            try:
+                wsc_dict = {k: v for k, v in zip(list(hd.keys()), line.strip().split(','))}
+            except KeyError:
+                raise KeyError("malformed or nonexistent header/format specifier in source list")
+
+            # set default values
+            for item in wsc_dict:
+                if not wsc_dict[item]:
+                    if hd[item]:
+                        wsc_dict[item] = hd[item]
+
+            # add back in the SpectralIndex
+            if wsc_dict['LogarithmicSI']:  # spectral index is specified identically to katpoint
+                wsc_dict['SpectralIndex'] = si
+            else:  # TODO: convert between logarithmic and polynomial si (curr. uses just Stokes I)
+                wsc_dict['SpectralIndex'] = si.partition(',')[0]
+
+            # Add wsc source type ('point' | 'gaussian') as an extra tag
+            if wsc_dict['Type'] == 'POINT':
+                tags = 'point'
+            elif wsc_dict['Type'] == 'GAUSSIAN':
+                tags = 'gaussian'
+
+            # convert re-ordered dict to tilde-separated string
+            n_line = ''
+            for key, value in wsc_dict.items():
+                n_line += f'{value}~ '
+            n_line = n_line[:-2]
+
+            targets.append(f'wsclean {tags}, {wsc_dict["Ra"]}, {wsc_dict["Dec"]}, '
+                           f'{wsc_dict["SpectralIndex"]}, {n_line}')
+
+        self.add(targets)
 
     def remove(self, name):
         """Remove target from catalogue.
