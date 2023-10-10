@@ -1,6 +1,11 @@
 History
 =======
 
+0.10.1 (2023-10-10)
+-------------------
+* Fix deprecated NumPy type aliases and configparser attributes (#81)
+* Flake8 cleanup (#82)
+
 0.10 (2021-04-20)
 -----------------
 * Handle out-of-range projection inputs (#67, #68)

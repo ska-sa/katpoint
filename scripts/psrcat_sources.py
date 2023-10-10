@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 #
 # Tool that converts the ATNF PSRCAT database into a katpoint Catalogue.
 #
@@ -34,16 +34,16 @@ if not args.db_file:
     raise RuntimeError("Please obtain a long ephemeris file from the PSRCAT package")
 
 # Regexp that finds key-value pair associated with pulsar
-key_val = re.compile('^([A-Z0-9_]+)\s+(\S+)')
+key_val = re.compile(r'^([A-Z0-9_]+)\s+(\S+)')
 # Regexp that finds SNR name associated with pulsar
-snr = re.compile('SNR:(PWN:)*(.+?)[[(,;$]')
+snr = re.compile(r'SNR:(PWN:)*(.+?)[[(,;$]')
 # Regexp that finds single flux measurement associated with pulsar
-flux_bin = re.compile('^S(\d{3,4})$')
+flux_bin = re.compile(r'^S(\d{3,4})$')
 
 # Turn database file into list of dicts, one per pulsar
 pulsars = []
 psr = {}
-for line in file(args.db_file):
+for line in open(args.db_file):
     if line.startswith('#'):
         continue
     if line.startswith('@'):
@@ -89,4 +89,4 @@ for psr in pulsars:
     description = '%s, radec psr, %s, %s' % (names, ra, dec)
     if flux_model:
         description += ', ' + flux_model.description
-    print description
+    print(description)
