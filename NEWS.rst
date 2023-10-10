@@ -1,7 +1,7 @@
 History
 =======
 
-0.10.1 (2023-10-04)
+0.10.1 (2023-10-10)
 -------------------
 * Fix deprecated NumPy type aliases and configparser attributes (#81)
 * Flake8 cleanup (#82)
