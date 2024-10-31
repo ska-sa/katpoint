@@ -29,6 +29,7 @@ long_description = readme + '\n\n' + news
 setup(name="katpoint",
       description="Karoo Array Telescope pointing coordinate library",
       long_description=long_description,
+      long_description_content_type='text/x-rst',
       author="Ludwig Schwardt",
       author_email="ludwig@ska.ac.za",
       packages=find_packages(),
