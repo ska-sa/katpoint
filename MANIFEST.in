@@ -1,2 +1,2 @@
-include NEWS.rst
+include NEWS.md
 exclude scripts/*
