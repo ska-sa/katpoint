@@ -1,6 +1,11 @@
 History
 =======
 
+0.10.2 (2024-10-31)
+-------------------
+* Fix NumPy 2.0 bug in flux model description string (#83)
+* Clarify status and point to katpoint 1 (#79)
+
 0.10.1 (2023-10-10)
 -------------------
 * Fix deprecated NumPy type aliases and configparser attributes (#81)

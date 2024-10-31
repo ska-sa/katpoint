@@ -22,13 +22,14 @@ from setuptools import setup, find_packages
 
 
 here = os.path.dirname(__file__)
-readme = open(os.path.join(here, 'README.rst')).read()
-news = open(os.path.join(here, 'NEWS.rst')).read()
+readme = open(os.path.join(here, 'README.md')).read()
+news = open(os.path.join(here, 'NEWS.md')).read()
 long_description = readme + '\n\n' + news
 
 setup(name="katpoint",
       description="Karoo Array Telescope pointing coordinate library",
       long_description=long_description,
+      long_description_content_type='text/markdown',
       author="Ludwig Schwardt",
       author_email="ludwig@ska.ac.za",
       packages=find_packages(),
@@ -53,6 +54,7 @@ setup(name="katpoint",
           "Programming Language :: Python :: 3.10",
           "Programming Language :: Python :: 3.11",
           "Programming Language :: Python :: 3.12",
+          "Programming Language :: Python :: 3.13",
           "Topic :: Software Development :: Libraries :: Python Modules",
           "Topic :: Scientific/Engineering :: Astronomy"],
       platforms=["OS Independent"],
