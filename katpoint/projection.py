@@ -258,11 +258,15 @@ def treat_out_of_range_values(x, err_msg, lower=None, upper=None):
     # Cast output array to float so that we may assign NaNs to it if needed
     clipped_x = np.asarray(np.clip(x, lower, upper), dtype=float)
     treatment = get_out_of_range_treatment()
+    boilerplate = (
+        '\nThis exception can be suppressed by first calling: '
+        'katpoint.projection.set_out_of_range_treatment("nan")'
+    )
     if treatment != 'clip':
         # Suppress false alarms due to rounding errors -> only flag substantial outliers
         out_of_range = ~np.isclose(x, clipped_x, rtol=0., atol=4. * np.finfo(float).eps)
         if treatment == 'raise' and np.any(out_of_range):
-            raise OutOfRangeError(err_msg)
+            raise OutOfRangeError(err_msg + boilerplate)
         elif treatment == 'nan':
             clipped_x[out_of_range] = np.nan
     return clipped_x.item() if np.isscalar(x) else clipped_x
