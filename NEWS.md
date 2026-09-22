@@ -1,6 +1,11 @@
 History
 =======
 
+0.10.3 (2026-09-22)
+-------------------
+* Support NumPy 2.5 by replacing row_stack with vstack (#85)
+* Improve out-of-range error message (#87)
+
 0.10.2 (2024-10-31)
 -------------------
 * Fix NumPy 2.0 bug in flux model description string (#83)
