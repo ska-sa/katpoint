@@ -28,7 +28,6 @@ and CASA.
 from __future__ import print_function, division, absolute_import
 
 import logging as _logging
-import warnings as _warnings
 
 import future.utils
 
@@ -71,14 +70,6 @@ _no_config_handler.setFormatter(_logging.Formatter(_logging.BASIC_FORMAT))
 _no_config_handler.addFilter(_NoConfigFilter())
 logger = _logging.getLogger(__name__)
 logger.addHandler(_no_config_handler)
-
-if future.utils.PY2:
-    _PY2_WARNING = (
-        "Python 2 has reached End-of-Life, and a future version of katpoint "
-        "will remove support for it. Please update your scripts to Python 3 "
-        "as soon as possible."
-    )
-    _warnings.warn(_PY2_WARNING, FutureWarning)
 
 # BEGIN VERSION CHECK
 # Get package version when locally imported from repo or via -e develop install
