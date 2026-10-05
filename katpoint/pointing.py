@@ -333,6 +333,8 @@ class PointingModel(Model):
         sigma_daz, sigma_del = np.asarray(sigma_daz), np.asarray(sigma_del)
         assert az.shape == el.shape == delta_az.shape == delta_el.shape == sigma_daz.shape == sigma_del.shape, \
             'Input parameters should all have the same shape'
+        # Ensure az is symmetrical around zero - essential to fit P12
+        az = (az + np.pi) % (2*np.pi) - np.pi
 
         if not keep_disabled_params:
             # Blank out the existing model but warn that this behaviour is deprecated
