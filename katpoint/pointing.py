@@ -28,7 +28,7 @@ import warnings
 import numpy as np
 
 from .model import Parameter, Model
-from .ephem_extra import rad2deg, deg2rad, angle_from_degrees
+from .ephem_extra import rad2deg, deg2rad, angle_from_degrees, wrap_angle
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +146,8 @@ class PointingModel(Model):
         # Preserve the sign of cos(el), as this will allow for correct antenna plunging
         sec_el = np.sign(cos_el) / np.clip(np.abs(cos_el), deg2rad(6. / 60.), 1.0)
         tan_el = sin_el * sec_el
+        # Ensure az is symmetrical around zero - essential for P12
+        az = wrap_angle(az)
 
         # Obtain pointing correction using full VLBI model for alt-az mount (no P2 or P10 allowed!)
         delta_az = P1 + P3*tan_el - P4*sec_el + P5*sin_az*tan_el - P6*cos_az*tan_el + \
@@ -333,6 +335,8 @@ class PointingModel(Model):
         sigma_daz, sigma_del = np.asarray(sigma_daz), np.asarray(sigma_del)
         assert az.shape == el.shape == delta_az.shape == delta_el.shape == sigma_daz.shape == sigma_del.shape, \
             'Input parameters should all have the same shape'
+        # Ensure az is symmetrical around zero - essential to fit P12
+        az = wrap_angle(az)
 
         if not keep_disabled_params:
             # Blank out the existing model but warn that this behaviour is deprecated
