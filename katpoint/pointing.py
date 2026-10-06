@@ -146,6 +146,8 @@ class PointingModel(Model):
         # Preserve the sign of cos(el), as this will allow for correct antenna plunging
         sec_el = np.sign(cos_el) / np.clip(np.abs(cos_el), deg2rad(6. / 60.), 1.0)
         tan_el = sin_el * sec_el
+        # Ensure az is symmetrical around zero - essential for P12
+        az = wrap_angle(az)
 
         # Obtain pointing correction using full VLBI model for alt-az mount (no P2 or P10 allowed!)
         delta_az = P1 + P3*tan_el - P4*sec_el + P5*sin_az*tan_el - P6*cos_az*tan_el + \
