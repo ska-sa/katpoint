@@ -28,7 +28,7 @@ import warnings
 import numpy as np
 
 from .model import Parameter, Model
-from .ephem_extra import rad2deg, deg2rad, angle_from_degrees
+from .ephem_extra import rad2deg, deg2rad, angle_from_degrees, wrap_angle
 
 logger = logging.getLogger(__name__)
 
@@ -334,8 +334,7 @@ class PointingModel(Model):
         assert az.shape == el.shape == delta_az.shape == delta_el.shape == sigma_daz.shape == sigma_del.shape, \
             'Input parameters should all have the same shape'
         # Ensure az is symmetrical around zero - essential to fit P12
-        eps = 1e-13 # Vanishingly small number to use to ensure values map to [-pi, pi]
-        az = (az + np.pi) % (2*np.pi+eps) - np.pi
+        az = wrap_angle(az)
 
         if not keep_disabled_params:
             # Blank out the existing model but warn that this behaviour is deprecated
